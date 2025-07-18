@@ -11,11 +11,7 @@ type Args = {
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
-<<<<<<< Updated upstream
-  return <main className="pt-16 pb-24">asd</main>
-=======
   return <main className="pt-16 pb-24">devup2</main>
->>>>>>> Stashed changes
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
