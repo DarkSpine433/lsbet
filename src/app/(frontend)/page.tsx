@@ -11,7 +11,7 @@ import { CheckCircle, Home, LogIn, User } from 'lucide-react'
 import Form from 'next/form'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useLayoutEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 const Page = () => {
   const [response, setResponse] = useState({} as signUpRetrunType)
