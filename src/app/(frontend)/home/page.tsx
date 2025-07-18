@@ -11,7 +11,7 @@ type Args = {
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
-  return <main className="pt-16 pb-24">asd</main>
+  return <main className="pt-16 pb-24">dev</main>
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
