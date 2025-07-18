@@ -16,14 +16,14 @@ export const InitTheme: React.FC = () => {
       var hasImplicitPreference = typeof mql.matches === 'boolean'
 
       if (hasImplicitPreference) {
-        return mql.matches ? 'dark' : 'light'
+        return dark
       }
 
       return null
     }
 
     function themeIsValid(theme) {
-      return theme === 'light' || theme === 'dark'
+      return dark
     }
 
     var themeToSet = '${defaultTheme}'

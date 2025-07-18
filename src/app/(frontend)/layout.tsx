@@ -16,8 +16,16 @@ import { draftMode } from 'next/headers'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
+import { getPayload } from 'payload'
+import config from '@payload-config'
+import { headers as nextHeaders } from 'next/headers'
+import { redirect } from 'next/navigation'
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
+  const payload = await getPayload({ config })
+  const headers = await nextHeaders()
+  const { user } = await payload.auth({ headers })
 
   return (
     <html className={cn(GeistSans.variable, GeistMono.variable)} lang="en" suppressHydrationWarning>

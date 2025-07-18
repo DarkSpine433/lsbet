@@ -22,6 +22,11 @@ const dirname = path.dirname(filename)
 
 export default buildConfig({
   admin: {
+    routes: {
+      browseByFolder: '/browse-by-folder' as const,
+      login: '/login' as const,
+      account: '/account' as const,
+    },
     components: {
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
@@ -34,6 +39,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
     user: Users.slug,
+    avatar: 'default' as const,
     livePreview: {
       breakpoints: [
         {
