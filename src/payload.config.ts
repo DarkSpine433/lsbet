@@ -15,27 +15,79 @@ import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
-import { getServerSideURL } from './utilities/getURL'
+
+const validateEnv = (key: string, required: boolean = true): string => {
+  const value = process.env[key]
+  if (required && !value) {
+    throw new Error(`Missing required environment variable: ${key}`)
+  }
+  return value || ''
+}
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+const getAllowedDomains = (): string[] => {
+  const justDomain = validateEnv('NEXT_PUBLIC_JUST_DOMAIN', false)
+  const serverUrl = validateEnv('NEXT_PUBLIC_SERVER_URL', false)
+
+  const baseDomains: string[] = []
+
+  if (justDomain) {
+    baseDomains.push(`${serverUrl}`)
+  }
+
+  baseDomains.push('https://uploadthing.com')
+
+  if (serverUrl?.includes('localhost')) {
+    baseDomains.push('http://localhost:3000')
+  }
+
+  return baseDomains.filter(Boolean) // Remove any undefined values
+}
+
+const getJobsConfig = () => {
+  const cronSecret = validateEnv('CRON_SECRET', false)
+
+  if (!cronSecret) {
+    console.warn('CRON_SECRET not found - job access will be user-only')
+  }
+
+  return {
+    access: {
+      run: ({ req }: { req: PayloadRequest }): boolean => {
+        // Allow authenticated users
+        if (req.user) return true
+
+        // Allow requests with valid cron secret
+        if (cronSecret) {
+          const authHeader = req.headers.get('authorization')
+          return authHeader === `Bearer ${cronSecret}`
+        }
+
+        return false
+      },
+    },
+    tasks: [],
+  }
+}
+
 export default buildConfig({
   admin: {
-    routes: {
-      login: '/' as const,
-      unauthorized: '/' as const,
-    },
     components: {
-      // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
       beforeLogin: ['@/components/BeforeLogin'],
-      // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
       beforeDashboard: ['@/components/BeforeDashboard'],
     },
     importMap: {
-      baseDir: path.resolve(dirname),
+      baseDir: path.resolve(dirname, 'src'),
+      importMapFile: path.resolve(
+        dirname,
+        'app',
+        '(payloadAuth)',
+        '(payload)',
+        'admin',
+        'importMap.js',
+      ),
     },
     user: Users.slug,
     avatar: 'default' as const,
@@ -62,36 +114,26 @@ export default buildConfig({
       ],
     },
   },
-  // This config helps us configure global or default features that the other editors can inherit
+
   editor: defaultLexical,
   db: mongooseAdapter({
-    url: process.env.DATABASE_URI || '',
+    url: validateEnv('DATABASE_URI'),
   }),
   collections: [Pages, Posts, Media, Categories, Users],
-  cors: [getServerSideURL()].filter(Boolean),
+  csrf: getAllowedDomains(),
+  cors: getAllowedDomains(),
   globals: [Header, Footer],
-  plugins: [
-    ...plugins,
-    // storage-adapter-placeholder
-  ],
-  secret: process.env.PAYLOAD_SECRET,
+  plugins: [...plugins],
+  secret: validateEnv('PAYLOAD_SECRET'),
   sharp,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  jobs: {
-    access: {
-      run: ({ req }: { req: PayloadRequest }): boolean => {
-        // Allow logged in users to execute this endpoint (default)
-        if (req.user) return true
-
-        // If there is no logged in user, then check
-        // for the Vercel Cron secret to be present as an
-        // Authorization header:
-        const authHeader = req.headers.get('authorization')
-        return authHeader === `Bearer ${process.env.CRON_SECRET}`
-      },
+  jobs: getJobsConfig(),
+  ...(process.env.NODE_ENV === 'production' && {
+    rateLimit: {
+      max: 2000,
+      trustProxy: true,
     },
-    tasks: [],
-  },
+  }),
 })

@@ -27,6 +27,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headers = await nextHeaders()
   const { user } = await payload.auth({ headers })
 
+  if (user?.banned) {
+    return (
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <title>Account Banned</title>
+        </head>
+        <body className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Your account has been banned</h1>
+            <p className="mt-4">Please contact support for more information.</p>
+          </div>
+        </body>
+      </html>
+    )
+  }
+
   return (
     <html className={cn(GeistSans.variable, GeistMono.variable)} lang="en" suppressHydrationWarning>
       <head>
@@ -36,12 +52,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <Providers>
-          <AdminBar
-            adminBarProps={{
-              preview: isEnabled,
-            }}
-          />
-
           <Header />
           {children}
           <Footer />
