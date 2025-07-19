@@ -31,6 +31,7 @@ export function useWebSocket(url: string) {
   // Simulate real WebSocket with realistic updates
   const simulateWebSocket = useCallback(() => {
     setState((prev) => ({ ...prev, isConnecting: true }))
+    console.log('Simulating WebSocket connection...') // Add this
 
     // Simulate connection delay
     setTimeout(() => {
@@ -40,6 +41,7 @@ export function useWebSocket(url: string) {
         isConnecting: false,
         lastUpdate: new Date(),
       }))
+      console.log('WebSocket connected!') // Add this
 
       // Start sending realistic updates
       updateIntervalRef.current = setInterval(

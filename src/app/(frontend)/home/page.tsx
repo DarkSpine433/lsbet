@@ -24,9 +24,9 @@ import {
   LogOut,
 } from 'lucide-react'
 import { useLiveGames } from '@/hooks/useLiveGames'
-import { ConnectionStatus } from '@/components/MainPage/ConnectionStatus'
 import { LiveUpdateIndicator } from '@/components/MainPage/LiveUpdateIndicator'
 import { Logo } from '@/components/Logo/Logo'
+import Link from 'next/link'
 
 interface Bet {
   id: string
@@ -47,27 +47,9 @@ const sportsCategories = [
 
 export default function BettingDashboard() {
   const [selectedBets, setSelectedBets] = useState<Bet[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Piłka nożna')
 
   // Use live games hook instead of static data
-  const {
-    games: liveGames,
-    isConnected,
-    isConnecting,
-    lastUpdate,
-    error,
-    isGameRecentlyUpdated,
-    connectionStatus,
-  } = useLiveGames()
-
-  // Ensure connectionStatus is strictly typed
-  const connectionStatusStrict: 'connected' | 'connecting' | 'disconnected' =
-    connectionStatus === 'connected' ||
-    connectionStatus === 'connecting' ||
-    connectionStatus === 'disconnected'
-      ? connectionStatus
-      : 'disconnected'
 
   const addBet = (game: any, market: string, odds: number, team: string) => {
     const newBet: Bet = {
@@ -111,9 +93,7 @@ export default function BettingDashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Logo />
-              <div className="relative">
-                <ConnectionStatus status={connectionStatusStrict} lastUpdate={lastUpdate} />
-              </div>
+              <div className="relative">{/* Use connectionStatus from hook */}</div>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -124,9 +104,11 @@ export default function BettingDashboard() {
                 <Wallet className="h-4 w-4 text-slate-600" />
                 <span className="font-semibold">0 zł</span>
               </div>
-              <Button variant="default" size="sm">
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <Link href={'/home/logout'}>
+                <Button variant="default" size="sm">
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -165,152 +147,8 @@ export default function BettingDashboard() {
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">Mecze na żywo i nadchodzące</h1>
-              <p className="text-slate-600">Obstawiaj mecze na żywo i nadchodzące wydarzenia</p>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtruj
-              </Button>
-              <Button variant="outline" size="sm">
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Popularne
-              </Button>
-            </div>
-          </div>
-
           {/* Live Games */}
-          <div className="space-y-4">
-            {liveGames.map((game: any) => (
-              <Card key={game.id} className="overflow-hidden relative">
-                <LiveUpdateIndicator show={isGameRecentlyUpdated(game.id)} />
-                <CardContent className="p-0">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 border-b">
-                    <div className="flex items-center space-x-3">
-                      <Badge
-                        variant={game.status === 'live' ? 'destructive' : 'secondary'}
-                        className="flex items-center space-x-1"
-                      >
-                        {game.status === 'live' ? (
-                          <>
-                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                            <span>NA ŻYWO</span>
-                          </>
-                        ) : game.status === 'halftime' ? (
-                          <>
-                            <Clock className="h-3 w-3" />
-                            <span>PRZERWA</span>
-                          </>
-                        ) : (
-                          <Clock className="h-3 w-3" />
-                        )}
-                      </Badge>
-                      <span className="text-sm font-medium text-slate-600">{game.league}</span>
-                      {isConnected && game.isLive && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs border-green-500 text-green-600"
-                        >
-                          <Wifi className="h-2 w-2 mr-1" />
-                          Dane na żywo
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-sm text-slate-600">
-                      {game.status === 'live' || game.status === 'halftime'
-                        ? `${game.time}`
-                        : game.time}
-                    </div>
-                  </div>
-
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-slate-900">{game.homeTeam}</span>
-                          {game.score && (
-                            <span
-                              className={`text-2xl font-bold transition-colors duration-300 ${
-                                isGameRecentlyUpdated(game.id) ? 'text-blue-600' : 'text-slate-900'
-                              }`}
-                            >
-                              {game.score.home}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-900">{game.awayTeam}</span>
-                          {game.score && (
-                            <span
-                              className={`text-2xl font-bold transition-colors duration-300 ${
-                                isGameRecentlyUpdated(game.id) ? 'text-blue-600' : 'text-slate-900'
-                              }`}
-                            >
-                              {game.score.away}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Betting Options with live odds highlighting */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <Button
-                        variant="outline"
-                        className={`flex flex-col items-center p-4 h-auto hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 ${
-                          isGameRecentlyUpdated(game.id)
-                            ? 'bg-blue-50 border-blue-300 shadow-md'
-                            : 'bg-transparent'
-                        }`}
-                        onClick={() => addBet(game, '1X2', game.homeOdds, game.homeTeam)}
-                      >
-                        <span className="text-xs text-slate-600 mb-1">1</span>
-                        <span className="font-bold text-lg">{game.homeOdds}</span>
-                      </Button>
-
-                      {game.drawOdds && (
-                        <Button
-                          variant="outline"
-                          className={`flex flex-col items-center p-4 h-auto hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 ${
-                            isGameRecentlyUpdated(game.id)
-                              ? 'bg-blue-50 border-blue-300 shadow-md'
-                              : 'bg-transparent'
-                          }`}
-                          onClick={() => addBet(game, '1X2', game.drawOdds!, 'Remis')}
-                        >
-                          <span className="text-xs text-slate-600 mb-1">X</span>
-                          <span className="font-bold text-lg">{game.drawOdds}</span>
-                        </Button>
-                      )}
-
-                      <Button
-                        variant="outline"
-                        className={`flex flex-col items-center p-4 h-auto hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 ${
-                          isGameRecentlyUpdated(game.id)
-                            ? 'bg-blue-50 border-blue-300 shadow-md'
-                            : 'bg-transparent'
-                        }`}
-                        onClick={() => addBet(game, '1X2', game.awayOdds, game.awayTeam)}
-                      >
-                        <span className="text-xs text-slate-600 mb-1">2</span>
-                        <span className="font-bold text-lg">{game.awayOdds}</span>
-                      </Button>
-                    </div>
-
-                    <div className="flex items-center justify-center mt-4">
-                      <Button variant="ghost" size="sm" className="text-blue-600">
-                        <Plus className="h-4 w-4 mr-1" />
-                        Więcej rynków ({Math.floor(Math.random() * 50) + 20})
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <div className="space-y-4"></div>
         </main>
 
         {/* Betting Slip */}
