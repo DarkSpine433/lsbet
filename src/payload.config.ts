@@ -28,16 +28,17 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 const getAllowedDomains = (): string[] => {
-  const justDomain = validateEnv('NEXT_PUBLIC_JUST_DOMAIN', false)
   const serverUrl = validateEnv('NEXT_PUBLIC_SERVER_URL', false)
 
-  const baseDomains: string[] = []
-
-  if (justDomain) {
-    baseDomains.push(`${serverUrl}`)
-  }
-
-  baseDomains.push('https://uploadthing.com')
+  const baseDomains: string[] = [
+    `${serverUrl}`,
+    'https://uploadthing.com',
+    'http://mongodb.net',
+    'https://mongodb.net',
+    'https://mongodb.com',
+    'http://mongodb.com',
+    'https://ufs.sh',
+  ]
 
   if (serverUrl?.includes('localhost')) {
     baseDomains.push('http://localhost:3000')
