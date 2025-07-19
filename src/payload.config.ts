@@ -15,6 +15,7 @@ import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
+import { getServerSideURL } from './utilities/getURL'
 
 const validateEnv = (key: string, required: boolean = true): string => {
   const value = process.env[key]
@@ -28,7 +29,7 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 const getAllowedDomains = (): string[] => {
-  const serverUrl = validateEnv('NEXT_PUBLIC_SERVER_URL', false)
+  const serverUrl = getServerSideURL()
 
   const baseDomains: string[] = [
     `${serverUrl}`,
@@ -38,6 +39,7 @@ const getAllowedDomains = (): string[] => {
     'https://mongodb.com',
     'http://mongodb.com',
     'https://ufs.sh',
+    'http://ufs.sh',
   ]
 
   if (serverUrl?.includes('localhost')) {
