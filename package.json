@@ -37,6 +37,7 @@
     "@payloadcms/plugin-seo": "3.48.0",
     "@payloadcms/richtext-lexical": "3.48.0",
     "@payloadcms/storage-uploadthing": "^3.48.0",
+    "@payloadcms/translations": "^3.48.0",
     "@payloadcms/ui": "3.48.0",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-checkbox": "^1.0.4",
