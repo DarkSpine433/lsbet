@@ -17,7 +17,7 @@ export const Logo = (props: Props) => {
     /* eslint-disable @next/next/no-img-element */
     <div
       className={clsx(
-        'max-w-[9.375rem] w-full h-20 overflow-hidden flex items-center justify-center',
+        'max-w-[9.375rem] w-full h-10 overflow-hidden flex items-center justify-center',
         className,
       )}
     >

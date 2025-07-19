@@ -21,7 +21,7 @@ export const Users: CollectionConfig = {
     read: isAdminOrItself,
   },
   admin: {
-    defaultColumns: ['name', 'email'],
+    defaultColumns: ['role', 'nickname', 'email'],
   },
 
   fields: [

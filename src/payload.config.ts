@@ -16,6 +16,7 @@ import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
+import { pl } from '@payloadcms/translations/languages/pl'
 
 const validateEnv = (key: string, required: boolean = true): string => {
   const value = process.env[key]
@@ -77,10 +78,44 @@ const getJobsConfig = () => {
 }
 
 export default buildConfig({
+  i18n: {
+    fallbackLanguage: 'pl',
+    supportedLanguages: { pl },
+  },
   admin: {
+    suppressHydrationWarning: true,
+    meta: {
+      title: 'LSBets Admin Panel',
+      titleSuffix: ' - LSBets',
+      description: 'LsBet Admin Panel - Manage your LSBet website content',
+      icons: [
+        {
+          rel: 'icon',
+          type: 'image/jpeg',
+          url: 'https://ut91p27j9t.ufs.sh/f/CI2WZ5YUTq1beVeh3Fwfw9glnXS4C6WAJcNBbrvIad7PD2yU',
+        },
+      ],
+      openGraph: {
+        images: [
+          {
+            url: '/https://ut91p27j9t.ufs.sh/f/CI2WZ5YUTq1bdEX04uQDXpVt0zI3oulY6iq2RyfQ8bOh4wP7',
+            width: 1200,
+            height: 630,
+            alt: 'LSBets Admin Panel',
+          },
+        ],
+        description: 'Admin panel for LSBets website',
+        siteName: 'LSBets Admin Panel',
+        title: 'LSBets Panel - PZS Złoczew',
+      },
+    },
     components: {
       beforeLogin: ['@/components/BeforeLogin'],
       beforeDashboard: ['@/components/BeforeDashboard'],
+      graphics: {
+        Logo: '@/components/Logo/Logo#Logo',
+        Icon: '@/components/Icon/Icon',
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname, 'src'),
