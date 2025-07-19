@@ -3,14 +3,14 @@ import { getServerSideURL } from './getURL'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
   type: 'website',
-  description: 'An open-source website built with Payload and Next.js.',
+  description: 'LsBet Zarabiaj Pieniądze Z Nami',
   images: [
     {
-      url: `${getServerSideURL()}/website-template-OG.webp`,
+      url: `https://ut91p27j9t.ufs.sh/f/CI2WZ5YUTq1bdEX04uQDXpVt0zI3oulY6iq2RyfQ8bOh4wP7`,
     },
   ],
-  siteName: 'Payload Website Template',
-  title: 'Payload Website Template',
+  siteName: 'LsBet',
+  title: 'Oficialna strona LsBet',
 }
 
 export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata['openGraph'] => {
