@@ -29,7 +29,7 @@ export const Logo = (props: Props) => {
         fetchPriority={priority}
         decoding="async"
         className={clsx(' w-full h-32  object-contain', className)}
-        src="https://4rnviijiwq.ufs.sh/f/W6b8gTiNTm1Pb6e3NxEUQ7cfkqALeaE6wsSCJb4Zm2NlHvIt"
+        src="https://ut91p27j9t.ufs.sh/f/CI2WZ5YUTq1b5mpQ3hTF5LkXP7DvMqtnhJY1IRlZB9uEWTOr"
       />
     </div>
   )
