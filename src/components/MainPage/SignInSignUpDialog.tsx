@@ -32,7 +32,6 @@ const SignInSignUpDialog = (props: Props) => {
   const [isLoading, setIsLoading] = useState(false)
 
   const [nickname, setNickname] = useState('')
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
 
@@ -42,18 +41,18 @@ const SignInSignUpDialog = (props: Props) => {
   const handleLogin = async (FormData: FormData) => {
     setIsLoading(true)
 
-    const email = FormData.get('email') as string
+    const nickname = FormData.get('nickname') as string
     const password = FormData.get('password') as string
 
     const response = await signIn({
-      email: email,
+      nickname: nickname,
       password: password,
     })
     if (response.isSuccess === false) {
-      setEmail(email)
+      setNickname(nickname)
       setPassword(password)
     } else {
-      setEmail('')
+      setNickname('')
       setPassword('')
     }
 
@@ -65,24 +64,20 @@ const SignInSignUpDialog = (props: Props) => {
   }
   const handleOauthSignUp = async (FormData: FormData) => {
     const nickname = FormData.get('nickname') as string
-    const email = FormData.get('email') as string
     const password = FormData.get('password') as string
     const passwordConfirm = FormData.get('passwordConfirm') as string
 
     const response = await signUp({
       nickname: nickname,
-      email: email,
       password: password,
       passwordConfirm: passwordConfirm,
     })
     if (response.isSuccess === false) {
       setNickname(nickname)
-      setEmail(email)
       setPassword(password)
       setPasswordConfirm(passwordConfirm)
     } else {
       setNickname('')
-      setEmail('')
       setPassword('')
       setPasswordConfirm('')
     }
@@ -131,14 +126,14 @@ const SignInSignUpDialog = (props: Props) => {
                       >
                         <div className="space-y-2">
                           <Label htmlFor="email" className="text-sm font-medium">
-                            Email <span className="text-destructive">*</span>
+                            Nick OOC {`(Forum)`} <span className="text-destructive">*</span>
                           </Label>
                           <Input
-                            type="email"
-                            name="email"
-                            id="email"
+                            type="text"
+                            name="nickname"
+                            id="nickname"
                             required
-                            defaultValue={email}
+                            defaultValue={nickname}
                             className="h-10"
                           />
                         </div>
@@ -201,7 +196,7 @@ const SignInSignUpDialog = (props: Props) => {
                         >
                           <div className="space-y-2">
                             <Label htmlFor="nickname" className="text-sm font-medium">
-                              Nickname <span className="text-destructive">*</span>
+                              Nick OOC {`(Forum)`} <span className="text-destructive">*</span>
                             </Label>
                             <Input
                               type="text"
@@ -211,22 +206,6 @@ const SignInSignUpDialog = (props: Props) => {
                               defaultValue={nickname}
                               className="h-10"
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="email" className="text-sm font-medium">
-                              Email <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                              type="email"
-                              name="email"
-                              id="email"
-                              required
-                              defaultValue={email}
-                              className="h-10"
-                            />
-                            {response.kind === 'userExists' && (
-                              <p className="text-sm text-destructive mt-1">{response.message}</p>
-                            )}
                           </div>
 
                           <div className="space-y-2">

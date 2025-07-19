@@ -13,7 +13,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headers = await nextHeaders()
   const { user } = await payload.auth({ headers })
 
-  if (!user || !user.verified || !user.role?.includes('admin') || user.banned) redirect('/')
+  if (!user || !user.verified || user.banned) redirect('/')
   return <>{children}</>
 }
 

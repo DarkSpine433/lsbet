@@ -406,7 +406,6 @@ export interface Category {
  */
 export interface User {
   id: string;
-  nickname: string;
   verified?: boolean | null;
   banned?: boolean | null;
   role: 'admin' | 'user';
@@ -1020,7 +1019,6 @@ export interface CategoriesSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
-  nickname?: T;
   verified?: T;
   banned?: T;
   role?: T;

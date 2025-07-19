@@ -89,7 +89,6 @@ export const seed = async ({
     payload.create({
       collection: 'users',
       data: {
-        nickname: 'DemoUser',
         email: 'demo-author@example.com',
         password: 'password',
         role: 'user',

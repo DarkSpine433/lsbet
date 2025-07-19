@@ -4,7 +4,7 @@ import config from '@payload-config'
 import type { signUpRetrunType } from './signUp'
 import { cookies } from 'next/headers'
 type CustomerEd = {
-  email: string
+  nickname: string
   password: string
 }
 
@@ -12,13 +12,17 @@ const calculateExpiration = (days: number): Date => {
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000)
 }
 
-const signIn = async <T extends CustomerEd>({ email, password }: T): Promise<signUpRetrunType> => {
-  if (!email || !password) {
+const signIn = async <T extends CustomerEd>({
+  nickname,
+  password,
+}: T): Promise<signUpRetrunType> => {
+  if (!nickname || !password) {
     return { data: null, message: 'Wypełnij wszystkie pola', isSuccess: false, kind: 'error' }
   }
 
   const payload = await getPayload({ config })
   const cookieStore = await cookies()
+  const email = nickname + '@lsbet.pl'
   try {
     const result = await payload.login({
       collection: 'users', // required
@@ -30,6 +34,23 @@ const signIn = async <T extends CustomerEd>({ email, password }: T): Promise<sig
       depth: 2,
     })
 
+    if (result.user.banned) {
+      return {
+        data: null,
+        message: 'Konto jest zablokowane',
+        isSuccess: false,
+        kind: 'error',
+      }
+    }
+    if (!result.user.verified) {
+      return {
+        data: null,
+        message:
+          'Konto jest w trakcie weryfikacji sprawdzaj email i formu. Skontaktujemy się z tobą w celu werifikacji',
+        isSuccess: false,
+        kind: 'error',
+      }
+    }
     //add user result to local storage
 
     if (result.token && result.user) {

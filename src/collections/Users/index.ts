@@ -21,16 +21,10 @@ export const Users: CollectionConfig = {
     read: isAdminOrItself,
   },
   admin: {
-    defaultColumns: ['role', 'nickname', 'email'],
+    defaultColumns: ['role', 'email'],
   },
 
   fields: [
-    {
-      name: 'nickname',
-      label: 'Nickname',
-      type: 'text',
-      required: true,
-    },
     {
       access: {
         create: isAdmin,
