@@ -44,7 +44,7 @@ export default function LogoutPage() {
   }, [])
 
   return (
-    <div className="min-h-[60dvh] flex items-center justify-center p-4">
+    <div className="min-h-[90dvh] flex items-center justify-center p-4 bg-slate-50">
       <Card className="w-full max-w-md shadow-lg border-0 overflow-hidden backdrop-blur-sm">
         <CardHeader className="text-center relative z-10">
           <div className="flex justify-center mb-2">
@@ -56,10 +56,10 @@ export default function LogoutPage() {
               <XCircle className="h-8 w-8 text-rose-500" />
             )}
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-800">
+          <CardTitle className="text-2xl font-bold text-background">
             {isLoading ? 'Wylogowywanie' : 'Wylogowano'}
           </CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardDescription className="text-secondary">
             {isLoading
               ? 'Trwa wylogowywanie z systemu...'
               : 'Dziękujemy za skorzystanie z naszych usług! Do zobaczenia!'}
@@ -86,12 +86,6 @@ export default function LogoutPage() {
                 <Link href="/" className="flex items-center gap-2 w-full justify-center">
                   <Home size={20} />
                   Powrót do strony głównej
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full" asChild>
-                <Link href="/auth/login" className="flex items-center gap-2 w-full justify-center">
-                  Zaloguj się ponownie
-                  <LogIn size={20} />
                 </Link>
               </Button>
             </>
