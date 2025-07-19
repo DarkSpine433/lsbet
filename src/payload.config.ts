@@ -33,6 +33,7 @@ const getAllowedDomains = (): string[] => {
 
   const baseDomains: string[] = [
     `${serverUrl}`,
+    `lsbet-git-development-darkspine433s-projects.vercel.app`,
     'https://uploadthing.com',
     'http://mongodb.net',
     'https://mongodb.net',
