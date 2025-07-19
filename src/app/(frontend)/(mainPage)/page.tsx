@@ -41,7 +41,7 @@ export default function HomePage() {
       <div className="fixed w-96 h-96 bg-gradient-to-r from-blue-500/20 to-red-500/20 rounded-full blur-3xl pointer-events-none transition-all duration-300 ease-out" />
 
       {/* Hero Section */}
-      <main className="relative z-10 container mx-auto px-4 py-20">
+      <main className="relative z-10 container mx-auto px-4 pt-10 pb-20 md:py-20">
         <div className="text-center max-w-6xl mx-auto">
           {/* Animated Badge */}
           <div

@@ -40,11 +40,11 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   return (
     <header className="relative z-50 backdrop-blur-lg bg-white/5 border-b border-white/10">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           <div
-            className={`flex items-center space-x-3 transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'}`}
+            className={`flex cursor-pointer items-center space-x-3 transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'}`}
           >
-            <Logo className="h-10 w-auto" />
+            <Logo className="h-8 w-auto" />
           </div>
 
           <div

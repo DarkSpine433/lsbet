@@ -91,9 +91,8 @@ export default function BettingDashboard() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 cursor-pointer">
               <Logo />
-              <div className="relative">{/* Use connectionStatus from hook */}</div>
             </div>
 
             <div className="flex items-center space-x-4">
