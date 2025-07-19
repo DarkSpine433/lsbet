@@ -1,32 +1,23 @@
-import { getCachedGlobal } from '@/utilities/getGlobals'
-import Link from 'next/link'
 import React from 'react'
 
 import type { Footer } from '@/payload-types'
 
-import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
-import { CMSLink } from '@/components/Link'
+import { Globe } from 'lucide-react'
 import { Logo } from '@/components/Logo/Logo'
 
 export async function Footer() {
-  const footerData: Footer = await getCachedGlobal('footer', 1)()
-
-  const navItems = footerData?.navItems || []
-
   return (
-    <footer className="mt-auto border-t border-border bg-black dark:bg-card text-white">
-      <div className="container py-8 gap-8 flex flex-col md:flex-row md:justify-between">
-        <Link className="flex items-center" href="/">
+    <footer className="relative py-8 border-t border-primary">
+      <div className="container mx-auto px-4 text-center">
+        <div className="flex items-center justify-center space-x-2 mb-4">
           <Logo />
-        </Link>
-
-        <div className="flex flex-col-reverse items-start md:flex-row gap-4 md:items-center">
-          <nav className="flex flex-col md:flex-row gap-4">
-            {navItems.map(({ link }, i) => {
-              return <CMSLink className="text-white" key={i} {...link} />
-            })}
-          </nav>
         </div>
+        <p className="text-sm text-white/40">
+          © {new Date().getFullYear()} LSBet. Wszelkie prawa zastrzeżone.
+        </p>
+        <p className="text-xs mt-2 text-white/30">
+          {`Strona zrobiona na potrzeby gry RolePlay (VibeRP)`}
+        </p>
       </div>
     </footer>
   )

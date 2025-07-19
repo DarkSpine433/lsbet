@@ -23,6 +23,7 @@ import {
 
 export const Pages: CollectionConfig<'pages'> = {
   slug: 'pages',
+
   access: {
     create: authenticated,
     delete: authenticated,
@@ -37,6 +38,8 @@ export const Pages: CollectionConfig<'pages'> = {
     slug: true,
   },
   admin: {
+    hidden: true,
+    hideAPIURL: true,
     defaultColumns: ['title', 'slug', 'updatedAt'],
     livePreview: {
       url: ({ data, req }) => {
@@ -75,7 +78,7 @@ export const Pages: CollectionConfig<'pages'> = {
             {
               name: 'layout',
               type: 'blocks',
-              blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock],
+              blocks: [CallToAction, Content, MediaBlock, Archive],
               required: true,
               admin: {
                 initCollapsed: true,
