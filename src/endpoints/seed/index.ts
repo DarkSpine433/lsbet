@@ -99,9 +99,10 @@ export const seed = async ({
     payload.create({
       collection: 'users',
       data: {
-        name: 'Demo Author',
+        nickname: 'DemoUser',
         email: 'demo-author@example.com',
         password: 'password',
+        role: 'user',
       },
     }),
     payload.create({

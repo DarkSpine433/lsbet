@@ -53,7 +53,7 @@ const Page = () => {
 
         return () => clearTimeout(timer)
       } else {
-        router.push('/')
+        router.push('/home')
       }
     }
   }, [counter, router, response.isSuccess])
