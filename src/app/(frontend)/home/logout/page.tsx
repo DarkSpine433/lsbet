@@ -1,21 +1,13 @@
 'use client'
 
 import type { signUpRetrunType } from '@/app/actions/signUp' // Fixed typo in type name
-import { logout } from '@/app/actions/logout'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, Home, CheckCircle, XCircle, LogIn } from 'lucide-react'
+import { LogOut, Home, CheckCircle, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
+import { logout } from '@/app/actions/logout'
 
 export default function LogoutPage() {
   const router = useRouter()
@@ -44,9 +36,9 @@ export default function LogoutPage() {
   }, [])
 
   return (
-    <div className="min-h-[90dvh] flex items-center justify-center p-4 bg-slate-50">
-      <Card className="w-full max-w-md shadow-lg border-0 overflow-hidden backdrop-blur-sm">
-        <CardHeader className="text-center relative z-10">
+    <div className="min-h-[90dvh] bg flex items-center justify-center p-4 bg-slate-50">
+      <Card className="w-full max-w-md shadow-lg border-0 overflow-hidden backdrop-blur-sm bg-slate-100">
+        <CardHeader className="text-center relative z-10 text-foreground">
           <div className="flex justify-center mb-2">
             {isLoading ? (
               <LogOut className="h-8 w-8 text-rose-500 animate-pulse" />
@@ -57,33 +49,25 @@ export default function LogoutPage() {
             )}
           </div>
           <CardTitle className="text-2xl font-bold text-background">
-            {isLoading ? 'Wylogowywanie' : 'Wylogowano'}
+            {isLoading ? 'Wylogowywanie' : response?.isSuccess ? 'Wylogowany' : 'Błąd'}
           </CardTitle>
-          <CardDescription className="text-secondary">
+          <CardDescription>
             {isLoading
               ? 'Trwa wylogowywanie z systemu...'
-              : 'Dziękujemy za skorzystanie z naszych usług! Do zobaczenia!'}
+              : response?.isSuccess
+                ? 'Dziękujemy za skorzystanie z naszych usług! Do zobaczenia!'
+                : 'Wystąpił błąd podczas wylogowywania. Spróbuj ponownie.'}
           </CardDescription>
         </CardHeader>
 
-        {response && !response.isSuccess && (
-          <CardContent className="relative z-10 text-center">
-            <Alert
-              className={`mx-auto max-w-xs bg-red-50 border-red-200'
-                }`}
-            >
-              <XCircle className="h-6 w-6 text-red-500" />
-
-              <AlertTitle className="text-lg font-semibold">Błąd</AlertTitle>
-              <AlertDescription>{response.message}</AlertDescription>
-            </Alert>
-          </CardContent>
-        )}
         <CardFooter className="flex flex-col gap-4 relative z-10 p-6">
           {!isLoading && (
             <>
               <Button variant="default" className="w-full" asChild>
-                <Link href="/" className="flex items-center gap-2 w-full justify-center">
+                <Link
+                  href="/"
+                  className="flex items-center gap-2 w-full justify-center text-foreground"
+                >
                   <Home size={20} />
                   Powrót do strony głównej
                 </Link>

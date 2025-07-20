@@ -6,7 +6,6 @@ type CustomerEd = {
   password: string
   passwordConfirm: string
   nickname: string
-  email: string
 }
 export type signUpRetrunType = {
   data: unknown
@@ -27,9 +26,9 @@ const signUp = async <T extends CustomerEd>({
   password,
   passwordConfirm,
   nickname,
-  email,
 }: T): Promise<signUpRetrunType> => {
-  if (!nickname || !email || !password || !passwordConfirm) {
+  const email = nickname + '@lsbet.pl'
+  if (!nickname || !password || !passwordConfirm) {
     return { data: null, message: 'Wypełnij wszystkie pola', isSuccess: false, kind: 'error' }
   }
   if (password !== passwordConfirm) {
@@ -57,7 +56,7 @@ const signUp = async <T extends CustomerEd>({
       limit: 1,
       pagination: false,
       where: {
-        or: [{ nickname: { equals: nickname } }, { email: { equals: email } }],
+        or: [{ email: { equals: email } }],
       },
     })
     if (docs.length > 0) {
@@ -69,17 +68,12 @@ const signUp = async <T extends CustomerEd>({
       }
     }
 
-    const {
-      id: getId,
-      email: getEmail,
-      nickname: getNickname,
-    } = await payload.create({
+    const { id: getId, email: getEmail } = await payload.create({
       collection: 'users', // required
       data: {
         email: email,
         password: password,
         role: 'user',
-        nickname: nickname,
       },
     })
 
@@ -90,11 +84,7 @@ const signUp = async <T extends CustomerEd>({
       limit: 1,
       pagination: false,
       where: {
-        and: [
-          { email: { equals: getEmail } },
-          { id: { equals: getId } },
-          { nickname: { equals: getNickname } },
-        ],
+        and: [{ email: { equals: getEmail } }, { id: { equals: getId } }],
       },
     })
 

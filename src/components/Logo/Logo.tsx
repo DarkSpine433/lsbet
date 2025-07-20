@@ -17,7 +17,7 @@ export const Logo = (props: Props) => {
     /* eslint-disable @next/next/no-img-element */
     <div
       className={clsx(
-        'max-w-[9.375rem] w-full h-10 overflow-hidden flex items-center justify-center',
+        'max-w-[9.375rem] w-full h-9 overflow-hidden flex items-center justify-center',
         className,
       )}
     >
@@ -28,7 +28,7 @@ export const Logo = (props: Props) => {
         loading={loading}
         fetchPriority={priority}
         decoding="async"
-        className={clsx(' w-full h-32  object-contain', className)}
+        className={clsx(' w-full h-32  object-contain')}
         src="https://ut91p27j9t.ufs.sh/f/CI2WZ5YUTq1b5mpQ3hTF5LkXP7DvMqtnhJY1IRlZB9uEWTOr"
       />
     </div>
