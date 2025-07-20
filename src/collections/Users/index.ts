@@ -56,6 +56,14 @@ export const Users: CollectionConfig = {
       options: ['admin', 'user'],
       required: true,
     },
+    {
+      name: 'money',
+      label: 'Money In Wallet',
+      type: 'number',
+      admin: {
+        position: 'sidebar',
+      },
+    },
   ],
   timestamps: true,
 }

@@ -20,11 +20,12 @@ const SubmitButtonClient = ({
   return (
     <Button type="submit" className={`${className ?? ' w-full h-11 mt-6'}`} disabled={isSuccess}>
       {status.pending ? (
-        <CircularProgress size={loadingSize} className="[&>*]:text-background mr-2" />
+        <CircularProgress size={loadingSize} className="[&>*]:text-slate-50 mr-2" />
       ) : (
-        <>{children}</>
+        <>
+          {children} {text ?? ''}
+        </>
       )}
-      {text ?? ''}
     </Button>
   )
 }

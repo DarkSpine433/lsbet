@@ -27,10 +27,11 @@ type PageClientProps = {
   nickname: string
   categories: Category[]
   bets: Bet[]
+  money?: number
 }
 
 export default function PageClient(props: PageClientProps) {
-  const { nickname, categories, bets } = props
+  const { nickname, categories, bets, money } = props
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedCategory, setSelectedCategory] = useState(
@@ -105,7 +106,7 @@ export default function PageClient(props: PageClientProps) {
               </Button>
               <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
                 <Wallet className="h-4 w-4 text-slate-600" />
-                <span className="font-semibold">0 zł</span>
+                <span className="font-semibold">{money}&nbsp;zł</span>
               </div>
               <Link href={'/home/logout'}>
                 <Button variant="default" size="sm">
@@ -147,90 +148,129 @@ export default function PageClient(props: PageClientProps) {
         {/* Main Content */}
         <main className="flex-1 p-6 bg-gray-50">
           <div className="space-y-8 max-w-6xl mx-auto">
-            {bets.map((bet: Bet) => (
-              <Card
-                key={bet.id}
-                className="bg-white shadow-md hover:shadow-xl border border-gray-200/80 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 max-w-4xl mx-auto"
-              >
-                <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
-                  <div className="flex flex-row items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-semibold text-red-500 tracking-wide">LIVE</span>
-                    </div>
-                    <CardTitle className="text-xl font-bold text-slate-800 text-center">
-                      {bet.title}
-                    </CardTitle>
-                    <CardDescription>
-                      <Badge
-                        variant="secondary"
-                        className="px-3 py-1 text-xs sm:text-sm font-medium rounded-full"
-                      >
-                        {formatDateTime(bet.updatedAt, true)}
-                      </Badge>
-                    </CardDescription>
-                  </div>
-                </CardHeader>
+            {bets.map((bet: Bet) => {
+              const betDate = new Date(bet.starteventdate || '').toLocaleString('pl-PL', {
+                timeZone: 'Europe/Warsaw', // A time zone in UTC+2
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })
+              const timeInUTC2 = new Date().toLocaleString('pl-PL', {
+                timeZone: 'Europe/Warsaw', // A time zone in UTC+2
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })
+              const isLive = betDate <= timeInUTC2
 
-                <div className="p-6 sm:p-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                    {bet.team?.map((team) => (
-                      <div
-                        key={team.id}
-                        className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200/80 hover:border-gray-300 transition-colors duration-300"
-                      >
-                        <div className="text-center space-y-4">
-                          <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden shadow-inner bg-gray-100">
-                            <Media
-                              key={team.id}
-                              resource={team.logo}
-                              fill={true}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              imgClassName="w-full h-full object-cover"
-                            />
-                          </div>
-                          <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-                            {team.name}
-                          </h3>
-                          <Button
-                            size="lg"
-                            onClick={() => addBet([team])}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 transition-all duration-300"
-                          >
-                            Select Team
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {bet.team && (
-                    <div className="mt-6 mx-auto flex justify-center">
-                      <Button
-                        size="lg"
-                        className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
-                      >
-                        <span className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                        <span className="relative flex items-center space-x-3">
-                          <span>REMIS</span>
+              return (
+                <Card
+                  key={bet.id}
+                  className="bg-white shadow-md hover:shadow-xl border border-gray-200/80 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 max-w-4xl mx-auto"
+                >
+                  <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
+                    <div className="flex flex-row items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CardTitle className="text-xl font-extrabold text-slate-800 text-center">
+                          {bet.title}
+                        </CardTitle>
+                        <div
+                          className={`w-2.5 h-2.5 rounded-full ${
+                            isLive && !bet.endevent ? 'bg-red-500 animate-pulse' : 'bg-gray-500'
+                          }`}
+                        ></div>
+                        <span
+                          className={`text-sm font-semibold tracking-wide ${
+                            isLive && !bet.endevent ? 'text-red-500' : 'text-gray-500'
+                          }`}
+                        >
+                          {isLive && !bet.endevent
+                            ? 'LIVE'
+                            : bet.endevent
+                              ? 'ZAKOŃCZONE'
+                              : 'WKRÓTCE'}
                         </span>
-                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                      </div>
 
-                <div className="bg-gray-50/80 p-3 border-t border-gray-200/80">
-                  <div className="flex justify-between items-center text-xs text-gray-500">
-                    <span className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Live Betting Active</span>
-                    </span>
-                    <span className="font-mono">Match ID: {bet.id}</span>
+                      <CardDescription>
+                        <Badge
+                          variant="secondary"
+                          className="px-3 py-1 text-xs sm:text-sm font-medium rounded-full"
+                        >
+                          {bet && bet.starteventdate && formatDateTime(bet.starteventdate, true)}
+                        </Badge>
+                      </CardDescription>
+                    </div>
+                  </CardHeader>
+
+                  <div className="p-6 sm:p-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                      {bet.team?.map((team) => (
+                        <div
+                          key={team.id}
+                          className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200/80 hover:border-gray-300 transition-colors duration-300"
+                        >
+                          <div className="text-center space-y-4">
+                            <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden shadow-inner bg-gray-100">
+                              <Media
+                                key={team.id}
+                                resource={team.logo}
+                                fill={true}
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                imgClassName="w-full h-full object-cover"
+                              />
+                            </div>
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                              {team.name}
+                            </h3>
+                            <Button
+                              size="lg"
+                              onClick={() => addBet([team])}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 transition-all duration-300"
+                            >
+                              Select Team
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {bet.team && (
+                      <div className="mt-6 mx-auto flex justify-center">
+                        <Button
+                          size="lg"
+                          className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
+                        >
+                          <span className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                          <span className="relative flex items-center space-x-3">
+                            <span>REMIS</span>
+                          </span>
+                          <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </Card>
-            ))}
+
+                  <div className="bg-gray-50/80 p-3 border-t border-gray-200/80">
+                    <div className="flex justify-between items-center text-xs text-gray-500">
+                      <span className="flex items-center space-x-2">
+                        <div
+                          className={`w-2 h-2 ${bet.canbet ? 'bg-red-500' : 'bg-green-500'} rounded-full`}
+                        ></div>
+                        <span>Zakłady {bet.canbet ? 'Nieaktywne' : 'Aktywne'} </span>
+                      </span>
+                      <span className="font-mono">Match ID: {bet.id}</span>
+                    </div>
+                  </div>
+                </Card>
+              )
+            })}
           </div>
         </main>
 

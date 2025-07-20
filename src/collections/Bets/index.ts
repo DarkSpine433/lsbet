@@ -34,6 +34,16 @@ export const Bets: CollectionConfig<'bets'> = {
       type: 'checkbox',
       label: 'Can Bet',
       defaultValue: true,
+      admin: {
+        description: 'If unchecked,  bets can not be placed. before the event end or start',
+      },
+    },
+    {
+      name: 'endevent',
+      type: 'checkbox',
+      label: 'End Event',
+      defaultValue: false,
+      admin: { description: 'If checked, the event is ended and no more bets can be placed.' },
     },
     {
       type: 'radio',
@@ -93,7 +103,7 @@ export const Bets: CollectionConfig<'bets'> = {
     }, // Added team field
 
     {
-      name: 'startevent',
+      name: 'starteventdate',
       type: 'date',
       timezone: true,
       admin: {
@@ -104,18 +114,7 @@ export const Bets: CollectionConfig<'bets'> = {
         },
       },
     },
-    {
-      name: 'endevent',
-      type: 'date',
-      timezone: true,
-      admin: {
-        position: 'sidebar',
-        date: {
-          timeFormat: 'HH:mm',
-          pickerAppearance: 'dayAndTime',
-        },
-      },
-    },
+
     {
       name: 'category',
       type: 'relationship',
