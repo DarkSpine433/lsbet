@@ -91,7 +91,7 @@ interface AnalyzeMatchBetResult {
   label: string
 }
 
-export function analyzeMatchBet(input: AnalyzeMatchBetInput): AnalyzeMatchBetResult {
+function analyzeMatchBet(input: AnalyzeMatchBetInput): AnalyzeMatchBetResult {
   const {
     teamAName,
     teamBName,
