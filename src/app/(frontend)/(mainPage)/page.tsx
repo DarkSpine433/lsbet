@@ -24,6 +24,7 @@ import { Logo } from '@/components/Logo/Logo'
 import { AnimatedCounter } from '@/components/MainPage/AnimatedCounter'
 import { GlassCard } from '@/components/MainPage/GlassCard'
 import SignInSignUpDialog from '@/components/MainPage/SignInSignUpDialog'
+import { getMeUser } from '@/utilities/getMeUser'
 
 export default function HomePage() {
   const [isVisible, setIsVisible] = useState(false)
@@ -49,7 +50,7 @@ export default function HomePage() {
           >
             <DollarSign className="h-4 w-4 text-green-400 animate-pulse" />
             <span className="text-white/90 font-medium md:text-base text-sm">
-              Zrabiaj Dzięki Naszej Platformie
+              Zarabiaj Dzięki Naszej Platformie
             </span>
             <Badge className="bg-gradient-to-r from-red-500 to-blue-500 text-white border-0">
               LIVE

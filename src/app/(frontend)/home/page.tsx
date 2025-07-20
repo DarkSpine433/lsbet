@@ -1,244 +1,155 @@
-'use client'
-
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import {
-  ClubIcon as Football,
-  Trophy,
-  Clock,
-  TrendingUp,
-  Plus,
-  Minus,
-  X,
-  User,
-  Wallet,
-  Settings,
-  Bell,
-  Search,
-  Filter,
-  Wifi,
-  LogOut,
-} from 'lucide-react'
-import { useLiveGames } from '@/hooks/useLiveGames'
-import { LiveUpdateIndicator } from '@/components/MainPage/LiveUpdateIndicator'
-import { Logo } from '@/components/Logo/Logo'
+import React, { cache } from 'react'
+import PageClient from './page.client'
+import { getMeUser } from '@/utilities/getMeUser'
 import Link from 'next/link'
-
-interface Bet {
-  id: string
-  team: string
-  market: string
-  odds: number
-  stake: number
+import { getPayload, type RequiredDataFromCollectionSlug } from 'payload'
+import configPromise from '@payload-config'
+import { Bet } from '@/payload-types'
+import { Media } from '@/components/Media'
+type Props = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-const sportsCategories = [
-  { name: 'Piłka nożna', icon: Football, count: 156, active: true },
-  { name: 'Koszykówka', icon: Trophy, count: 89 },
-  { name: 'Tenis', icon: Trophy, count: 67 },
-  { name: 'Baseball', icon: Trophy, count: 45 },
-  { name: 'Hokej', icon: Trophy, count: 34 },
-  { name: 'Siatkówka', icon: Football, count: 234 },
-]
-
-export default function BettingDashboard() {
-  const [selectedBets, setSelectedBets] = useState<Bet[]>([])
-  const [selectedCategory, setSelectedCategory] = useState('Piłka nożna')
-
-  // Use live games hook instead of static data
-
-  const addBet = (game: any, market: string, odds: number, team: string) => {
-    const newBet: Bet = {
-      id: `${game.id}-${market}`,
-      team,
-      market,
-      odds,
-      stake: 10,
-    }
-
-    setSelectedBets((prev) => {
-      const existing = prev.find((bet) => bet.id === newBet.id)
-      if (existing) {
-        return prev
-      }
-      return [...prev, newBet]
-    })
-  }
-
-  const removeBet = (betId: string) => {
-    setSelectedBets((prev) => prev.filter((bet) => bet.id !== betId))
-  }
-
-  const updateStake = (betId: string, stake: number) => {
-    setSelectedBets((prev) => prev.map((bet) => (bet.id === betId ? { ...bet, stake } : bet)))
-  }
-
-  const calculatePotentialWin = () => {
-    return selectedBets.reduce((total, bet) => total + bet.stake * bet.odds, 0)
-  }
-
-  const calculateTotalStake = () => {
-    return selectedBets.reduce((total, bet) => total + bet.stake, 0)
-  }
-
+const page = async (props: Props) => {
+  const { searchParams } = props
+  const params = await searchParams
+  const { category } = await params
+  const { user } = await getMeUser()
+  const getCategories = await getCashedCategories()
+  const getBets = await getBetsByCategory({ category: category as string })
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 cursor-pointer">
-              <Logo />
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
-                <Bell className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
-                <Wallet className="h-4 w-4 text-slate-600" />
-                <span className="font-semibold">0 zł</span>
-              </div>
-              <Link href={'/home/logout'}>
-                <Button variant="default" size="sm">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
+    <>
+      {user.role === 'admin' && (
+        <div className="flex items-center justify-center bg-blue-500 text-white p-1">
+          <span>
+            <p className="">Witaj, {user.email.split('@')[0]}!</p>
+          </span>
+          &nbsp;
+          <span>
+            <Link href="/admin" className=" underline">
+              Go to Admin Dashboard
+            </Link>
+          </span>
         </div>
-      </header>
-
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-slate-200 min-h-screen">
-          <div className="p-4">
-            <h2 className="font-semibold text-slate-900 mb-4">Sporty</h2>
-            <div className="space-y-1">
-              {sportsCategories.map((category) => (
-                <button
-                  key={category.name}
-                  onClick={() => setSelectedCategory(category.name)}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
-                    selectedCategory === category.name
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                      : 'hover:bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <category.icon className="h-4 w-4" />
-                    <span className="font-medium">{category.name}</span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {category.count}
-                  </Badge>
-                </button>
-              ))}
-            </div>
-
-            <Separator className="my-6" />
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          {/* Live Games */}
-          <div className="space-y-4"></div>
-        </main>
-
-        {/* Betting Slip */}
-        <aside className="w-80 bg-white border-l border-slate-200 min-h-screen">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-slate-900">Kupon</h2>
-              <Badge variant="secondary">{selectedBets.length}</Badge>
-            </div>
-
-            {selectedBets.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Trophy className="h-8 w-8 text-slate-400" />
-                </div>
-                <p className="text-slate-500 text-sm">
-                  Kliknij na kursy, aby dodać wybory do kuponu
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {selectedBets.map((bet) => (
-                  <Card key={bet.id} className="p-3">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <p className="font-medium text-sm text-slate-900">{bet.team}</p>
-                        <p className="text-xs text-slate-600">{bet.market}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-sm">{bet.odds}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeBet(bet.id)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateStake(bet.id, Math.max(1, bet.stake - 5))}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <Input
-                        type="number"
-                        value={bet.stake}
-                        onChange={(e) => updateStake(bet.id, Number(e.target.value))}
-                        className="h-8 text-center"
-                        min="1"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateStake(bet.id, bet.stake + 5)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </Card>
-                ))}
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Łączna stawka:</span>
-                    <span className="font-semibold">{calculateTotalStake().toFixed(2)} zł</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Potencjalna wygrana:</span>
-                    <span className="font-semibold text-green-600">
-                      {calculatePotentialWin().toFixed(2)} zł
-                    </span>
-                  </div>
-                </div>
-
-                <Button className="w-full bg-gradient-to-r from-red-600 to-blue-700 hover:from-red-700 hover:to-blue-800">
-                  Postaw zakład
-                </Button>
-              </div>
-            )}
-          </div>
-        </aside>
-      </div>
-    </div>
+      )}
+      <PageClient nickname={user.email.split('@')[0]} categories={getCategories} bets={getBets} />
+    </>
   )
+}
+const getCashedCategories = cache(async () => {
+  const payload = await getPayload({ config: configPromise })
+
+  const result = await payload.find({
+    collection: 'categories',
+  })
+
+  return result.docs || []
+})
+const getBetsByCategory = cache(async ({ category }: { category: string }) => {
+  const payload = await getPayload({ config: configPromise })
+
+  const result = await payload.find({
+    collection: 'bets',
+    where: {
+      or: [
+        {
+          'category.title': {
+            equals: category,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+})
+export default page
+
+type BetOutcome = 'teamAWin' | 'draw' | 'teamBWin'
+
+interface AnalyzeMatchBetInput {
+  teamAName: string
+  teamBName: string
+  oddsTeamA: number
+  oddsDraw: number
+  oddsTeamB: number
+  stake?: number
+  selectedOutcome: BetOutcome
+  yourProbability?: number // optional, 0-1
+}
+
+interface AnalyzeMatchBetResult {
+  impliedProbabilities: Record<BetOutcome, number>
+  margin: number
+  grossWinnings: number
+  netProfit: number
+  selectedOdds: number
+  valueBet: {
+    expectedValue: number
+    isValue: boolean
+  } | null
+  label: string
+}
+
+export function analyzeMatchBet(input: AnalyzeMatchBetInput): AnalyzeMatchBetResult {
+  const {
+    teamAName,
+    teamBName,
+    oddsTeamA,
+    oddsDraw,
+    oddsTeamB,
+    stake = 100,
+    selectedOutcome,
+    yourProbability,
+  } = input
+
+  const odds: Record<BetOutcome, number> = {
+    teamAWin: oddsTeamA,
+    draw: oddsDraw,
+    teamBWin: oddsTeamB,
+  }
+
+  const pA = 1 / oddsTeamA
+  const pX = 1 / oddsDraw
+  const pB = 1 / oddsTeamB
+
+  const totalProb = pA + pX + pB
+
+  const impliedProbabilities: Record<BetOutcome, number> = {
+    teamAWin: +(pA / totalProb).toFixed(4),
+    draw: +(pX / totalProb).toFixed(4),
+    teamBWin: +(pB / totalProb).toFixed(4),
+  }
+
+  const margin = +(totalProb - 1).toFixed(4) * 100
+
+  const selectedOdds = odds[selectedOutcome]
+  const grossWinnings = stake * selectedOdds
+  const netProfit = grossWinnings - stake
+
+  let valueBet: AnalyzeMatchBetResult['valueBet'] = null
+  if (yourProbability !== undefined) {
+    const EV = yourProbability * selectedOdds - 1
+    valueBet = {
+      expectedValue: +(EV * 100).toFixed(2),
+      isValue: EV > 0,
+    }
+  }
+
+  // Optional label for UI or logs
+  const outcomeLabels: Record<BetOutcome, string> = {
+    teamAWin: `${teamAName} wins`,
+    draw: `Draw`,
+    teamBWin: `${teamBName} wins`,
+  }
+
+  return {
+    impliedProbabilities,
+    margin: +margin.toFixed(2),
+    grossWinnings: +grossWinnings.toFixed(2),
+    netProfit: +netProfit.toFixed(2),
+    selectedOdds,
+    valueBet,
+    label: outcomeLabels[selectedOutcome],
+  }
 }

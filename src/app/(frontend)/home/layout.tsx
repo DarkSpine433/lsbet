@@ -14,7 +14,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { user } = await payload.auth({ headers })
 
   if (!user || !user.verified || user.banned) redirect('/')
-  return <>{children}</>
+  return <div className="bg-white">{children}</div>
 }
 
 export const metadata: Metadata = {
