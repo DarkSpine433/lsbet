@@ -162,7 +162,7 @@ export default buildConfig({
   collections: [Pages, Posts, Media, Categories, Users, Bets],
   csrf: getAllowedDomains(),
   cors: getAllowedDomains(),
-  globals: [],
+  globals: [Header, Footer],
   plugins: [...plugins],
   secret: validateEnv('PAYLOAD_SECRET'),
   sharp,
