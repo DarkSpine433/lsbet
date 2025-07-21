@@ -580,15 +580,15 @@ export interface Bet {
   id: string;
   title: string;
   /**
-   * If unchecked,  bets can not be placed. before the event end or start
+   * If checked,  bets can not be placed. before the event ends or after the event starts
    */
-  canbet?: boolean | null;
+  stopbeting?: boolean | null;
   /**
    * If checked, the event is ended and no more bets can be placed.
    */
   endevent?: boolean | null;
   /**
-   * Type of bet
+   * the result how event is finished
    */
   typeofbet: 'win-lose' | 'draw';
   'draw-odds'?: number | null;
@@ -1090,7 +1090,7 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface BetsSelect<T extends boolean = true> {
   title?: T;
-  canbet?: T;
+  stopbeting?: T;
   endevent?: T;
   typeofbet?: T;
   'draw-odds'?: T;

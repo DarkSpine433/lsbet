@@ -30,12 +30,13 @@ export const Bets: CollectionConfig<'bets'> = {
       required: true,
     },
     {
-      name: 'canbet',
+      name: 'stopbeting',
       type: 'checkbox',
-      label: 'Can Bet',
-      defaultValue: true,
+      label: 'Stop Beting',
+      defaultValue: false,
       admin: {
-        description: 'If unchecked,  bets can not be placed. before the event end or start',
+        description:
+          'If checked,  bets can not be placed. before the event ends or after the event starts',
       },
     },
     {
@@ -48,11 +49,11 @@ export const Bets: CollectionConfig<'bets'> = {
     {
       type: 'radio',
       name: 'typeofbet',
-      label: 'Typ Of Bet',
+      label: 'Result Of Event',
       options: ['win-lose', 'draw'],
       defaultValue: 'win-lose',
       required: true,
-      admin: { description: 'Type of bet' },
+      admin: { description: 'the result how event is finished' },
     },
     {
       name: 'draw-odds',
