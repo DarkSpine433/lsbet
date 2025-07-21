@@ -6,14 +6,15 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Trophy, Plus, Minus, X, Wallet, Bell, LogOut } from 'lucide-react'
+import { Trophy, Plus, Minus, X, Wallet, Bell, LogOut, BellRing } from 'lucide-react'
 import { Logo } from '@/components/Logo/Logo'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types' // Renamed Media to avoid conflict
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Media } from '@/components/Media'
 import { formatDateTime } from '@/utilities/formatDateTime'
-
+import CircularProgress from '@mui/material/CircularProgress'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 // 1. DEFINED THE NEW TYPE for bets in the bet slip
 type SelectedBet = {
   id: string
@@ -37,11 +38,20 @@ export default function PageClient(props: PageClientProps) {
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get('category') ?? categories[0]?.title,
   )
-  // 2. UPDATED THE STATE to use the new SelectedBet[] type
+  // --- LOADING STATE LOGIC ---
+  // Start with loading: true to show a spinner on initial page load.
+  const [loading, setLoading] = useState(true)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
+  const moneySign = money ? '$' : ''
+  // This effect now correctly handles the end of a loading state.
+  // Whenever the 'bets' prop updates (meaning data has been fetched for the selected category),
+  // we set loading to false. This works even if the returned bets array is empty.
+  useEffect(() => {
+    setLoading(false)
+  }, [bets])
 
   useEffect(() => {
-    // Navigate to the selected category page, only if the category changes
+    // Navigate to the selected category page, only if the category changes in the URL
     if (searchParams.get('category') !== selectedCategory) {
       router.push(`/home?category=${selectedCategory}`)
     }
@@ -79,34 +89,56 @@ export default function PageClient(props: PageClientProps) {
     setSelectedBets((prev) => prev.map((bet) => (bet.id === betId ? { ...bet, stake } : bet)))
   }
 
-  const calculateTotalStake = () => {
+  const calculateTotalStake = (combinedBets: boolean = false) => {
+    if (combinedBets) {
+      return selectedBets[0].stake
+    }
     return selectedBets.reduce((total, bet) => total + bet.stake, 0)
   }
 
-  const calculatePotentialWin = () => {
+  const calculatePotentialWin = (combinedBets: boolean = false) => {
+    if (combinedBets) {
+      const combinedOdds = selectedBets.reduce((total, bet) => total * (bet.odds ?? 1), 1)
+      console.log(combinedOdds)
+
+      return selectedBets[0].stake * combinedOdds
+    }
     return selectedBets.reduce((total, bet) => total + bet.stake * (bet.odds ?? 0), 0)
   }
 
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen w-full bg-white">
       {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="px-6 py-4 max-w-screen-2xl mx-auto">
+        <div className="px-4 sm:px-6 py-4 max-w-screen-2xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4 cursor-pointer">
               <Logo />
             </div>
 
-            <div className="flex items-center space-x-4">
-              <Badge className="bg-gradient-to-r from-red-500 to-blue-500 text-white">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Badge className="bg-gradient-to-r from-red-500 to-blue-500 text-white hidden sm:inline-flex">
                 {nickname}
               </Badge>
-              <Button variant="outline" size="sm">
-                <Bell className="h-4 w-4" />
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" side="bottom" align="end">
+                  <div className="flex flex-col items-center justify-center ">
+                    <BellRing className="h-4 w-4" />
+                    <p className="text-sm text-slate-600">Brak powiadomien</p>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
               <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
                 <Wallet className="h-4 w-4 text-slate-600" />
-                <span className="font-semibold">{money}&nbsp;zł</span>
+                <span className="font-semibold text-sm">
+                  {money}&nbsp;{moneySign}
+                </span>
               </div>
               <Link href={'/home/logout'}>
                 <Button variant="default" size="sm">
@@ -118,16 +150,24 @@ export default function PageClient(props: PageClientProps) {
         </div>
       </header>
 
-      <div className="flex max-w-screen-2xl mx-auto bg-slate-50">
+      {/* Main layout container: flex-col on mobile, flex-row on large screens */}
+      <div className="flex flex-col lg:flex-row max-w-screen-2xl mx-auto">
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-slate-200 min-h-screen">
+        {/* Full width on mobile, fixed width on desktop. Added border-b for mobile view. */}
+        <aside className="w-full lg:w-64 lg:shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-slate-200">
           <div className="p-4">
             <h2 className="font-semibold text-slate-900 mb-4">Sporty</h2>
             <div className="space-y-1">
               {categories.map((category) => (
                 <button
                   key={category.id}
-                  onClick={() => setSelectedCategory(category.title)}
+                  onClick={() => {
+                    // When a new category is clicked, set loading to true and update the category.
+                    if (selectedCategory !== category.title) {
+                      setLoading(true)
+                      setSelectedCategory(category.title)
+                    }
+                  }}
                   className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border ${
                     selectedCategory === category.title
                       ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -146,136 +186,166 @@ export default function PageClient(props: PageClientProps) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 bg-gray-50">
-          <div className="space-y-8 max-w-6xl mx-auto">
-            {bets.map((bet: Bet) => {
-              const betDate = new Date(bet.starteventdate || '').toLocaleString('pl-PL', {
-                timeZone: 'Europe/Warsaw', // A time zone in UTC+2
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-              })
-              const timeInUTC2 = new Date().toLocaleString('pl-PL', {
-                timeZone: 'Europe/Warsaw', // A time zone in UTC+2
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-              })
-              const isLive = betDate <= timeInUTC2
+        {/* flex-1 allows it to grow and fill available space on desktop */}
+        <main className="flex-1 p-4 min-h-dvh sm:p-6 bg-gray-50 order-first lg:order-none">
+          {loading ? (
+            <div className="flex justify-center items-center h-full min-h-[400px]">
+              <CircularProgress />
+            </div>
+          ) : (
+            <div className="space-y-8 max-w-6xl mx-auto">
+              {bets.length > 0 ? (
+                bets.map((bet: Bet) => {
+                  const betDate = new Date(bet.starteventdate || '').toLocaleString('pl-PL', {
+                    timeZone: 'Europe/Warsaw',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })
+                  const timeInUTC2 = new Date().toLocaleString('pl-PL', {
+                    timeZone: 'Europe/Warsaw',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  })
+                  const isLive = betDate <= timeInUTC2
 
-              return (
-                <Card
-                  key={bet.id}
-                  className="bg-white shadow-md hover:shadow-xl border border-gray-200/80 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 max-w-4xl mx-auto"
-                >
-                  <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
-                    <div className="flex flex-row items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <CardTitle className="text-xl font-extrabold text-slate-800 text-center">
-                          {bet.title}
-                        </CardTitle>
-                        <div
-                          className={`w-2.5 h-2.5 rounded-full ${
-                            isLive && !bet.endevent ? 'bg-red-500 animate-pulse' : 'bg-gray-500'
-                          }`}
-                        ></div>
-                        <span
-                          className={`text-sm font-semibold tracking-wide ${
-                            isLive && !bet.endevent ? 'text-red-500' : 'text-gray-500'
-                          }`}
-                        >
-                          {isLive && !bet.endevent
-                            ? 'LIVE'
-                            : bet.endevent
-                              ? 'ZAKOŃCZONE'
-                              : 'WKRÓTCE'}
-                        </span>
-                      </div>
+                  return (
+                    <Card
+                      key={bet.id}
+                      className="bg-white shadow-md hover:shadow-xl border border-gray-200/80 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 max-w-4xl mx-auto"
+                    >
+                      <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                          <div className="flex items-center space-x-2">
+                            <CardTitle className="text-lg sm:text-xl font-extrabold text-slate-800">
+                              {bet.title}
+                            </CardTitle>
+                            <div
+                              className={`w-2.5 h-2.5 rounded-full ${
+                                isLive && !bet.endevent ? 'bg-red-500 animate-pulse' : 'bg-gray-500'
+                              }`}
+                            ></div>
+                            <span
+                              className={`text-xs sm:text-sm font-semibold tracking-wide ${
+                                isLive && !bet.endevent ? 'text-red-500' : 'text-gray-500'
+                              }`}
+                            >
+                              {isLive && !bet.endevent
+                                ? 'LIVE'
+                                : bet.endevent
+                                  ? 'ZAKOŃCZONE'
+                                  : 'WKRÓTCE'}
+                            </span>
+                          </div>
 
-                      <CardDescription>
-                        <Badge
-                          variant="secondary"
-                          className="px-3 py-1 text-xs sm:text-sm font-medium rounded-full"
-                        >
-                          {bet && bet.starteventdate && formatDateTime(bet.starteventdate, true)}
-                        </Badge>
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
+                          <CardDescription>
+                            <Badge
+                              variant="secondary"
+                              className="px-3 py-1 text-xs sm:text-sm font-medium rounded-full"
+                            >
+                              {bet &&
+                                bet.starteventdate &&
+                                formatDateTime(bet.starteventdate, true)}
+                            </Badge>
+                          </CardDescription>
+                        </div>
+                      </CardHeader>
 
-                  <div className="p-6 sm:p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-                      {bet.team?.map((team) => (
-                        <div
-                          key={team.id}
-                          className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200/80 hover:border-gray-300 transition-colors duration-300"
-                        >
-                          <div className="text-center space-y-4">
-                            <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden shadow-inner bg-gray-100">
-                              <Media
-                                key={team.id}
-                                resource={team.logo}
-                                fill={true}
-                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                imgClassName="w-full h-full object-cover"
-                              />
+                      <div className="p-4 sm:p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+                          {bet.team?.map((team) => (
+                            <div
+                              key={team.id}
+                              className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200/80 hover:border-gray-300 transition-colors duration-300"
+                            >
+                              <div className="text-center space-y-4">
+                                <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden shadow-inner bg-gray-100">
+                                  <Media
+                                    key={team.id}
+                                    resource={team.logo}
+                                    fill={true}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    imgClassName="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+                                  {team.name}
+                                </h3>
+                                <Badge>Kurs: {team.odds}</Badge>
+                                <Button
+                                  size="lg"
+                                  onClick={() => addBet([team])}
+                                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 transition-all duration-300"
+                                >
+                                  Select Team
+                                </Button>
+                              </div>
                             </div>
-                            <h3 className="text-lg sm:text-xl font-bold text-gray-800">
-                              {team.name}
-                            </h3>
+                          ))}
+                        </div>
+                        <div className="w-full flex items-center justify-center mt-3 mb-2">
+                          <Badge className="mx-auto text-center self-center bg-blue-500">
+                            Kurs: {bet['draw-odds']}
+                          </Badge>
+                        </div>
+
+                        {bet.team && (
+                          <div className=" mx-auto flex justify-center">
                             <Button
                               size="lg"
-                              onClick={() => addBet([team])}
-                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 transition-all duration-300"
+                              className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
                             >
-                              Select Team
+                              <span className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                              <span className="relative flex items-center space-x-3">
+                                <span>REMIS</span>
+                              </span>
+                              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
                             </Button>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {bet.team && (
-                      <div className="mt-6 mx-auto flex justify-center">
-                        <Button
-                          size="lg"
-                          className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
-                        >
-                          <span className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                          <span className="relative flex items-center space-x-3">
-                            <span>REMIS</span>
-                          </span>
-                          <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
-                        </Button>
+                        )}
                       </div>
-                    )}
-                  </div>
 
-                  <div className="bg-gray-50/80 p-3 border-t border-gray-200/80">
-                    <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span className="flex items-center space-x-2">
-                        <div
-                          className={`w-2 h-2 ${bet.canbet ? 'bg-red-500' : 'bg-green-500'} rounded-full`}
-                        ></div>
-                        <span>Zakłady {bet.canbet ? 'Nieaktywne' : 'Aktywne'} </span>
-                      </span>
-                      <span className="font-mono">Match ID: {bet.id}</span>
-                    </div>
+                      <div className="bg-gray-50/80 p-3 border-t border-gray-200/80">
+                        <div className="flex justify-between items-center text-xs text-gray-500">
+                          <span className="flex items-center space-x-2">
+                            <div
+                              className={`w-2 h-2 ${
+                                !bet.stopbeting ? 'bg-red-500' : 'bg-green-500'
+                              } rounded-full`}
+                            ></div>
+                            <span>Zakłady {!bet.stopbeting ? 'Nieaktywne' : 'Aktywne'} </span>
+                          </span>
+                          <span className="font-mono">Match ID: {bet.id}</span>
+                        </div>
+                      </div>
+                    </Card>
+                  )
+                })
+              ) : (
+                <div className="text-center py-20">
+                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Trophy className="h-12 w-12 text-slate-400" />
                   </div>
-                </Card>
-              )
-            })}
-          </div>
+                  <h3 className="text-xl font-semibold text-slate-700">Brak aktywnych zakładów</h3>
+                  <p className="text-slate-500 text-sm mt-2">
+                    Aktualnie nie ma aktywnych zakładów w tej kategorii.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </main>
 
         {/* Betting Slip */}
-        <aside className="w-96 bg-white border-l border-slate-200 min-h-screen p-4 space-y-4">
+        {/* Full width on mobile, fixed width on desktop. */}
+        <aside className="w-full lg:w-96 lg:shrink-0 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-slate-900 text-lg">Kupon</h2>
             <Badge variant="secondary">{selectedBets.length}</Badge>
@@ -322,55 +392,91 @@ export default function PageClient(props: PageClientProps) {
                     >
                       <X className="h-4 w-4" />
                     </Button>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      onClick={() => updateStake(bet.id, Math.max(1, bet.stake - 10))}
-                      className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Input
-                      type="number"
-                      value={bet.stake}
-                      onChange={(e) => {
-                        const value = Number(e.target.value)
-                        if (value >= 1) updateStake(bet.id, value)
-                      }}
-                      className="h-9 text-center font-bold  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800   focus-visible:ring-2 focus-visible:ring-blue-200 focus:border-transparent"
-                      min="1 "
-                    />
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      onClick={() => updateStake(bet.id, bet.stake + 10)}
-                      className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  </div>{' '}
+                  {selectedBets.length <= 1 && (
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => updateStake(bet.id, Math.max(1, bet.stake - 10))}
+                        className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <Input
+                        type="number"
+                        value={bet.stake}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          updateStake(bet.id, value)
+                        }}
+                        className="h-9 text-center font-bold  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800   focus-visible:ring-2 focus-visible:ring-blue-200 focus:border-transparent"
+                        min="1"
+                      />
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => updateStake(bet.id, bet.stake + 10)}
+                        className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
-
+              Kupon Łączony
+              {selectedBets.length > 1 && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() =>
+                      selectedBets.forEach((bet) =>
+                        updateStake(bet.id, Math.max(1, bet.stake - 10)),
+                      )
+                    }
+                    className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={selectedBets[0].stake}
+                    onChange={(e) => {
+                      const value = Number(e.target.value)
+                      selectedBets.forEach((bet) => updateStake(bet.id, value))
+                    }}
+                    className="h-9 text-center font-bold  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800   focus-visible:ring-2 focus-visible:ring-blue-200 focus:border-transparent"
+                    min="1"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() =>
+                      selectedBets.forEach((bet) => updateStake(bet.id, bet.stake + 10))
+                    }
+                    className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
               <Separator className="!my-4" />
-
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-600">Łączna stawka:</span>
                   <span className="font-bold text-slate-900">
-                    {calculateTotalStake().toFixed(2)} PLN
+                    {calculateTotalStake(selectedBets.length > 1).toFixed(2)} {moneySign}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-600">Potencjalna wygrana:</span>
                   <span className="font-bold text-lg text-green-600">
-                    {calculatePotentialWin().toFixed(2)} PLN
+                    {calculatePotentialWin(selectedBets.length > 1).toFixed(2)} {moneySign}
                   </span>
                 </div>
               </div>
-
               <div className="pt-4">
                 <Button
                   size="lg"

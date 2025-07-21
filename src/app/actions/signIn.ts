@@ -46,7 +46,7 @@ const signIn = async <T extends CustomerEd>({
       return {
         data: null,
         message:
-          'Konto jest w trakcie weryfikacji sprawdzaj email i formu. Skontaktujemy się z tobą w celu werifikacji',
+          'Konto jest w trakcie weryfikacji sprawdzaj formu. Skontaktujemy się z tobą w celu weryfikowacji ',
         isSuccess: false,
         kind: 'error',
       }
