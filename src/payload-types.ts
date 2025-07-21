@@ -411,6 +411,7 @@ export interface User {
   verified?: boolean | null;
   banned?: boolean | null;
   role: 'admin' | 'user';
+  money?: number | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -578,7 +579,14 @@ export interface ArchiveBlock {
 export interface Bet {
   id: string;
   title: string;
+  /**
+   * If unchecked,  bets can not be placed. before the event end or start
+   */
   canbet?: boolean | null;
+  /**
+   * If checked, the event is ended and no more bets can be placed.
+   */
+  endevent?: boolean | null;
   /**
    * Type of bet
    */
@@ -594,10 +602,8 @@ export interface Bet {
         logo?: (string | null) | Media;
       }[]
     | null;
-  startevent?: string | null;
-  startevent_tz?: SupportedTimezones;
-  endevent?: string | null;
-  endevent_tz?: SupportedTimezones;
+  starteventdate?: string | null;
+  starteventdate_tz?: SupportedTimezones;
   category?: (string | null) | Category;
   updatedAt: string;
   createdAt: string;
@@ -1060,6 +1066,7 @@ export interface UsersSelect<T extends boolean = true> {
   verified?: T;
   banned?: T;
   role?: T;
+  money?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1084,6 +1091,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface BetsSelect<T extends boolean = true> {
   title?: T;
   canbet?: T;
+  endevent?: T;
   typeofbet?: T;
   'draw-odds'?: T;
   team?:
@@ -1096,10 +1104,8 @@ export interface BetsSelect<T extends boolean = true> {
         'win-lose'?: T;
         logo?: T;
       };
-  startevent?: T;
-  startevent_tz?: T;
-  endevent?: T;
-  endevent_tz?: T;
+  starteventdate?: T;
+  starteventdate_tz?: T;
   category?: T;
   updatedAt?: T;
   createdAt?: T;

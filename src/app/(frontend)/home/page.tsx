@@ -1,11 +1,14 @@
 import React, { cache } from 'react'
-import PageClient from './page.client'
 import { getMeUser } from '@/utilities/getMeUser'
 import Link from 'next/link'
 import { getPayload, type RequiredDataFromCollectionSlug } from 'payload'
 import configPromise from '@payload-config'
-import { Bet } from '@/payload-types'
-import { Media } from '@/components/Media'
+import dynamic from 'next/dynamic'
+import CircularProgress from '@mui/material/CircularProgress'
+
+const PageClient = dynamic(() => import('./page.client'), {
+  loading: () => <CircularProgress className="mx-auto [&>*]:text-blue-500" />,
+})
 type Props = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
@@ -32,7 +35,12 @@ const page = async (props: Props) => {
           </span>
         </div>
       )}
-      <PageClient nickname={user.email.split('@')[0]} categories={getCategories} bets={getBets} />
+      <PageClient
+        nickname={user.email.split('@')[0]}
+        categories={getCategories}
+        bets={getBets}
+        money={user.money || 0}
+      />
     </>
   )
 }
