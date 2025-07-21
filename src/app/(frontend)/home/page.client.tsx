@@ -6,7 +6,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Trophy, Plus, Minus, X, Wallet, Bell, LogOut } from 'lucide-react'
+import { Trophy, Plus, Minus, X, Wallet, Bell, LogOut, BellRing } from 'lucide-react'
 import { Logo } from '@/components/Logo/Logo'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types' // Renamed Media to avoid conflict
@@ -14,7 +14,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Media } from '@/components/Media'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import CircularProgress from '@mui/material/CircularProgress'
-
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 // 1. DEFINED THE NEW TYPE for bets in the bet slip
 type SelectedBet = {
   id: string
@@ -42,7 +42,7 @@ export default function PageClient(props: PageClientProps) {
   // Start with loading: true to show a spinner on initial page load.
   const [loading, setLoading] = useState(true)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
-
+  const moneySign = money ? '$' : ''
   // This effect now correctly handles the end of a loading state.
   // Whenever the 'bets' prop updates (meaning data has been fetched for the selected category),
   // we set loading to false. This works even if the returned bets array is empty.
@@ -120,12 +120,25 @@ export default function PageClient(props: PageClientProps) {
               <Badge className="bg-gradient-to-r from-red-500 to-blue-500 text-white hidden sm:inline-flex">
                 {nickname}
               </Badge>
-              <Button variant="outline" size="sm">
-                <Bell className="h-4 w-4" />
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" side="bottom" align="end">
+                  <div className="flex flex-col items-center justify-center ">
+                    <BellRing className="h-4 w-4" />
+                    <p className="text-sm text-slate-600">Brak powiadomien</p>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
               <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
                 <Wallet className="h-4 w-4 text-slate-600" />
-                <span className="font-semibold text-sm">{money}&nbsp;$</span>
+                <span className="font-semibold text-sm">
+                  {money}&nbsp;{moneySign}
+                </span>
               </div>
               <Link href={'/home/logout'}>
                 <Button variant="default" size="sm">
@@ -265,6 +278,7 @@ export default function PageClient(props: PageClientProps) {
                                 <h3 className="text-lg sm:text-xl font-bold text-gray-800">
                                   {team.name}
                                 </h3>
+                                <Badge>Kurs: {team.odds}</Badge>
                                 <Button
                                   size="lg"
                                   onClick={() => addBet([team])}
@@ -276,9 +290,14 @@ export default function PageClient(props: PageClientProps) {
                             </div>
                           ))}
                         </div>
+                        <div className="w-full flex items-center justify-center mt-3 mb-2">
+                          <Badge className="mx-auto text-center self-center bg-blue-500">
+                            Kurs: {bet['draw-odds']}
+                          </Badge>
+                        </div>
 
                         {bet.team && (
-                          <div className="mt-6 mx-auto flex justify-center">
+                          <div className=" mx-auto flex justify-center">
                             <Button
                               size="lg"
                               className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
@@ -389,7 +408,7 @@ export default function PageClient(props: PageClientProps) {
                         value={bet.stake}
                         onChange={(e) => {
                           const value = Number(e.target.value)
-                          if (value >= 1) updateStake(bet.id, value)
+                          updateStake(bet.id, value)
                         }}
                         className="h-9 text-center font-bold  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800   focus-visible:ring-2 focus-visible:ring-blue-200 focus:border-transparent"
                         min="1"
@@ -426,7 +445,7 @@ export default function PageClient(props: PageClientProps) {
                     value={selectedBets[0].stake}
                     onChange={(e) => {
                       const value = Number(e.target.value)
-                      if (value >= 1) selectedBets.forEach((bet) => updateStake(bet.id, value))
+                      selectedBets.forEach((bet) => updateStake(bet.id, value))
                     }}
                     className="h-9 text-center font-bold  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800   focus-visible:ring-2 focus-visible:ring-blue-200 focus:border-transparent"
                     min="1"
@@ -448,13 +467,13 @@ export default function PageClient(props: PageClientProps) {
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-600">Łączna stawka:</span>
                   <span className="font-bold text-slate-900">
-                    {calculateTotalStake(selectedBets.length > 1).toFixed(2)} $
+                    {calculateTotalStake(selectedBets.length > 1).toFixed(2)} {moneySign}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-slate-600">Potencjalna wygrana:</span>
                   <span className="font-bold text-lg text-green-600">
-                    {calculatePotentialWin(selectedBets.length > 1).toFixed(2)} $
+                    {calculatePotentialWin(selectedBets.length > 1).toFixed(2)} {moneySign}
                   </span>
                 </div>
               </div>
