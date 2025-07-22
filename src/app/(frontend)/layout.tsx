@@ -16,6 +16,7 @@ import { getServerSideURL } from '@/utilities/getURL'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { headers as nextHeaders } from 'next/headers'
+import { Analytics } from '@vercel/analytics/next'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const payload = await getPayload({ config })
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
+        <Analytics />
         <Providers>
           <Toaster richColors position="top-center" />
           {children}
