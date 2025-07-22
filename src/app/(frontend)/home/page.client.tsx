@@ -6,7 +6,19 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { Trophy, Plus, Minus, X, Wallet, Bell, LogOut, BellRing, CheckCircle2 } from 'lucide-react'
+import {
+  Trophy,
+  Plus,
+  Minus,
+  X,
+  Wallet,
+  Bell,
+  LogOut,
+  BellRing,
+  CheckCircle2,
+  ScaleIcon,
+  CircleArrowOutUpLeft,
+} from 'lucide-react'
 import { Logo } from '@/components/Logo/Logo'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types' // Renamed Media to avoid conflict
@@ -27,6 +39,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { placeBetAction } from '@/app/actions/placeBet' // Import the server action
 
 // Corrected type definition for a bet in the bet slip
 type SelectedBet = {
@@ -35,6 +48,7 @@ type SelectedBet = {
   name: string // The name of the bet (e.g., team name or "Draw")
   stake: number
   odds?: number | null
+  category?: string
   logo?: string | MediaType | null
 }
 
@@ -53,12 +67,23 @@ export default function PageClient(props: PageClientProps) {
     searchParams.get('category') ?? categories[0]?.title,
   )
   const [loading, setLoading] = useState(true)
+  const [isPlacingBet, setIsPlacingBet] = useState(false)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
   const moneySign = money ? '$' : ''
+  const [logoutClicked, setLogoutClicked] = useState(false)
 
   useEffect(() => {
     setLoading(false)
   }, [bets])
+
+  // Added useEffect to refresh data every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      router.refresh()
+    }, 5000) // 10 seconds
+
+    return () => clearInterval(interval) // Cleanup interval on component unmount
+  }, [router])
 
   useEffect(() => {
     if (searchParams.get('category') !== selectedCategory) {
@@ -73,13 +98,14 @@ export default function PageClient(props: PageClientProps) {
     teamName: string
     odds?: number | null
     logo?: string | MediaType | null
-    stopBetting?: boolean
+    category: string
+    isBettingDisabled?: boolean
   }) => {
-    const { eventId, teamId, teamName, odds, logo, stopBetting } = betDetails
+    const { eventId, teamId, teamName, odds, logo, isBettingDisabled, category } = betDetails
 
-    // Prevent adding bet if betting is stopped
-    if (stopBetting) {
-      toast.error('Zakłady na to wydarzenie są obecnie wstrzymane.')
+    // Prevent adding bet if betting is stopped or event has ended
+    if (isBettingDisabled) {
+      toast.error('Zakłady na to wydarzenie są niedostępne.')
       return
     }
 
@@ -95,6 +121,7 @@ export default function PageClient(props: PageClientProps) {
       name: teamName,
       odds: odds,
       logo: logo,
+      category: category,
       stake: 10, // Default stake
     }
 
@@ -139,10 +166,22 @@ export default function PageClient(props: PageClientProps) {
     return selectedBets.reduce((total, bet) => total + bet.stake * (bet.odds ?? 0), 0)
   }
 
-  const handlePlaceBet = () => {
-    // Here you would typically handle the API call to place the bet
-    console.log('Bet placed:', selectedBets)
-    // After successfully placing the bet, you might want to clear the slip
+  const handlePlaceBet = async () => {
+    setIsPlacingBet(true)
+    try {
+      const result = await placeBetAction(selectedBets)
+
+      if (result.success) {
+        toast.success(result.message)
+        clearBetSlip()
+      } else {
+        toast.error(result.message)
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred.')
+    } finally {
+      setIsPlacingBet(false)
+    }
   }
 
   const clearBetSlip = () => {
@@ -184,8 +223,12 @@ export default function PageClient(props: PageClientProps) {
                 </span>
               </div>
               <Link href={'/home/logout'}>
-                <Button variant="default" size="sm">
-                  <LogOut className="h-4 w-4" />
+                <Button variant="default" size="sm" onClick={() => setLogoutClicked(true)}>
+                  {logoutClicked ? (
+                    <CircularProgress size={16} className="[&>*]:text-slate-50" />
+                  ) : (
+                    <LogOut className="h-4 w-4" />
+                  )}
                 </Button>
               </Link>
             </div>
@@ -243,11 +286,17 @@ export default function PageClient(props: PageClientProps) {
                     timeZone: 'Europe/Warsaw',
                   })
                   const isLive = betDate <= timeInUTC2
+                  const isBettingDisabled = !!bet.stopbeting || !!bet.endevent
+                  const categoryTitle =
+                    typeof bet.category === 'object' && bet.category?.title
+                      ? bet.category.title
+                      : ''
 
                   return (
                     <Card
                       key={bet.id}
                       className="bg-white shadow-md hover:shadow-xl border border-gray-200/80 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 max-w-4xl mx-auto"
+                      id={`category=${categoryTitle}#${bet.id}`}
                     >
                       <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -291,7 +340,7 @@ export default function PageClient(props: PageClientProps) {
                           {bet.team?.map((team) => (
                             <div
                               key={team.id}
-                              className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200/80 hover:border-gray-300 transition-colors duration-300"
+                              className={`bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200/80 hover:border-gray-300 transition-colors duration-300 ${bet.endevent && bet.typeofbet === 'win-lose' && team['win-lose'] ? 'border-green-500 bg-green-50' : ''}`}
                             >
                               <div className="text-center space-y-4">
                                 <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden shadow-inner bg-gray-100">
@@ -308,7 +357,7 @@ export default function PageClient(props: PageClientProps) {
                                 <Badge>Kurs: {team.odds}</Badge>
                                 <Button
                                   size="lg"
-                                  disabled={!!bet.stopbeting}
+                                  disabled={isBettingDisabled}
                                   onClick={() =>
                                     addBet({
                                       eventId: bet.id,
@@ -316,25 +365,37 @@ export default function PageClient(props: PageClientProps) {
                                       teamName: team.name,
                                       odds: team.odds,
                                       logo: team.logo,
-                                      stopBetting: !!bet.stopbeting,
+                                      category: categoryTitle,
+                                      isBettingDisabled: isBettingDisabled,
                                     })
                                   }
                                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                   Select Team
                                 </Button>
+                                {bet.endevent && bet.typeofbet === 'win-lose' && (
+                                  <Badge
+                                    className={`mt-2 ${
+                                      team['win-lose']
+                                        ? 'bg-green-500 text-white'
+                                        : 'bg-red-500 text-white'
+                                    }`}
+                                  >
+                                    {team['win-lose'] ? 'WYGRANA' : 'PRZEGRANA'}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           ))}
                         </div>
-                        {bet.team && (
+                        {bet.typeofbet === 'draw' && (
                           <div className="w-full flex flex-col items-center justify-center mt-4 gap-2">
                             <Badge className="mx-auto text-center bg-blue-500">
                               Kurs: {bet['draw-odds']}
                             </Badge>
                             <Button
                               size="lg"
-                              disabled={!!bet.stopbeting}
+                              disabled={isBettingDisabled}
                               className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
                               onClick={() =>
                                 addBet({
@@ -343,7 +404,8 @@ export default function PageClient(props: PageClientProps) {
                                   teamName: 'Remis', // "Draw" in Polish
                                   odds: bet['draw-odds'],
                                   logo: null, // No logo for a draw
-                                  stopBetting: !!bet.stopbeting,
+                                  category: categoryTitle,
+                                  isBettingDisabled: isBettingDisabled,
                                 })
                               }
                             >
@@ -353,6 +415,9 @@ export default function PageClient(props: PageClientProps) {
                               </span>
                               <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
                             </Button>
+                            {bet.endevent && (
+                              <Badge className="mt-2 bg-green-500 text-white">WYGRANA</Badge>
+                            )}
                           </div>
                         )}
                       </div>
@@ -362,10 +427,17 @@ export default function PageClient(props: PageClientProps) {
                           <span className="flex items-center space-x-2">
                             <div
                               className={`w-2 h-2 ${
-                                bet.stopbeting ? 'bg-red-500' : 'bg-green-500'
+                                bet.stopbeting || bet.endevent ? 'bg-red-500' : 'bg-green-500'
                               } rounded-full`}
                             ></div>
-                            <span>Zakłady {bet.stopbeting ? 'Wstrzymane' : 'Otwarte'} </span>
+                            <span>
+                              Zakłady{' '}
+                              {bet.endevent
+                                ? 'Zakończone'
+                                : bet.stopbeting
+                                  ? 'Wstrzymane'
+                                  : 'Otwarte'}{' '}
+                            </span>
                           </span>
                           <span className="font-mono">Match ID: {bet.id}</span>
                         </div>
@@ -419,17 +491,7 @@ export default function PageClient(props: PageClientProps) {
                       <div className="flex items-center gap-3">
                         {isDraw ? (
                           <div className="flex items-center justify-center w-8 h-8 bg-slate-200 rounded-full shrink-0">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              fill="currentColor"
-                              className="text-slate-500"
-                              viewBox="0 0 16 16"
-                            >
-                              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                              <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8z" />
-                            </svg>
+                            <ScaleIcon className="h-4 w-4  [&>*]:text-slate-800" />
                           </div>
                         ) : (
                           <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-inner bg-gray-100 shrink-0">
@@ -455,14 +517,25 @@ export default function PageClient(props: PageClientProps) {
                           </p>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeBet(bet.id)}
-                        className="h-8 w-8 text-slate-500 hover:bg-red-50 hover:text-red-600 shrink-0"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                      <div className="flex flex-row gap-3">
+                        <Link href={`/home?category=${bet.category}#${bet.id}`}>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="h-8 w-8 text-slate-500   hover:bg-slate-200 hover:text-slate-800 shrink-0"
+                          >
+                            <CircleArrowOutUpLeft className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeBet(bet.id)}
+                          className="h-8 w-8 text-slate-500 hover:bg-red-50 hover:text-red-600 shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     {selectedBets.length <= 1 && (
                       <div className="flex items-center space-x-2">
@@ -550,12 +623,12 @@ export default function PageClient(props: PageClientProps) {
                       Postaw Zakład
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="bg-slate-50">
                     <AlertDialogHeader className="items-center">
                       <div className="rounded-full bg-green-100 p-3">
                         <CheckCircle2 className="h-8 w-8 text-green-600" />
                       </div>
-                      <AlertDialogTitle className="text-2xl font-bold pt-2">
+                      <AlertDialogTitle className="text-2xl font-bold pt-2 text-slate-800">
                         Twój zakład został przyjęty!
                       </AlertDialogTitle>
                       <AlertDialogDescription className="text-center">
@@ -583,13 +656,14 @@ export default function PageClient(props: PageClientProps) {
                     <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
                       <AlertDialogAction
                         onClick={handlePlaceBet}
+                        disabled={isPlacingBet}
                         className="w-full bg-red-600 hover:bg-red-700"
                       >
-                        Zamknij
+                        {isPlacingBet ? <CircularProgress size={20} color="inherit" /> : 'Zamknij'}
                       </AlertDialogAction>
                       <AlertDialogCancel
                         onClick={clearBetSlip}
-                        className="w-full mt-0 border-none hover:bg-slate-100"
+                        className="w-full mt-0 border-none hover:bg-slate-300  bg-slate-200 hover:text-slate-900 text-slate-800"
                       >
                         Postaw ponownie
                       </AlertDialogCancel>

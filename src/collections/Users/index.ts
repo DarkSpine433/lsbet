@@ -22,6 +22,7 @@ export const Users: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['role', 'email'],
+    useAsTitle: 'email',
   },
 
   fields: [

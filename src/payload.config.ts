@@ -18,6 +18,7 @@ import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { pl } from '@payloadcms/translations/languages/pl'
+import { PlacedBets } from './collections/PlaceBets'
 
 const validateEnv = (key: string, required: boolean = true): string => {
   const value = process.env[key]
@@ -159,7 +160,7 @@ export default buildConfig({
   db: mongooseAdapter({
     url: validateEnv('DATABASE_URI'),
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Bets],
+  collections: [Pages, Posts, Media, Categories, Users, Bets, PlacedBets],
   csrf: getAllowedDomains(),
   cors: getAllowedDomains(),
   globals: [Header, Footer],

@@ -73,6 +73,7 @@ export interface Config {
     categories: Category;
     users: User;
     bets: Bet;
+    'placed-bets': PlacedBet;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -91,6 +92,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     bets: BetsSelect<false> | BetsSelect<true>;
+    'placed-bets': PlacedBetsSelect<false> | PlacedBetsSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -611,6 +613,22 @@ export interface Bet {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "placed-bets".
+ */
+export interface PlacedBet {
+  id: string;
+  user: string | User;
+  betEvent: string | Bet;
+  selectedOutcome: string;
+  stake: number;
+  odds: number;
+  potentialWin: number;
+  status: 'pending' | 'won' | 'lost';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-jobs".
  */
 export interface PayloadJob {
@@ -731,6 +749,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'bets';
         value: string | Bet;
+      } | null)
+    | ({
+        relationTo: 'placed-bets';
+        value: string | PlacedBet;
       } | null)
     | ({
         relationTo: 'payload-jobs';
@@ -1110,6 +1132,21 @@ export interface BetsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "placed-bets_select".
+ */
+export interface PlacedBetsSelect<T extends boolean = true> {
+  user?: T;
+  betEvent?: T;
+  selectedOutcome?: T;
+  stake?: T;
+  odds?: T;
+  potentialWin?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
