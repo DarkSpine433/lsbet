@@ -6,6 +6,7 @@ import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { populatePublishedAt } from '../../hooks/populatePublishedAt'
 import { isAdmin } from '@/access/isAdmin'
 import { generateId } from '@/hooks/generateId'
+import { afterChangeHook } from './hooks/afterChangeHook'
 
 export const Bets: CollectionConfig<'bets'> = {
   slug: 'bets',
@@ -126,7 +127,7 @@ export const Bets: CollectionConfig<'bets'> = {
     },
   ],
   hooks: {
-    beforeChange: [populatePublishedAt],
+    afterChange: [afterChangeHook],
   },
   versions: {
     drafts: {
