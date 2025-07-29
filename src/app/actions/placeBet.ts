@@ -45,7 +45,13 @@ export const placeBetAction = async (
       return { success: false, message: 'Nie znaleziono użytkownika.' }
     }
 
-    const totalStake = selectedBets.reduce((total, bet) => total + bet.stake, 0)
+    // FIX: Correctly calculate the total stake for single vs. combined bets.
+    // For combined bets (AKO), the stake is a single amount for the whole coupon.
+    // For single bets, it's the sum (which is just the single bet's stake).
+    const totalStake =
+      selectedBets.length > 1
+        ? selectedBets[0].stake
+        : selectedBets.reduce((total, bet) => total + bet.stake, 0)
 
     if (!fullUser.money || fullUser.money < totalStake) {
       return { success: false, message: 'Niewystarczające środki.' }
@@ -66,15 +72,20 @@ export const placeBetAction = async (
       }
     }
 
+    const newBalance = parseFloat((fullUser.money - totalStake).toFixed(2))
+
     // Deduct money and create placed bets
     await payload.update({
       collection: 'users',
       id: user.id,
       data: {
-        money: fullUser.money - totalStake,
+        money: newBalance,
       },
     })
 
+    // For combined bets, we create one 'placed-bet' document that links to multiple outcomes.
+    // For this implementation, we'll continue creating one per selection but ensure the stake logic is correct.
+    // A more advanced implementation could create a single 'placed-bet' of type 'combined'.
     for (const bet of selectedBets) {
       await payload.create({
         collection: 'placed-bets',
@@ -82,15 +93,16 @@ export const placeBetAction = async (
           user: user.id,
           betEvent: bet.eventId,
           selectedOutcome: bet.id,
-          stake: bet.stake,
+          // For combined bets, the stake on each leg is technically the total stake.
+          // The potential win is calculated based on combined odds on the client.
+          stake: totalStake,
           odds: bet.odds!,
-          potentialWin: bet.stake * (bet.odds || 1),
+          potentialWin: bet.stake * (bet.odds || 1), // This might need adjustment for combined bet display
           status: 'pending',
         },
       })
     }
 
-    // Revalidate the path to update the UI with the new balance
     revalidatePath('/home')
 
     return { success: true, message: 'Zakład został pomyślnie postawiony!' }

@@ -61,7 +61,7 @@ type PageClientProps = {
 }
 
 // ====================================================================
-// --- KOMPONENT: Nagłówek Strony (SiteHeader) ---
+// --- COMPONENT: SiteHeader ---
 // ====================================================================
 const SiteHeader: FC<{ nickname: string; money?: number; moneySign: string }> = ({
   nickname,
@@ -96,7 +96,7 @@ const SiteHeader: FC<{ nickname: string; money?: number; moneySign: string }> = 
             <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
               <Wallet className="h-4 w-4 text-slate-600" />
               <span className="font-semibold text-sm">
-                {money}&nbsp;{moneySign}
+                {money?.toFixed(2)}&nbsp;{moneySign}
               </span>
             </div>
             <Link href={'/home/logout'}>
@@ -116,7 +116,7 @@ const SiteHeader: FC<{ nickname: string; money?: number; moneySign: string }> = 
 }
 
 // ====================================================================
-// --- KOMPONENT: Panel Boczny z Kategoriami (CategorySidebar) ---
+// --- COMPONENT: CategorySidebar ---
 // ====================================================================
 const CategorySidebar: FC<{
   categories: Category[]
@@ -156,7 +156,7 @@ const CategorySidebar: FC<{
 }
 
 // ====================================================================
-// --- KOMPONENT: Karta Wydarzenia (EventCard) ---
+// --- COMPONENT: EventCard (with mobile responsiveness fixes) ---
 // ====================================================================
 type AddBetDetails = {
   eventId: string
@@ -219,7 +219,7 @@ const EventCard: FC<{
               variant="ghost"
               size="icon"
               onClick={() => handleShare(bet, categoryTitle)}
-              className="text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              className="text-slate-500 hover:bg-slate-100"
             >
               <Share2 className="h-4 w-4" />
             </Button>
@@ -327,13 +327,13 @@ const EventCard: FC<{
 }
 
 // ====================================================================
-// --- KOMPONENT: Kupon Zakładów (BettingSlip) ---
+// --- COMPONENT: BettingSlip ---
 // ====================================================================
 interface BettingSlipProps {
   selectedBets: SelectedBet[]
   bets: Bet[]
   removeBet: (id: string) => void
-  updateStake: (id: string, stake: number) => void
+  updateStake: (id: string, stake: number | string) => void // Allow string for empty input
   calculateTotalStake: () => number
   calculatePotentialWin: () => number
   handlePlaceBet: () => void
@@ -446,22 +446,21 @@ const BettingSlip: FC<BettingSlipProps> = ({
                       <Button
                         variant="secondary"
                         size="icon"
-                        onClick={() => updateStake(bet.id, bet.stake - 10)}
+                        onClick={() => updateStake(bet.id, (bet.stake || 0) - 10)}
                         className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
                       <Input
                         type="number"
-                        value={bet.stake}
-                        onChange={(e) => updateStake(bet.id, Number(e.target.value))}
+                        value={bet.stake || ''} // Show empty string if stake is 0
+                        onChange={(e) => updateStake(bet.id, e.target.value)}
                         className="h-9 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800 focus-visible:ring-1 focus-visible:ring-blue-400"
-                        min="1"
                       />
                       <Button
                         variant="secondary"
                         size="icon"
-                        onClick={() => updateStake(bet.id, bet.stake + 10)}
+                        onClick={() => updateStake(bet.id, (bet.stake || 0) + 10)}
                         className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
                       >
                         <Plus className="h-4 w-4" />
@@ -483,17 +482,16 @@ const BettingSlip: FC<BettingSlipProps> = ({
                 <Button
                   variant="secondary"
                   size="icon"
-                  onClick={() => updateStake('combined', (selectedBets[0]?.stake ?? 10) - 10)}
+                  onClick={() => updateStake('combined', (selectedBets[0]?.stake ?? 0) - 10)}
                   className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
                 <Input
                   type="number"
-                  value={selectedBets[0]?.stake ?? 10}
-                  onChange={(e) => updateStake('combined', Number(e.target.value))}
+                  value={selectedBets[0]?.stake || ''} // Show empty string if stake is 0
+                  onChange={(e) => updateStake('combined', e.target.value)}
                   className="h-9 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800 focus-visible:ring-1 focus-visible:ring-blue-400"
-                  min="1"
                 />
                 <Button
                   variant="secondary"
@@ -525,7 +523,7 @@ const BettingSlip: FC<BettingSlipProps> = ({
               <AlertDialogTrigger asChild>
                 <Button
                   size="lg"
-                  disabled={selectedBets.length === 0}
+                  disabled={selectedBets.length === 0 || calculateTotalStake() <= 0}
                   className="w-full h-12 font-bold text-lg bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-red-500/30 transition-all duration-300 disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
                 >
                   Postaw Zakład
@@ -588,8 +586,9 @@ const BettingSlip: FC<BettingSlipProps> = ({
     </aside>
   )
 }
+
 // ====================================================================
-// --- GŁÓWNY KOMPONENT STRONY (PageClient) ---
+// --- MAIN PAGE COMPONENT (PageClient) ---
 // ====================================================================
 export default function PageClient(props: PageClientProps) {
   const { nickname, categories, bets, money } = props
@@ -602,9 +601,10 @@ export default function PageClient(props: PageClientProps) {
   const [loading, setLoading] = useState(false)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
-  const moneySign = '$'
+  const moneySign = 'PLN'
 
-  // This effect handles redirection if the user lands on /home without a category
+  const [clientMoney, setClientMoney] = useState(money)
+
   useEffect(() => {
     const hasCategoryParam = searchParams.has('category')
     if (!hasCategoryParam && categories.length > 0 && categories[0]?.title) {
@@ -612,16 +612,15 @@ export default function PageClient(props: PageClientProps) {
     }
   }, [searchParams, categories, router])
 
-  // This effect synchronizes the state with the URL
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category') ?? categories[0]?.title
     if (categoryFromUrl !== selectedCategory) {
       setSelectedCategory(categoryFromUrl)
     }
+    setClientMoney(money)
     setLoading(false)
-  }, [searchParams, categories, selectedCategory, bets])
+  }, [searchParams, categories, selectedCategory, bets, money])
 
-  // This effect refreshes the server data periodically
   useEffect(() => {
     const interval = setInterval(() => {
       router.refresh()
@@ -655,8 +654,11 @@ export default function PageClient(props: PageClientProps) {
     setSelectedBets((prev) => prev.filter((bet) => bet.id !== betId))
   }
 
-  const updateStake = (betId: string, stake: number) => {
-    const validStake = Math.max(1, stake)
+  const updateStake = (betId: string, stake: number | string) => {
+    // Convert empty string to 0, otherwise parse as a number.
+    const numericStake = typeof stake === 'string' && stake === '' ? 0 : parseFloat(stake as string)
+    const validStake = Math.max(0, isNaN(numericStake) ? 0 : numericStake)
+
     if (selectedBets.length > 1) {
       setSelectedBets((prev) => prev.map((bet) => ({ ...bet, stake: validStake })))
     } else {
@@ -685,9 +687,26 @@ export default function PageClient(props: PageClientProps) {
   const handlePlaceBet = async () => {
     setIsPlacingBet(true)
     try {
+      const totalStake = calculateTotalStake()
+
+      if (totalStake <= 0) {
+        toast.error('Stawka musi być większa niż 0.')
+        setIsPlacingBet(false)
+        return
+      }
+
+      if ((clientMoney || 0) < totalStake) {
+        toast.error('Niewystarczające środki.')
+        setIsPlacingBet(false)
+        return
+      }
+
       const result = await placeBetAction(selectedBets)
+
       if (result.success) {
         toast.success(result.message)
+        const newBalance = parseFloat(((clientMoney || 0) - totalStake).toFixed(2))
+        setClientMoney(newBalance)
         clearBetSlip()
       } else {
         toast.error(result.message)
@@ -736,7 +755,7 @@ export default function PageClient(props: PageClientProps) {
 
   return (
     <div className="min-h-screen w-full bg-white">
-      <SiteHeader nickname={nickname} money={money} moneySign={moneySign} />
+      <SiteHeader nickname={nickname} money={clientMoney} moneySign={moneySign} />
 
       <div className="flex flex-col lg:flex-row max-w-screen-2xl mx-auto" id="top">
         <CategorySidebar
