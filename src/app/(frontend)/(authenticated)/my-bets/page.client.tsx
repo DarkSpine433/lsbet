@@ -71,15 +71,11 @@ const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
         {bet.selections.map((selection, index) => {
           const betEventResult =
             resultOfEventBeted &&
-            resultOfEventBeted.find(
-              // @ts-ignore
-              (result) => result.id === selection.betEvent?.id,
-            )
+            resultOfEventBeted.find((result) => result.id === (selection.betEvent as Bet)?.id)
           const betEvent = selection.betEvent as Bet
           return (
-            <>
+            <div key={index}>
               <div
-                key={index}
                 className={`p-4 py-3 bg-slate-100 ${index < bet.selections.length - 1 ? 'border-b border-slate-200' : ''}`}
               >
                 {/* to FIX */}
@@ -123,7 +119,7 @@ const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
                 </div>{' '}
               </div>
               {index < bet.selections.length - 1 && <div className="border-b border-slate-200" />}
-            </>
+            </div>
           )
         })}
       </CardContent>

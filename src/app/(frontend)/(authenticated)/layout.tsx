@@ -48,19 +48,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 {user.email.split('@')[0].toString()}
               </Badge>
               <Popover>
-                <PopoverTrigger>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Bell className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-80" side="bottom" align="center">
-                    <div className="flex flex-col items-center justify-center ">
-                      <BellRing className="h-4 w-4" />
-                      <p className="text-sm text-slate-600">Brak powiadomień</p>
-                    </div>
-                  </PopoverContent>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Bell className="h-4 w-4" />
+                  </Button>
                 </PopoverTrigger>
+                <PopoverContent className="w-80" side="bottom" align="center">
+                  <div className="flex flex-col items-center justify-center ">
+                    <BellRing className="h-4 w-4" />
+                    <p className="text-sm text-slate-600">Brak powiadomień</p>
+                  </div>
+                </PopoverContent>
               </Popover>
               <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
                 <Wallet className="h-4 w-4 text-slate-600" />

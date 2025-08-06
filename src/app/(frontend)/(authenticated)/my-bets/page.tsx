@@ -51,14 +51,15 @@ const MyBetsPage = async () => {
   }
 
   const placedBets = await getCashedPlacedBets(user.id)
-  let betsIds = [] as string[]
-  placedBets.map((bet) => {
-    //@ts-ignore
-    bet.selections.map(
-      (selection) =>
-        //@ts-ignore
-        betsIds.includes(selection.betEvent.id!) || betsIds.push(selection.betEvent.id!),
-    )
+  // FIX: Changed `let` to `const` as `betsIds` is not reassigned.
+  const betsIds: string[] = []
+  placedBets.forEach((bet) => {
+    bet.selections.forEach((selection) => {
+      const eventId = (selection.betEvent as Bet)?.id
+      if (eventId && !betsIds.includes(eventId)) {
+        betsIds.push(eventId)
+      }
+    })
   })
   const resultOfEventBeted = await getCashedResultOfEventBeted(betsIds)
   return (
