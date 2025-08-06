@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, FC } from 'react'
+import { useState, FC, useMemo } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -11,6 +12,7 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Wallet, LogOut, Ticket, History, Trophy, Home, ScaleIcon } from 'lucide-react'
+import { Logo } from '@/components/Logo/Logo'
 import Link from 'next/link'
 import { PlacedBet, Media as MediaType, Bet } from '@/payload-types'
 import { formatDateTime } from '@/utilities/formatDateTime'
@@ -24,11 +26,34 @@ type MyBetsPageClientProps = {
   resultOfEventBeted: Bet[]
 }
 
+// A helper function to determine the status of an individual selection
+const getSelectionStatus = (
+  selection: PlacedBet['selections'][0],
+  result?: Bet,
+): 'won' | 'lost' | 'pending' => {
+  if (!result || !result.endevent) {
+    return 'pending'
+  }
+
+  const { selectedOutcomeName } = selection
+  const isDrawResult = result.typeofbet === 'draw'
+
+  if (isDrawResult) {
+    // Assuming 'Remis' is the designated name for a draw outcome
+    return selectedOutcomeName === 'Remis' ? 'won' : 'lost'
+  }
+
+  const winningTeam = result.team?.find((team) => team['win-lose'])
+  if (winningTeam) {
+    return selectedOutcomeName === winningTeam.name ? 'won' : 'lost'
+  }
+
+  // Default to lost if the event is over but the outcome is unclear
+  return 'lost'
+}
+
 // --- COMPONENT: BetCard ---
-const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
-  bet,
-  resultOfEventBeted,
-}) => {
+const BetCard: FC<{ bet: PlacedBet; resultsMap: Map<string, Bet> }> = ({ bet, resultsMap }) => {
   const isCombined = bet.betType === 'combined'
 
   let statusText = 'W grze'
@@ -40,6 +65,7 @@ const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
     statusText = 'Wygrany'
     statusColor = 'bg-green-500'
     outcomeText = `+${bet.potentialWin?.toFixed(2)} PLN`
+    outcomeColor = 'text-green-600'
   } else if (bet.status === 'lost') {
     statusText = 'Przegrany'
     statusColor = 'bg-red-500'
@@ -64,55 +90,68 @@ const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
           <Badge className={`${statusColor} text-white`}>{statusText}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 bg-slate-200">
         {bet.selections.map((selection, index) => {
           const betEvent = selection.betEvent as Bet
-          const betEventResult = resultOfEventBeted?.find((result) => result.id === betEvent?.id)
-
-          let selectionStatus: 'won' | 'lost' | 'pending' = 'pending'
-          if (betEventResult?.endevent) {
-            if (betEventResult.typeofbet === 'draw') {
-              selectionStatus = selection.selectedOutcomeName === 'Remis' ? 'won' : 'lost'
-            } else {
-              const winningTeam = betEventResult.team?.find((team) => team['win-lose'])
-              selectionStatus = winningTeam?.name === selection.selectedOutcomeName ? 'won' : 'lost'
-            }
-          }
+          // Performance fix: O(1) map lookup instead of O(n) array.find()
+          const betEventResult = resultsMap.get(betEvent.id)
+          const selectionStatus = getSelectionStatus(selection, betEventResult)
 
           return (
-            <div key={index}>
-              <div
-                className={`p-4 py-3 bg-slate-100 ${index < bet.selections.length - 1 ? 'border-b border-slate-200' : ''}`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-base font-semibold text-slate-800">{betEvent.title}</p>
-                    <p className="text-sm text-slate-500 mb-2">
-                      {betEvent.team?.map((t) => t.name).join(' vs ')}
-                    </p>
+            <div
+              key={index}
+              className={`p-4 py-3 bg-slate-200 ${index < bet.selections.length - 1 ? 'border-b border-slate-200' : ''}`}
+            >
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="text-base font-semibold text-slate-800 flex flex-wrap items-center">
+                    {betEvent.title}
                   </div>
-                  {betEventResult?.endevent && (
-                    <Badge
-                      variant={selectionStatus === 'won' ? 'default' : 'destructive'}
-                      className={selectionStatus === 'won' ? 'bg-green-500' : 'bg-red-500'}
-                    >
-                      {selectionStatus === 'won' ? 'Wygrana' : 'Przegrana'}
-                    </Badge>
-                  )}
+                  <div className="text-sm font-semibold text-slate-700 flex flex-row flex-wrap items-center ">
+                    {(betEventResult?.team || betEvent.team)?.map((team, idx, arr) => (
+                      <div key={team.id} className="flex items-center">
+                        <span>{team.name}</span>
+                        {idx < arr.length - 1 && <span className="text-blue-500 mx-1">vs</span>}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-slate-500 mb-3 ">bet id: {betEvent.id}</p>
                 </div>
-
-                <div className="flex items-center justify-between text-sm mt-2">
-                  <p className="text-slate-600">
-                    Twój typ:{' '}
-                    <span className="font-bold text-slate-900">
-                      {selection.selectedOutcomeName}
-                    </span>
-                  </p>
-                  <p className="text-slate-600">
-                    Kurs:{' '}
-                    <span className="font-bold text-slate-900">{selection.odds.toFixed(2)}</span>
-                  </p>
-                </div>
+                {/* Logic fix: Display the status for each individual selection */}
+                {bet.status !== 'pending' && (
+                  <Badge
+                    variant={
+                      selectionStatus === 'won'
+                        ? 'default'
+                        : selectionStatus === 'lost'
+                          ? 'destructive'
+                          : 'outline'
+                    }
+                    className={
+                      selectionStatus === 'won'
+                        ? 'bg-green-500 text-white'
+                        : selectionStatus === 'lost'
+                          ? 'bg-red-500 text-white'
+                          : ''
+                    }
+                  >
+                    {selectionStatus === 'won'
+                      ? 'Wygrany'
+                      : selectionStatus === 'lost'
+                        ? 'Przegrany'
+                        : 'W grze'}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-sm bg-slate-100 p-2 rounded-md">
+                <p className="text-slate-600">
+                  Twój typ:{' '}
+                  <span className="font-bold text-slate-900">{selection.selectedOutcomeName}</span>
+                </p>
+                <p className="text-slate-600">
+                  Kurs:{' '}
+                  <span className="font-bold text-slate-900">{selection.odds.toFixed(2)}</span>
+                </p>
               </div>
             </div>
           )
@@ -149,8 +188,27 @@ export default function MyBetsPageClient({
 }: MyBetsPageClientProps) {
   const [activeTab, setActiveTab] = useState<'active' | 'settled'>('active')
 
-  const activeBets = initialBets.filter((bet) => bet.status === 'pending')
-  const settledBets = initialBets.filter((bet) => bet.status === 'won' || bet.status === 'lost')
+  // Performance fix: Memoize filtered bets to prevent recalculation on every render
+  const activeBets = useMemo(
+    () => initialBets.filter((bet) => bet.status === 'pending'),
+    [initialBets],
+  )
+  const settledBets = useMemo(
+    () => initialBets.filter((bet) => bet.status === 'won' || bet.status === 'lost'),
+    [initialBets],
+  )
+
+  // Performance fix: Create a lookup map for event results for fast O(1) access.
+  // This prevents passing the entire results array to each card and repeatedly searching it.
+  const resultsMap = useMemo(() => {
+    const map = new Map<string, Bet>()
+    if (resultOfEventBeted) {
+      for (const result of resultOfEventBeted) {
+        map.set(result.id, result)
+      }
+    }
+    return map
+  }, [resultOfEventBeted])
 
   const betsToShow = activeTab === 'active' ? activeBets : settledBets
 
@@ -187,9 +245,7 @@ export default function MyBetsPageClient({
         {/* List of bets */}
         <div className="space-y-4">
           {betsToShow.length > 0 ? (
-            betsToShow.map((bet) => (
-              <BetCard key={bet.id} bet={bet} resultOfEventBeted={resultOfEventBeted} />
-            ))
+            betsToShow.map((bet) => <BetCard key={bet.id} bet={bet} resultsMap={resultsMap} />)
           ) : (
             <div className="text-center py-16 text-slate-500">
               <Trophy className="h-12 w-12 mx-auto mb-4 text-slate-300" />
