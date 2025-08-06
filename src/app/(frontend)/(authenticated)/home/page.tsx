@@ -22,19 +22,6 @@ const page = async (props: Props) => {
   const getBets = await getBetsByCategory({ category: category as string })
   return (
     <>
-      {user.role === 'admin' && (
-        <div className="flex items-center justify-center bg-blue-500 text-white p-1">
-          <span>
-            <p className="">Witaj, {user.email.split('@')[0]}!</p>
-          </span>
-          &nbsp;
-          <span>
-            <Link href="/admin" className=" underline">
-              Go to Admin Dashboard
-            </Link>
-          </span>
-        </div>
-      )}
       <PageClient
         nickname={user.email.split('@')[0]}
         categories={getCategories}

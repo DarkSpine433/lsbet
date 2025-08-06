@@ -618,12 +618,17 @@ export interface Bet {
 export interface PlacedBet {
   id: string;
   user: string | User;
-  betEvent: string | Bet;
-  selectedOutcome: string;
+  betType: 'single' | 'combined';
   stake: number;
-  odds: number;
+  totalOdds: number;
   potentialWin: number;
   status: 'pending' | 'won' | 'lost';
+  selections: {
+    betEvent: string | Bet;
+    selectedOutcomeName: string;
+    odds: number;
+    id?: string | null;
+  }[];
   updatedAt: string;
   createdAt: string;
 }
@@ -1139,12 +1144,19 @@ export interface BetsSelect<T extends boolean = true> {
  */
 export interface PlacedBetsSelect<T extends boolean = true> {
   user?: T;
-  betEvent?: T;
-  selectedOutcome?: T;
+  betType?: T;
   stake?: T;
-  odds?: T;
+  totalOdds?: T;
   potentialWin?: T;
   status?: T;
+  selections?:
+    | T
+    | {
+        betEvent?: T;
+        selectedOutcomeName?: T;
+        odds?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

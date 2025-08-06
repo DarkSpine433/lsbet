@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import {
   Trophy,
   Plus,
@@ -19,15 +18,15 @@ import {
   ScaleIcon,
   CircleArrowOutUpLeft,
   Share2,
+  Ticket,
 } from 'lucide-react'
-import { Logo } from '@/components/Logo/Logo'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Media } from '@/components/Media'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import CircularProgress from '@mui/material/CircularProgress'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -61,61 +60,6 @@ type PageClientProps = {
 }
 
 // ====================================================================
-// --- COMPONENT: SiteHeader ---
-// ====================================================================
-const SiteHeader: FC<{ nickname: string; money?: number; moneySign: string }> = ({
-  nickname,
-  money,
-  moneySign,
-}) => {
-  const [logoutClicked, setLogoutClicked] = useState(false)
-  return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-      <div className="px-4 sm:px-6 py-4 max-w-screen-2xl mx-auto">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4 cursor-pointer">
-            <Logo />
-          </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <Badge className="bg-gradient-to-r from-red-500 to-blue-500 text-white hidden sm:inline-flex">
-              {nickname}
-            </Badge>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Bell className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" side="bottom" align="center">
-                <div className="flex flex-col items-center justify-center ">
-                  <BellRing className="h-4 w-4" />
-                  <p className="text-sm text-slate-600">Brak powiadomień</p>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
-              <Wallet className="h-4 w-4 text-slate-600" />
-              <span className="font-semibold text-sm">
-                {money?.toFixed(2)}&nbsp;{moneySign}
-              </span>
-            </div>
-            <Link href={'/home/logout'}>
-              <Button variant="default" size="sm" onClick={() => setLogoutClicked(true)}>
-                {logoutClicked ? (
-                  <CircularProgress size={16} className="[&>*]:text-slate-50" />
-                ) : (
-                  <LogOut className="h-4 w-4" />
-                )}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    </header>
-  )
-}
-
-// ====================================================================
 // --- COMPONENT: CategorySidebar ---
 // ====================================================================
 const CategorySidebar: FC<{
@@ -126,6 +70,16 @@ const CategorySidebar: FC<{
   return (
     <aside className="w-full lg:w-64 lg:shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-slate-200 ">
       <div className="p-4 sticky left-0 top-16 ">
+        <Link href={`/my-bets`}>
+          <div
+            className={`mb-5 w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border cursor-pointer hover:bg-blue-50  hover:text-blue-700 hover:border-blue-200  text-slate-700 border-transparent`}
+          >
+            <div className="flex items-center space-x-3">
+              <Ticket className="h-4 w-4" />
+              <span className="font-medium">Moje kupony</span>
+            </div>
+          </div>
+        </Link>
         <h2 className="font-semibold text-slate-900 mb-4">Sporty</h2>
         <div className="space-y-1">
           {categories.map((category) => (
@@ -149,7 +103,6 @@ const CategorySidebar: FC<{
             </Link>
           ))}
         </div>
-        <Separator className="my-6" />
       </div>
     </aside>
   )
@@ -219,7 +172,7 @@ const EventCard: FC<{
               variant="ghost"
               size="icon"
               onClick={() => handleShare(bet, categoryTitle)}
-              className="text-slate-500 hover:bg-slate-100"
+              className="text-slate-500 hover:bg-slate-900"
             >
               <Share2 className="h-4 w-4" />
             </Button>
@@ -285,7 +238,7 @@ const EventCard: FC<{
                 addBet({
                   eventId: bet.id,
                   teamId: 'draw',
-                  teamName: 'Remis',
+                  teamName: 'draw',
                   odds: bet['draw-odds'],
                   logo: null,
                   category: categoryTitle,
@@ -601,7 +554,7 @@ export default function PageClient(props: PageClientProps) {
   const [loading, setLoading] = useState(false)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
-  const moneySign = 'PLN'
+  const moneySign = '$'
 
   const [clientMoney, setClientMoney] = useState(money)
 
@@ -755,8 +708,6 @@ export default function PageClient(props: PageClientProps) {
 
   return (
     <div className="min-h-screen w-full bg-white">
-      <SiteHeader nickname={nickname} money={clientMoney} moneySign={moneySign} />
-
       <div className="flex flex-col lg:flex-row max-w-screen-2xl mx-auto" id="top">
         <CategorySidebar
           categories={categories}
