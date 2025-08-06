@@ -22,16 +22,14 @@ export const placeBetAction = async (
   const token = cookieStore.get('payload-token')?.value
 
   const { user } = await payload.auth({
-    headers: new Headers({
-      Authorization: `JWT ${token}`,
-    }),
+    headers: new Headers({ Authorization: `JWT ${token}` }),
   })
 
   if (!user) {
     return { success: false, message: 'Musisz być zalogowany, aby postawić zakład.' }
   }
 
-  if (!selectedBets || !Array.isArray(selectedBets) || selectedBets.length === 0) {
+  if (!selectedBets || selectedBets.length === 0) {
     return { success: false, message: 'Nie wybrano żadnych zakładów.' }
   }
 
@@ -45,65 +43,85 @@ export const placeBetAction = async (
       return { success: false, message: 'Nie znaleziono użytkownika.' }
     }
 
-    // FIX: Correctly calculate the total stake for single vs. combined bets.
-    // For combined bets (AKO), the stake is a single amount for the whole coupon.
-    // For single bets, it's the sum (which is just the single bet's stake).
-    const totalStake =
-      selectedBets.length > 1
-        ? selectedBets[0].stake
-        : selectedBets.reduce((total, bet) => total + bet.stake, 0)
+    const isCombinedBet = selectedBets.length > 1
+    const totalStake = isCombinedBet ? selectedBets[0].stake : selectedBets[0].stake
 
     if (!fullUser.money || fullUser.money < totalStake) {
       return { success: false, message: 'Niewystarczające środki.' }
     }
 
-    // Validate each bet
+    // Validate each event in the coupon
     for (const bet of selectedBets) {
       const event = (await payload.findByID({
         collection: 'bets',
         id: bet.eventId,
       })) as Bet
-
       if (!event || event.stopbeting || event.endevent) {
         return {
           success: false,
-          message: `Zakłady na to wydarzenie są zamknięte: ${event?.title}`,
+          message: `Zakłady na wydarzenie "${event?.title}" są zamknięte.`,
         }
       }
     }
 
     const newBalance = parseFloat((fullUser.money - totalStake).toFixed(2))
 
-    // Deduct money and create placed bets
     await payload.update({
       collection: 'users',
       id: user.id,
-      data: {
-        money: newBalance,
-      },
+      data: { money: newBalance },
     })
 
-    // For combined bets, we create one 'placed-bet' document that links to multiple outcomes.
-    // For this implementation, we'll continue creating one per selection but ensure the stake logic is correct.
-    // A more advanced implementation could create a single 'placed-bet' of type 'combined'.
-    for (const bet of selectedBets) {
+    // --- NEW LOGIC FOR CREATING BETS ---
+
+    if (isCombinedBet) {
+      // Create ONE entry for the combined bet
+      const combinedOdds = selectedBets.reduce((total, bet) => total * (bet.odds || 1), 1)
+      const potentialWin = parseFloat((totalStake * combinedOdds).toFixed(2))
+
       await payload.create({
         collection: 'placed-bets',
         data: {
           user: user.id,
-          betEvent: bet.eventId,
-          selectedOutcome: bet.id,
-          // For combined bets, the stake on each leg is technically the total stake.
-          // The potential win is calculated based on combined odds on the client.
+          betType: 'combined',
           stake: totalStake,
-          odds: bet.odds!,
-          potentialWin: bet.stake * (bet.odds || 1), // This might need adjustment for combined bet display
+          totalOdds: combinedOdds,
+          potentialWin: potentialWin,
           status: 'pending',
+          selections: selectedBets.map((bet) => ({
+            betEvent: bet.eventId,
+            selectedOutcomeName: bet.name,
+            odds: bet.odds!,
+          })),
+        },
+      })
+    } else {
+      // Create ONE entry for the single bet
+      const singleBet = selectedBets[0]
+      const potentialWin = parseFloat((singleBet.stake * (singleBet.odds || 1)).toFixed(2))
+
+      await payload.create({
+        collection: 'placed-bets',
+        data: {
+          user: user.id,
+          betType: 'single',
+          stake: singleBet.stake,
+          totalOdds: singleBet.odds!,
+          potentialWin: potentialWin,
+          status: 'pending',
+          selections: [
+            {
+              betEvent: singleBet.eventId,
+              selectedOutcomeName: singleBet.name,
+              odds: singleBet.odds!,
+            },
+          ],
         },
       })
     }
 
     revalidatePath('/home')
+    revalidatePath('/my-bets') // Also revalidate the "My Bets" page
 
     return { success: true, message: 'Zakład został pomyślnie postawiony!' }
   } catch (error) {

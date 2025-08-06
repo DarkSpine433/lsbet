@@ -1,16 +1,11 @@
-import type { CollectionConfig } from 'payload'
 import { isAdmin } from '@/access/isAdmin'
-import { isAdminOrItself } from '@/access/isAdminOrItself'
+import { CollectionConfig } from 'payload'
 
 export const PlacedBets: CollectionConfig = {
   slug: 'placed-bets',
-  admin: {
-    useAsTitle: 'id',
-    defaultColumns: ['user', 'betEvent', 'status', 'stake', 'potentialWin', 'createdAt'],
-  },
   access: {
-    create: () => true, // Access is handled in the endpoint
-    read: isAdminOrItself,
+    create: () => true, // Allow users to create bets
+    read: () => true, // Allow users to read their own bets
     update: isAdmin,
     delete: isAdmin,
   },
@@ -20,57 +15,58 @@ export const PlacedBets: CollectionConfig = {
       type: 'relationship',
       relationTo: 'users',
       required: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
-      name: 'betEvent',
-      type: 'relationship',
-      relationTo: 'bets',
+      name: 'betType',
+      type: 'radio',
+      options: ['single', 'combined'],
       required: true,
-      admin: {
-        readOnly: true,
-      },
-    },
-    {
-      name: 'selectedOutcome',
-      type: 'text', // Stores the ID of the team or 'draw'
-      required: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
       name: 'stake',
       type: 'number',
       required: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
-      name: 'odds',
+      name: 'totalOdds', // Combined odds for the entire coupon
       type: 'number',
       required: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
       name: 'potentialWin',
       type: 'number',
       required: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
       name: 'status',
-      type: 'select',
+      type: 'radio',
       options: ['pending', 'won', 'lost'],
       defaultValue: 'pending',
       required: true,
+    },
+    // This array will hold all the individual selections for the bet
+    {
+      name: 'selections',
+      type: 'array',
+      required: true,
+      fields: [
+        {
+          name: 'betEvent',
+          type: 'relationship',
+          relationTo: 'bets',
+          required: true,
+        },
+        {
+          name: 'selectedOutcomeName', // e.g., "Team A" or "Draw"
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'odds',
+          type: 'number',
+          required: true,
+        },
+      ],
     },
   ],
 }
