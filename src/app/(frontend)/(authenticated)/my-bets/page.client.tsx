@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, FC } from 'react'
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -12,7 +11,6 @@ import {
 } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Wallet, LogOut, Ticket, History, Trophy, Home, ScaleIcon } from 'lucide-react'
-import { Logo } from '@/components/Logo/Logo'
 import Link from 'next/link'
 import { PlacedBet, Media as MediaType, Bet } from '@/payload-types'
 import { formatDateTime } from '@/utilities/formatDateTime'
@@ -42,14 +40,13 @@ const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
     statusText = 'Wygrany'
     statusColor = 'bg-green-500'
     outcomeText = `+${bet.potentialWin?.toFixed(2)} PLN`
-    outcomeColor = 'text-green-600'
   } else if (bet.status === 'lost') {
     statusText = 'Przegrany'
     statusColor = 'bg-red-500'
     outcomeText = `-${bet.stake?.toFixed(2)} PLN`
     outcomeColor = 'text-red-500'
   }
-  console.log('resultOfEventBeted', resultOfEventBeted)
+
   return (
     <Card className="w-full overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="bg-slate-50 p-4 border-b">
@@ -69,43 +66,42 @@ const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
       </CardHeader>
       <CardContent className="p-0">
         {bet.selections.map((selection, index) => {
-          const betEventResult =
-            resultOfEventBeted &&
-            resultOfEventBeted.find((result) => result.id === (selection.betEvent as Bet)?.id)
           const betEvent = selection.betEvent as Bet
+          const betEventResult = resultOfEventBeted?.find((result) => result.id === betEvent?.id)
+
+          let selectionStatus: 'won' | 'lost' | 'pending' = 'pending'
+          if (betEventResult?.endevent) {
+            if (betEventResult.typeofbet === 'draw') {
+              selectionStatus = selection.selectedOutcomeName === 'Remis' ? 'won' : 'lost'
+            } else {
+              const winningTeam = betEventResult.team?.find((team) => team['win-lose'])
+              selectionStatus = winningTeam?.name === selection.selectedOutcomeName ? 'won' : 'lost'
+            }
+          }
+
           return (
             <div key={index}>
               <div
                 className={`p-4 py-3 bg-slate-100 ${index < bet.selections.length - 1 ? 'border-b border-slate-200' : ''}`}
               >
-                {/* to FIX */}
-                <div className="text-base font-semibold text-slate-800 flex flex-row flex-wrap items-center">
-                  {betEvent.title}
-                  {(betEventResult?.typeofbet == 'draw' &&
-                    betEventResult.endevent &&
-                    betEvent.typeofbet) ||
-                  (betEventResult?.team?.find((team) => team.id == betEvent.id)?.['win-lose'] &&
-                    betEventResult.endevent)
-                    ? 'wygrana'
-                    : 'przegrana'}
-                </div>{' '}
-                <div className="text-sm font-semibold text-slate-800 flex flex-row flex-wrap items-center ">
-                  {' '}
-                  {(betEventResult &&
-                    betEventResult?.team?.map((team, idx) => (
-                      <div key={team.id}>
-                        <span>{team.name}</span>
-                        <span className="text-blue-500">
-                          &nbsp;
-                          {idx < betEventResult?.team?.length! - 1 ? ' vs ' : ''}
-                          &nbsp;
-                        </span>
-                      </div>
-                    ))) ||
-                    ''}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-base font-semibold text-slate-800">{betEvent.title}</p>
+                    <p className="text-sm text-slate-500 mb-2">
+                      {betEvent.team?.map((t) => t.name).join(' vs ')}
+                    </p>
+                  </div>
+                  {betEventResult?.endevent && (
+                    <Badge
+                      variant={selectionStatus === 'won' ? 'default' : 'destructive'}
+                      className={selectionStatus === 'won' ? 'bg-green-500' : 'bg-red-500'}
+                    >
+                      {selectionStatus === 'won' ? 'Wygrana' : 'Przegrana'}
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-xs  text-slate-500 mb-3 ">bet id: {betEvent.id}</p>
-                <div className="flex items-center justify-between text-sm">
+
+                <div className="flex items-center justify-between text-sm mt-2">
                   <p className="text-slate-600">
                     Twój typ:{' '}
                     <span className="font-bold text-slate-900">
@@ -116,9 +112,8 @@ const BetCard: FC<{ bet: PlacedBet; resultOfEventBeted?: Bet[] }> = ({
                     Kurs:{' '}
                     <span className="font-bold text-slate-900">{selection.odds.toFixed(2)}</span>
                   </p>
-                </div>{' '}
+                </div>
               </div>
-              {index < bet.selections.length - 1 && <div className="border-b border-slate-200" />}
             </div>
           )
         })}
