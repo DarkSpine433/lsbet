@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, FC, MouseEvent } from 'react'
+import { useEffect, useState, FC, MouseEvent, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +19,7 @@ import {
   CircleArrowOutUpLeft,
   Share2,
   Ticket,
+  Gift,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types'
@@ -26,7 +27,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Media } from '@/components/Media'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import CircularProgress from '@mui/material/CircularProgress'
-
 import { toast } from 'sonner'
 import {
   AlertDialog,
@@ -40,6 +40,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { placeBetAction } from '@/app/actions/placeBet'
+import { activateCouponAction } from '@/app/actions/activateCoupon' // Import the new action
+import Form from 'next/form'
 
 // --- TYPES ---
 type SelectedBet = {
@@ -59,6 +61,16 @@ type PageClientProps = {
   money?: number
 }
 
+type AddBetDetails = {
+  eventId: string
+  teamId: string
+  teamName: string
+  odds?: number | null
+  logo?: string | MediaType | null
+  category: string
+  isBettingDisabled?: boolean
+}
+
 // ====================================================================
 // --- COMPONENT: CategorySidebar ---
 // ====================================================================
@@ -66,7 +78,24 @@ const CategorySidebar: FC<{
   categories: Category[]
   selectedCategory: string
   setLoading: (loading: boolean) => void
-}> = ({ categories, selectedCategory, setLoading }) => {
+  setClientMoney: (newBalance: number) => void // Add setter for optimistic update
+}> = ({ categories, selectedCategory, setLoading, setClientMoney }) => {
+  const [isPending, startTransition] = useTransition()
+
+  const handleCouponCodeActivation = async (formData: FormData) => {
+    startTransition(async () => {
+      const result = await activateCouponAction(formData)
+      if (result.success) {
+        toast.success(result.message)
+        if (result.newBalance !== undefined) {
+          setClientMoney(result.newBalance) // Optimistically update wallet
+        }
+      } else {
+        toast.error(result.message)
+      }
+    })
+  }
+
   return (
     <aside className="w-full lg:w-64 lg:shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-slate-200 ">
       <div className="p-4 sticky left-0 top-16 ">
@@ -80,7 +109,28 @@ const CategorySidebar: FC<{
             </div>
           </div>
         </Link>
-        <h2 className="font-semibold text-slate-900 mb-4">Sporty</h2>
+
+        {/* Improved Coupon Code Form */}
+        <div className="mb-6">
+          <h2 className="font-semibold text-slate-900 mb-2">Kod Promocyjny</h2>
+          <Form action={handleCouponCodeActivation} className="space-y-2">
+            <div className="relative">
+              <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                name="couponCode"
+                className="bg-slate-100 border-slate-200 shadow-inner pl-9 focus-visible:ring-1 focus-visible:ring-blue-400 text-slate-900  caret-slate-900"
+                type="text"
+                placeholder="Wpisz kod..."
+                disabled={isPending}
+              />
+            </div>
+            <Button variant="secondary" type="submit" className="w-full" disabled={isPending}>
+              {isPending ? <CircularProgress size={20} color="inherit" /> : 'Aktywuj'}
+            </Button>
+          </Form>
+        </div>
+
+        <h2 className="font-semibold text-slate-900 my-4">Sporty</h2>
         <div className="space-y-1">
           {categories.map((category) => (
             <Link
@@ -109,18 +159,8 @@ const CategorySidebar: FC<{
 }
 
 // ====================================================================
-// --- COMPONENT: EventCard (with mobile responsiveness fixes) ---
+// --- COMPONENT: EventCard ---
 // ====================================================================
-type AddBetDetails = {
-  eventId: string
-  teamId: string
-  teamName: string
-  odds?: number | null
-  logo?: string | MediaType | null
-  category: string
-  isBettingDisabled?: boolean
-}
-
 const EventCard: FC<{
   bet: Bet
   addBet: (details: AddBetDetails) => void
@@ -138,9 +178,7 @@ const EventCard: FC<{
       id={`${categoryTitle}-${bet.id}`}
     >
       <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
-        {/* Responsive Header Layout */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          {/* Main Info Block */}
           <div className="flex flex-col gap-2">
             <CardTitle className="text-lg sm:text-xl font-extrabold text-slate-800">
               {bet.title}
@@ -166,7 +204,6 @@ const EventCard: FC<{
               </CardDescription>
             </div>
           </div>
-          {/* Share Button Block */}
           <div className="shrink-0 sm:ml-4">
             <Button
               variant="ghost"
@@ -238,7 +275,7 @@ const EventCard: FC<{
                 addBet({
                   eventId: bet.id,
                   teamId: 'draw',
-                  teamName: 'draw',
+                  teamName: 'Remis',
                   odds: bet['draw-odds'],
                   logo: null,
                   category: categoryTitle,
@@ -286,7 +323,7 @@ interface BettingSlipProps {
   selectedBets: SelectedBet[]
   bets: Bet[]
   removeBet: (id: string) => void
-  updateStake: (id: string, stake: number | string) => void // Allow string for empty input
+  updateStake: (id: string, stake: number | string) => void
   calculateTotalStake: () => number
   calculatePotentialWin: () => number
   handlePlaceBet: () => void
@@ -406,7 +443,7 @@ const BettingSlip: FC<BettingSlipProps> = ({
                       </Button>
                       <Input
                         type="number"
-                        value={bet.stake || ''} // Show empty string if stake is 0
+                        value={bet.stake || ''}
                         onChange={(e) => updateStake(bet.id, e.target.value)}
                         className="h-9 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800 focus-visible:ring-1 focus-visible:ring-blue-400"
                       />
@@ -442,7 +479,7 @@ const BettingSlip: FC<BettingSlipProps> = ({
                 </Button>
                 <Input
                   type="number"
-                  value={selectedBets[0]?.stake || ''} // Show empty string if stake is 0
+                  value={selectedBets[0]?.stake || ''}
                   onChange={(e) => updateStake('combined', e.target.value)}
                   className="h-9 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800 focus-visible:ring-1 focus-visible:ring-blue-400"
                 />
@@ -608,7 +645,6 @@ export default function PageClient(props: PageClientProps) {
   }
 
   const updateStake = (betId: string, stake: number | string) => {
-    // Convert empty string to 0, otherwise parse as a number.
     const numericStake = typeof stake === 'string' && stake === '' ? 0 : parseFloat(stake as string)
     const validStake = Math.max(0, isNaN(numericStake) ? 0 : numericStake)
 
@@ -713,6 +749,7 @@ export default function PageClient(props: PageClientProps) {
           categories={categories}
           selectedCategory={selectedCategory}
           setLoading={setLoading}
+          setClientMoney={setClientMoney}
         />
 
         <main className="flex-1 p-4 min-h-dvh sm:p-6 bg-gray-50 order-first lg:order-none">
