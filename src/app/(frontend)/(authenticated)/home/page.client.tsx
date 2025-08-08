@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, FC, MouseEvent, useTransition } from 'react'
+import { useEffect, useState, FC, MouseEvent, useTransition, FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -41,7 +41,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { placeBetAction } from '@/app/actions/placeBet'
 import { activateCouponAction } from '@/app/actions/activateCoupon'
-import Form from 'next/form'
 import { Separator } from '@/components/ui/separator'
 
 // --- TYPES ---
@@ -79,18 +78,23 @@ const CategorySidebar: FC<{
   categories: Category[]
   selectedCategory: string
   setLoading: (loading: boolean) => void
-  setClientMoney: (newBalance: number) => void // FIX: Simplified prop type
+  setClientMoney: (newBalance: number) => void
 }> = ({ categories, selectedCategory, setLoading, setClientMoney }) => {
   const [isPending, startTransition] = useTransition()
+  const [couponCode, setCouponCode] = useState('')
 
-  const handleCouponCodeActivation = async (formData: FormData) => {
+  const handleCouponCodeActivation = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+
     startTransition(async () => {
       const result = await activateCouponAction(formData)
       if (result.success) {
         toast.success(result.message)
         if (result.newBalance !== undefined) {
-          setClientMoney(result.newBalance) // FIX: Call with the new value directly
+          setClientMoney(result.newBalance)
         }
+        setCouponCode('') // Clear input on success
       } else {
         toast.error(result.message)
       }
@@ -102,7 +106,7 @@ const CategorySidebar: FC<{
       <div className="p-4 sticky left-0 top-16 ">
         <Link href={`/my-bets`}>
           <div
-            className={` w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border cursor-pointer bg-blue-600   text-blue-50 hover:border-blue-600   hover:bg-blue-50 hover:text-blue-600  border-transparent`}
+            className={`mb-5 w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border cursor-pointer hover:bg-blue-50  hover:text-blue-700 hover:border-blue-200  text-slate-700 border-transparent`}
           >
             <div className="flex items-center space-x-3">
               <Ticket className="h-4 w-4" />
@@ -110,15 +114,17 @@ const CategorySidebar: FC<{
             </div>
           </div>
         </Link>
-        <Separator className="my-3 bg-slate-300" />
-        <div className="mb-6">
+        <Separator />
+        <div className="my-4">
           <h2 className="font-semibold text-slate-900 mb-2">Kod Promocyjny</h2>
-          <Form action={handleCouponCodeActivation} className="space-y-2">
+          <form onSubmit={handleCouponCodeActivation} className="space-y-2">
             <div className="relative">
               <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 name="couponCode"
-                className="bg-slate-100 border-slate-200 shadow-inner pl-9 focus-visible:ring-1 focus-visible:ring-blue-400 text-slate-900  caret-slate-900"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                className="bg-slate-100 border-slate-200 shadow-inner pl-9 focus-visible:ring-1 focus-visible:ring-blue-400 text-slate-800 caret-slate-900"
                 type="text"
                 placeholder="Wpisz kod..."
                 disabled={isPending}
@@ -127,10 +133,9 @@ const CategorySidebar: FC<{
             <Button variant="secondary" type="submit" className="w-full" disabled={isPending}>
               {isPending ? <CircularProgress size={20} color="inherit" /> : 'Aktywuj'}
             </Button>
-          </Form>
+          </form>
         </div>
-        <Separator className="my-3 bg-slate-300" />
-
+        <Separator />
         <h2 className="font-semibold text-slate-900 my-4">Sporty</h2>
         <div className="space-y-1">
           {categories.map((category) => (
