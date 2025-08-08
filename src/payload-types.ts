@@ -74,6 +74,7 @@ export interface Config {
     users: User;
     bets: Bet;
     'placed-bets': PlacedBet;
+    'cupon-codes': CuponCode;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -93,6 +94,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     bets: BetsSelect<false> | BetsSelect<true>;
     'placed-bets': PlacedBetsSelect<false> | PlacedBetsSelect<true>;
+    'cupon-codes': CuponCodesSelect<false> | CuponCodesSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -634,6 +636,18 @@ export interface PlacedBet {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupon-codes".
+ */
+export interface CuponCode {
+  id: string;
+  code: string;
+  'amount-of-money': number;
+  'who-used'?: (string | User)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-jobs".
  */
 export interface PayloadJob {
@@ -758,6 +772,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'placed-bets';
         value: string | PlacedBet;
+      } | null)
+    | ({
+        relationTo: 'cupon-codes';
+        value: string | CuponCode;
       } | null)
     | ({
         relationTo: 'payload-jobs';
@@ -1157,6 +1175,17 @@ export interface PlacedBetsSelect<T extends boolean = true> {
         odds?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cupon-codes_select".
+ */
+export interface CuponCodesSelect<T extends boolean = true> {
+  code?: T;
+  'amount-of-money'?: T;
+  'who-used'?: T;
   updatedAt?: T;
   createdAt?: T;
 }

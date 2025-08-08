@@ -21,7 +21,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { user } = await payload.auth({ headers })
 
   if (!user || !user.verified || user.banned) redirect('/')
-  const moneySign = 'PLN'
+  const moneySign = '$'
   return (
     <div className="bg-white">
       {user.role === 'admin' && (
