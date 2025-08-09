@@ -7,7 +7,7 @@ import { Logo } from '@/components/Logo/Logo'
 
 export async function Footer() {
   return (
-    <footer className="relative py-8 border-t border-primary">
+    <footer className="relative pt-8 pb-32 xl:py-8 border-t border-primary">
       <div className="container mx-auto px-4 text-center">
         <div className="flex items-center justify-center space-x-2 mb-4">
           <Logo />

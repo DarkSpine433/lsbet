@@ -93,7 +93,7 @@ const SignInSignUpDialog = (props: Props) => {
           <DialogHeader className="sr-only">
             <DialogTitle>Zaloguj się lub zarejestruj się</DialogTitle>
           </DialogHeader>
-          <DialogContent className="min-h-96">
+          <DialogContent className="min-h-96 bg-background [&>*]:text-slate-100">
             <Tabs defaultValue={signInOrSignUp} className="w-full max-w-5xl">
               <div className="w-full flex justify-center ">
                 <TabsList>
