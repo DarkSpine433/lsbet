@@ -38,7 +38,6 @@ const ChangePwd = () => {
 
   return (
     <div className="">
-      <h2 className="text-xl font-bold  mb-6 text-slate-800">Zmień hasło</h2>
       <form action={handlePwdChange} className="space-y-6 text-slate-800">
         <div className="space-y-2">
           <Label htmlFor="currentPassword">Aktualne hasło</Label>

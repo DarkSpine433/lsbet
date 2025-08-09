@@ -1,5 +1,3 @@
-'use client'
-
 import React from 'react'
 import { Button } from '../../ui/button'
 import { UserIcon, History, Gift, KeyRound } from 'lucide-react'
@@ -13,7 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Separator } from '../../ui/separator'
 import ChangePwd from './ChangePwd'
 import CodeCupons from './CodeCupons'
 import MyBets from './MyBets/MyBets'
@@ -43,33 +41,34 @@ const Account = (props: Props) => {
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="bets" className="w-full flex-1 flex flex-col">
-          <TabsList className="grid w-full grid-cols-3 mx-auto px-6 border-b">
-            <TabsTrigger value="bets">
-              <History className="h-4 w-4 mr-2" />
-              Zakłady
-            </TabsTrigger>
-            <TabsTrigger value="coupons">
-              <Gift className="h-4 w-4 mr-2" />
-              Kupony
-            </TabsTrigger>
-            <TabsTrigger value="password">
-              <KeyRound className="h-4 w-4 mr-2" />
-              Hasło
-            </TabsTrigger>
-          </TabsList>
-          <div className="flex-1 overflow-y-auto p-6">
-            <TabsContent value="bets">
-              <MyBets />
-            </TabsContent>
-            <TabsContent value="coupons">
-              <CodeCupons />
-            </TabsContent>
-            <TabsContent value="password">
-              <ChangePwd />
-            </TabsContent>
-          </div>
-        </Tabs>
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+          {/* My Bets Section */}
+          <section>
+            <MyBets />
+          </section>
+
+          <Separator />
+
+          {/* Promo Codes Section */}
+          <section>
+            <div className="flex items-center gap-3 mb-4">
+              <Gift className="h-5 w-5 text-slate-500" />
+              <h3 className="text-lg font-semibold text-slate-800">Kody Promocyjne</h3>
+            </div>
+            <CodeCupons />
+          </section>
+
+          <Separator />
+
+          {/* Change Password Section */}
+          <section>
+            <div className="flex items-center gap-3 mb-4">
+              <KeyRound className="h-5 w-5 text-slate-500" />
+              <h3 className="text-lg font-semibold text-slate-800">Zmień Hasło</h3>
+            </div>
+            <ChangePwd />
+          </section>
+        </div>
 
         <div className="p-6 border-t mt-auto">
           <LogoutButton />

@@ -15,8 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { History, Wallet } from 'lucide-react'
-import { PopoverClose } from '@radix-ui/react-popover'
-import { Button } from '../../../ui/button'
+
 // Dynamically import the client component with a loading state
 const MyBetsPageClient = dynamic(() => import('@/components/NavBar/Account/MyBets/MyBets.client'), {
   loading: () => (
@@ -77,8 +76,8 @@ const MyBets = async () => {
       <Dialog>
         <DialogTrigger asChild>
           <div className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200 cursor-pointer">
-            <History className="h-4 w-4 text-slate-500" />
-            <span className="text-sm font-medium text-slate-700">Moje Zakłady</span>
+            <History className="h-5 w-5 text-slate-500" />
+            <span className="text-lg font-medium text-slate-700">Moje Zakłady</span>
           </div>
         </DialogTrigger>
         <DialogContent className="h-5/6 max-w-screen-xl overflow-y-auto w-full sm:w-11/12 px-0  m-0 sm:px-3 ">

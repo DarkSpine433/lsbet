@@ -44,7 +44,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { placeBetAction } from '@/app/actions/placeBet'
-import { activateCouponAction } from '@/app/actions/activateCoupon'
 import { Separator } from '@/components/ui/separator'
 
 // --- TYPES ---

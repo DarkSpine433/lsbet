@@ -32,7 +32,6 @@ const CodeCupons = (props: Props) => {
 
   return (
     <div>
-      <h2 className="font-semibold text-slate-900 mb-2">Kod Promocyjny</h2>
       <form onSubmit={handleCouponCodeActivation} className="space-y-2">
         <div className="relative">
           <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
