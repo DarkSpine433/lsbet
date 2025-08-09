@@ -104,17 +104,6 @@ const CategorySidebar: FC<{
   return (
     <aside className="w-full lg:w-64 lg:shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-slate-200 ">
       <div className="p-4 sticky left-0 top-16 ">
-        <Link href={`/my-bets`}>
-          <div
-            className={`mb-5 w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border cursor-pointer hover:bg-blue-50  hover:text-blue-700 hover:border-blue-200  text-slate-700 border-transparent`}
-          >
-            <div className="flex items-center space-x-3">
-              <Ticket className="h-4 w-4" />
-              <span className="font-medium">Moje kupony</span>
-            </div>
-          </div>
-        </Link>
-        <Separator />
         <div className="my-4">
           <h2 className="font-semibold text-slate-900 mb-2">Kod Promocyjny</h2>
           <form onSubmit={handleCouponCodeActivation} className="space-y-2">
@@ -560,7 +549,7 @@ const BettingSlip: FC<BettingSlipProps> = ({
                 <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
                   <AlertDialogAction
                     onClick={(e) => {
-                      e.preventDefault() // Prevent dialog from closing
+                      e.preventDefault()
                       handlePlaceBet(() => setIsAlertOpen(false))
                     }}
                     disabled={isPlacingBet}
@@ -572,7 +561,10 @@ const BettingSlip: FC<BettingSlipProps> = ({
                       'Potwierdź zakład'
                     )}
                   </AlertDialogAction>
-                  <AlertDialogCancel className="w-full mt-0 border-none hover:bg-slate-300 bg-slate-200 hover:text-slate-900 text-slate-800">
+                  <AlertDialogCancel
+                    disabled={isPlacingBet}
+                    className="w-full mt-0 border-none hover:bg-slate-300 bg-slate-200 hover:text-slate-900 text-slate-800"
+                  >
                     Anuluj
                   </AlertDialogCancel>
                 </AlertDialogFooter>
@@ -599,7 +591,7 @@ export default function PageClient(props: PageClientProps) {
   const [loading, setLoading] = useState(false)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
-  const moneySign = 'PLN'
+  const moneySign = '$'
 
   const [clientMoney, setClientMoney] = useState(money)
 

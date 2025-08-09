@@ -11,11 +11,18 @@ const LogoutButton = (props: Props) => {
   const [logoutClicked, setLogoutClicked] = useState(false)
   return (
     <Link href={'/logout'}>
-      <Button variant="default" size="sm" onClick={() => setLogoutClicked(true)}>
+      <Button
+        variant="default"
+        size="sm"
+        onClick={() => setLogoutClicked(true)}
+        className="flex items-center gap-3 flex-row w-full "
+      >
         {logoutClicked ? (
           <CircularProgress size={16} className="[&>*]:text-slate-50" />
         ) : (
-          <LogOut className="h-4 w-4" />
+          <>
+            <span>Wyloguj</span> <LogOut className="h-4 w-4" />
+          </>
         )}
       </Button>
     </Link>

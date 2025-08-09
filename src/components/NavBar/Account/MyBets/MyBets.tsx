@@ -6,9 +6,19 @@ import dynamic from 'next/dynamic'
 import CircularProgress from '@mui/material/CircularProgress'
 import { redirect } from 'next/navigation'
 import { Bet, PlacedBet } from '@/payload-types'
-
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { History, Wallet } from 'lucide-react'
+import { PopoverClose } from '@radix-ui/react-popover'
+import { Button } from '../../../ui/button'
 // Dynamically import the client component with a loading state
-const MyBetsPageClient = dynamic(() => import('./page.client'), {
+const MyBetsPageClient = dynamic(() => import('@/components/NavBar/Account/MyBets/MyBets.client'), {
   loading: () => (
     <div className="flex h-screen w-full items-center justify-center">
       <CircularProgress />
@@ -42,9 +52,9 @@ const getCashedResultOfEventBeted = cache(async (eventId: string[]): Promise<Bet
   })
   return result.docs || []
 })
-const MyBetsPage = async () => {
+const MyBets = async () => {
   const { user } = await getMeUser()
-
+  const moneySign = '$'
   // Redirect to login if no user is found
   if (!user) {
     return redirect('/login')
@@ -63,13 +73,30 @@ const MyBetsPage = async () => {
   })
   const resultOfEventBeted = await getCashedResultOfEventBeted(betsIds)
   return (
-    <MyBetsPageClient
-      nickname={user.email.split('@')[0]}
-      money={user.money || 0}
-      initialBets={placedBets}
-      resultOfEventBeted={resultOfEventBeted}
-    />
+    <>
+      <Dialog>
+        <DialogTrigger asChild>
+          <div className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200 cursor-pointer">
+            <History className="h-4 w-4 text-slate-500" />
+            <span className="text-sm font-medium text-slate-700">Moje Zakłady</span>
+          </div>
+        </DialogTrigger>
+        <DialogContent className="h-5/6 max-w-screen-xl overflow-y-auto w-full sm:w-11/12 px-0  m-0 sm:px-3 ">
+          <DialogHeader className="max-w-screen-lg mx-auto w-full">
+            <DialogTitle className="text-2xl sm:text-3xl font-bold text-slate-800  ">
+              Moje Zakłady
+            </DialogTitle>
+          </DialogHeader>
+          <MyBetsPageClient
+            nickname={user.email.split('@')[0]}
+            money={user.money || 0}
+            initialBets={placedBets}
+            resultOfEventBeted={resultOfEventBeted}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
-export default MyBetsPage
+export default MyBets
