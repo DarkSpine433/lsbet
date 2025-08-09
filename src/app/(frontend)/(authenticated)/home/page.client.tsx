@@ -85,51 +85,10 @@ const CategorySidebar: FC<{
   setClientMoney: (newBalance: number) => void
   onCategorySelect?: () => void // Optional: Callback to close dialog on mobile
 }> = ({ categories, selectedCategory, setLoading, setClientMoney, onCategorySelect }) => {
-  const [isPending, startTransition] = useTransition()
-  const [couponCode, setCouponCode] = useState('')
-
-  const handleCouponCodeActivation = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-
-    startTransition(async () => {
-      const result = await activateCouponAction(formData)
-      if (result.success) {
-        toast.success(result.message)
-        if (result.newBalance !== undefined) {
-          setClientMoney(result.newBalance)
-        }
-        setCouponCode('')
-      } else {
-        toast.error(result.message)
-      }
-    })
-  }
-
   return (
     <div className="p-4">
-      <div>
-        <h2 className="font-semibold text-slate-900 mb-2">Kod Promocyjny</h2>
-        <form onSubmit={handleCouponCodeActivation} className="space-y-2">
-          <div className="relative">
-            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              name="couponCode"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-              className="bg-slate-100 border-slate-200 shadow-inner pl-9 focus-visible:ring-1 focus-visible:ring-blue-400 text-slate-800 caret-slate-900"
-              type="text"
-              placeholder="Wpisz kod..."
-              disabled={isPending}
-            />
-          </div>
-          <Button variant="secondary" type="submit" className="w-full" disabled={isPending}>
-            {isPending ? <CircularProgress size={20} color="inherit" /> : 'Aktywuj'}
-          </Button>
-        </form>
-      </div>
-      <Separator className="my-4" />
-      <h2 className="font-semibold text-slate-900 mb-4">Sporty</h2>
+      <h2 className="font-semibold text-lg text-slate-900 mb-4">Kategorie</h2>
+      <Separator className="my-4 bg-slate-200" />
       <div className="space-y-1">
         {categories.map((category) => (
           <Link
@@ -598,6 +557,7 @@ export default function PageClient(props: PageClientProps) {
   const moneySign = 'PLN'
 
   const [clientMoney, setClientMoney] = useState(money)
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
 
   useEffect(() => {
     const hasCategoryParam = searchParams.has('category')
@@ -749,17 +709,19 @@ export default function PageClient(props: PageClientProps) {
 
   return (
     <div className="min-h-screen w-full bg-white">
-      <div className="flex flex-col lg:flex-row max-w-screen-2xl mx-auto" id="top">
-        <div className="hidden lg:block">
-          <CategorySidebar
-            categories={categories}
-            selectedCategory={selectedCategory}
-            setLoading={setLoading}
-            setClientMoney={setClientMoney}
-          />
-        </div>
+      <div className="flex flex-col xl:flex-row max-w-screen-2xl mx-auto" id="top">
+        <aside className="hidden xl:block xl:w-64 xl:shrink-0 bg-white border-r border-slate-200">
+          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+            <CategorySidebar
+              categories={categories}
+              selectedCategory={selectedCategory}
+              setLoading={setLoading}
+              setClientMoney={setClientMoney}
+            />
+          </div>
+        </aside>
 
-        <main className="flex-1 p-4 min-h-dvh sm:p-6 bg-gray-50 order-first lg:order-none">
+        <main className="flex-1 p-4 min-h-dvh sm:p-6 bg-gray-50 order-first xl:order-none pb-24 xl:pb-6">
           {loading ? (
             <div className="flex justify-center items-center h-full min-h-[400px]">
               <CircularProgress />
@@ -785,25 +747,27 @@ export default function PageClient(props: PageClientProps) {
           )}
         </main>
 
-        <div className="hidden lg:block">
-          <BettingSlip
-            selectedBets={selectedBets}
-            bets={bets}
-            removeBet={removeBet}
-            updateStake={updateStake}
-            calculateTotalStake={calculateTotalStake}
-            calculatePotentialWin={calculatePotentialWin}
-            handlePlaceBet={handlePlaceBet}
-            clearBetSlip={clearBetSlip}
-            handleRedirectToEvent={handleRedirectToEvent}
-            isPlacingBet={isPlacingBet}
-            moneySign={moneySign}
-          />
-        </div>
+        <aside className="hidden xl:block xl:w-96 xl:shrink-0 bg-white border-l border-slate-200">
+          <div className="sticky top-16 h-[calc(100vh-4rem)]">
+            <BettingSlip
+              selectedBets={selectedBets}
+              bets={bets}
+              removeBet={removeBet}
+              updateStake={updateStake}
+              calculateTotalStake={calculateTotalStake}
+              calculatePotentialWin={calculatePotentialWin}
+              handlePlaceBet={handlePlaceBet}
+              clearBetSlip={clearBetSlip}
+              handleRedirectToEvent={handleRedirectToEvent}
+              isPlacingBet={isPlacingBet}
+              moneySign={moneySign}
+            />
+          </div>
+        </aside>
 
         {/* Mobile Bottom Bar */}
-        <div className="lg:hidden z-40 fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 flex justify-around items-center shadow-lg text-slate-800">
-          <Dialog>
+        <div className="xl:hidden z-40 fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 flex justify-around items-center shadow-lg text-slate-800">
+          <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" className="flex flex-col h-auto p-2">
                 <ListFilter className="h-6 w-6 text-slate-600" />
@@ -820,6 +784,7 @@ export default function PageClient(props: PageClientProps) {
                   selectedCategory={selectedCategory}
                   setLoading={setLoading}
                   setClientMoney={setClientMoney}
+                  onCategorySelect={() => setIsCategoryDialogOpen(false)}
                 />
               </div>
             </DialogContent>
