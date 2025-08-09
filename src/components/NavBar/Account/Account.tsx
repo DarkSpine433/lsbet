@@ -8,6 +8,15 @@ import { Separator } from '../../ui/separator'
 import Link from 'next/link'
 import { PopoverClose } from '@radix-ui/react-popover'
 import MyBets from './MyBets/MyBets'
+import CodeCupons from './CodeCupons'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
 type Props = {
   user: User
@@ -16,8 +25,8 @@ type Props = {
 const Account = (props: Props) => {
   const { user } = props
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Dialog>
+      <DialogTrigger asChild>
         <Button
           variant="secondary"
           size="icon"
@@ -25,22 +34,28 @@ const Account = (props: Props) => {
         >
           <UserIcon className="h-5 w-5" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-64 p-0" side="bottom" align="end">
+      </DialogTrigger>
+      <DialogContent className=" max-w-96  w-full h-5/6 max-h-96 ">
         <div className="flex flex-col">
-          <div className="p-4 border-b">
-            <p className="text-sm font-semibold text-slate-800">{user.email.split('@')[0]}</p>
-          </div>
-          <nav className="p-2">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="text-lg font-semibold text-slate-800">Moje konto</DialogTitle>
+            <DialogDescription className="text-sm font-semibold text-slate-800">
+              <span className="font-normal">Witaj,&nbsp;</span>
+              <span>{user.email.split('@')[0]}</span>
+              <span className="font-normal">!</span>
+            </DialogDescription>
+          </DialogHeader>
+          <nav className="p-2 flex flex-col gap-2 ">
+            <CodeCupons />
+            <Separator />
             <MyBets />
           </nav>
-          <Separator />
-          <PopoverClose className="p-2 w-full">
-            <LogoutButton />
-          </PopoverClose>
+          <Separator className="mb-2" />
+
+          <LogoutButton />
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   )
 }
 

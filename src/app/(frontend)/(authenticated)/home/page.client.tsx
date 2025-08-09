@@ -10,16 +10,13 @@ import {
   Plus,
   Minus,
   X,
-  Wallet,
-  Bell,
-  LogOut,
-  BellRing,
   CheckCircle2,
   ScaleIcon,
   CircleArrowOutUpLeft,
   Share2,
   Ticket,
   Gift,
+  ListFilter,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types'
@@ -39,6 +36,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { placeBetAction } from '@/app/actions/placeBet'
 import { activateCouponAction } from '@/app/actions/activateCoupon'
 import { Separator } from '@/components/ui/separator'
@@ -79,7 +83,8 @@ const CategorySidebar: FC<{
   selectedCategory: string
   setLoading: (loading: boolean) => void
   setClientMoney: (newBalance: number) => void
-}> = ({ categories, selectedCategory, setLoading, setClientMoney }) => {
+  onCategorySelect?: () => void // Optional: Callback to close dialog on mobile
+}> = ({ categories, selectedCategory, setLoading, setClientMoney, onCategorySelect }) => {
   const [isPending, startTransition] = useTransition()
   const [couponCode, setCouponCode] = useState('')
 
@@ -94,7 +99,7 @@ const CategorySidebar: FC<{
         if (result.newBalance !== undefined) {
           setClientMoney(result.newBalance)
         }
-        setCouponCode('') // Clear input on success
+        setCouponCode('')
       } else {
         toast.error(result.message)
       }
@@ -102,54 +107,53 @@ const CategorySidebar: FC<{
   }
 
   return (
-    <aside className="w-full lg:w-64 lg:shrink-0 bg-white border-b lg:border-b-0 lg:border-r border-slate-200 ">
-      <div className="p-4 sticky left-0 top-16 ">
-        <div className="my-4">
-          <h2 className="font-semibold text-slate-900 mb-2">Kod Promocyjny</h2>
-          <form onSubmit={handleCouponCodeActivation} className="space-y-2">
-            <div className="relative">
-              <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                name="couponCode"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                className="bg-slate-100 border-slate-200 shadow-inner pl-9 focus-visible:ring-1 focus-visible:ring-blue-400 text-slate-800 caret-slate-900"
-                type="text"
-                placeholder="Wpisz kod..."
-                disabled={isPending}
-              />
-            </div>
-            <Button variant="secondary" type="submit" className="w-full" disabled={isPending}>
-              {isPending ? <CircularProgress size={20} color="inherit" /> : 'Aktywuj'}
-            </Button>
-          </form>
-        </div>
-        <Separator />
-        <h2 className="font-semibold text-slate-900 my-4">Sporty</h2>
-        <div className="space-y-1">
-          {categories.map((category) => (
-            <Link
-              key={category.id}
-              href={`/home?category=${category.title}`}
-              onClick={() => {
-                if (selectedCategory !== category.title) {
-                  setLoading(true)
-                }
-              }}
-            >
-              <div
-                className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border cursor-pointer ${selectedCategory === category.title ? 'bg-blue-50 text-blue-700 border-blue-200' : 'hover:bg-slate-50 text-slate-700 border-transparent'}`}
-              >
-                <div className="flex items-center space-x-3">
-                  <Trophy className="h-4 w-4" />
-                  <span className="font-medium">{category.title}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+    <div className="p-4">
+      <div>
+        <h2 className="font-semibold text-slate-900 mb-2">Kod Promocyjny</h2>
+        <form onSubmit={handleCouponCodeActivation} className="space-y-2">
+          <div className="relative">
+            <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              name="couponCode"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+              className="bg-slate-100 border-slate-200 shadow-inner pl-9 focus-visible:ring-1 focus-visible:ring-blue-400 text-slate-800 caret-slate-900"
+              type="text"
+              placeholder="Wpisz kod..."
+              disabled={isPending}
+            />
+          </div>
+          <Button variant="secondary" type="submit" className="w-full" disabled={isPending}>
+            {isPending ? <CircularProgress size={20} color="inherit" /> : 'Aktywuj'}
+          </Button>
+        </form>
       </div>
-    </aside>
+      <Separator className="my-4" />
+      <h2 className="font-semibold text-slate-900 mb-4">Sporty</h2>
+      <div className="space-y-1">
+        {categories.map((category) => (
+          <Link
+            key={category.id}
+            href={`/home?category=${category.title}`}
+            onClick={() => {
+              if (selectedCategory !== category.title) {
+                setLoading(true)
+              }
+              onCategorySelect?.() // Close dialog on mobile
+            }}
+          >
+            <div
+              className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border cursor-pointer ${selectedCategory === category.title ? 'bg-blue-50 text-blue-700 border-blue-200' : 'hover:bg-slate-50 text-slate-700 border-transparent'}`}
+            >
+              <div className="flex items-center space-x-3">
+                <Trophy className="h-4 w-4" />
+                <span className="font-medium">{category.title}</span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -344,8 +348,8 @@ const BettingSlip: FC<BettingSlipProps> = ({
   const [isAlertOpen, setIsAlertOpen] = useState(false)
 
   return (
-    <aside className="w-full lg:w-96 lg:shrink-0 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 sticky top-16 h-[calc(100vh-4rem)] flex flex-col">
-      <div className="p-4 border-b border-slate-200 shrink-0">
+    <aside className="p-4 h-full flex flex-col">
+      <div className="border-b border-slate-200 shrink-0 pb-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-slate-900 text-lg">
             {selectedBets.length > 1 ? 'Kupon AKO' : 'Kupon'}
@@ -353,9 +357,9 @@ const BettingSlip: FC<BettingSlipProps> = ({
           <Badge variant="secondary">{selectedBets.length}</Badge>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto py-4">
         {selectedBets.length === 0 ? (
-          <div className="text-center py-10 px-4">
+          <div className="text-center py-10 px-4 h-full flex flex-col justify-center items-center">
             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trophy className="h-8 w-8 text-slate-400" />
             </div>
@@ -363,7 +367,7 @@ const BettingSlip: FC<BettingSlipProps> = ({
             <p className="text-slate-400 text-xs mt-1">Kliknij na kurs, aby dodać zakład.</p>
           </div>
         ) : (
-          <div className="p-4 space-y-3">
+          <div className="space-y-3">
             {selectedBets.map((bet) => {
               const isDraw = bet.id.endsWith('-draw')
               const originalEvent = isDraw ? bets.find((b) => b.id === bet.eventId) : null
@@ -461,7 +465,7 @@ const BettingSlip: FC<BettingSlipProps> = ({
         )}
       </div>
       {selectedBets.length > 0 && (
-        <div className="p-4 border-t border-slate-200 shrink-0 space-y-4">
+        <div className="pt-4 border-t border-slate-200 shrink-0 space-y-4">
           {selectedBets.length > 1 && (
             <div className="space-y-2">
               <label className="font-semibold text-sm text-slate-800">Stawka Kuponu</label>
@@ -591,7 +595,7 @@ export default function PageClient(props: PageClientProps) {
   const [loading, setLoading] = useState(false)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
-  const moneySign = '$'
+  const moneySign = 'PLN'
 
   const [clientMoney, setClientMoney] = useState(money)
 
@@ -746,12 +750,14 @@ export default function PageClient(props: PageClientProps) {
   return (
     <div className="min-h-screen w-full bg-white">
       <div className="flex flex-col lg:flex-row max-w-screen-2xl mx-auto" id="top">
-        <CategorySidebar
-          categories={categories}
-          selectedCategory={selectedCategory}
-          setLoading={setLoading}
-          setClientMoney={setClientMoney}
-        />
+        <div className="hidden lg:block">
+          <CategorySidebar
+            categories={categories}
+            selectedCategory={selectedCategory}
+            setLoading={setLoading}
+            setClientMoney={setClientMoney}
+          />
+        </div>
 
         <main className="flex-1 p-4 min-h-dvh sm:p-6 bg-gray-50 order-first lg:order-none">
           {loading ? (
@@ -779,19 +785,75 @@ export default function PageClient(props: PageClientProps) {
           )}
         </main>
 
-        <BettingSlip
-          selectedBets={selectedBets}
-          bets={bets}
-          removeBet={removeBet}
-          updateStake={updateStake}
-          calculateTotalStake={calculateTotalStake}
-          calculatePotentialWin={calculatePotentialWin}
-          handlePlaceBet={handlePlaceBet}
-          clearBetSlip={clearBetSlip}
-          handleRedirectToEvent={handleRedirectToEvent}
-          isPlacingBet={isPlacingBet}
-          moneySign={moneySign}
-        />
+        <div className="hidden lg:block">
+          <BettingSlip
+            selectedBets={selectedBets}
+            bets={bets}
+            removeBet={removeBet}
+            updateStake={updateStake}
+            calculateTotalStake={calculateTotalStake}
+            calculatePotentialWin={calculatePotentialWin}
+            handlePlaceBet={handlePlaceBet}
+            clearBetSlip={clearBetSlip}
+            handleRedirectToEvent={handleRedirectToEvent}
+            isPlacingBet={isPlacingBet}
+            moneySign={moneySign}
+          />
+        </div>
+
+        {/* Mobile Bottom Bar */}
+        <div className="lg:hidden z-40 fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 flex justify-around items-center shadow-lg text-slate-800">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" className="flex flex-col h-auto p-2">
+                <ListFilter className="h-6 w-6 text-slate-600" />
+                <span className="text-xs">Kategorie</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="h-full max-h-[80dvh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Kategorie i Opcje</DialogTitle>
+              </DialogHeader>
+              <div className="overflow-y-auto -mx-6 px-6 flex-1">
+                <CategorySidebar
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  setLoading={setLoading}
+                  setClientMoney={setClientMoney}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" className="flex flex-col h-auto p-2 relative">
+                <Ticket className="h-6 w-6 text-slate-600" />
+                <span className="text-xs">Kupon</span>
+                {selectedBets.length > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white">
+                    {selectedBets.length}
+                  </Badge>
+                )}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="h-full max-h-[80dvh] flex flex-col">
+              <BettingSlip
+                selectedBets={selectedBets}
+                bets={bets}
+                removeBet={removeBet}
+                updateStake={updateStake}
+                calculateTotalStake={calculateTotalStake}
+                calculatePotentialWin={calculatePotentialWin}
+                handlePlaceBet={handlePlaceBet}
+                clearBetSlip={clearBetSlip}
+                handleRedirectToEvent={handleRedirectToEvent}
+                isPlacingBet={isPlacingBet}
+                moneySign={moneySign}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </div>
   )
