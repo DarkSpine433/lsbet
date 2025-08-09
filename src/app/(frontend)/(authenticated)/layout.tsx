@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button'
 import LogoutButton from '@/components/ui/logout-button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
+import Account from '@/components/NavBar/Account/Account'
+import Notification from '@/components/NavBar/Notification'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const payload = await getPayload({ config })
@@ -44,29 +46,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Logo />
             </Link>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Badge className="bg-gradient-to-r from-red-500 to-blue-500 text-white hidden sm:inline-flex">
-                {user.email.split('@')[0].toString()}
-              </Badge>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80" side="bottom" align="center">
-                  <div className="flex flex-col items-center justify-center ">
-                    <BellRing className="h-4 w-4" />
-                    <p className="text-sm text-slate-600">Brak powiadomień</p>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <div className="flex items-center space-x-2 bg-secondary rounded-lg px-3 py-2">
-                <Wallet className="h-4 w-4 text-slate-600" />
-                <span className="font-semibold text-sm">
+              <Account user={user} />
+              <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 shadow-inner border border-slate-200/80">
+                <Wallet className="h-5 w-5 text-slate-500" />
+                <span className="font-semibold text-sm text-slate-800 tabular-nums">
                   {user.money?.toFixed(2)}&nbsp;{moneySign}
                 </span>
               </div>
-              <LogoutButton />
+              <Notification />
             </div>
           </div>
         </div>

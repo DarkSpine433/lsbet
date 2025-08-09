@@ -213,19 +213,10 @@ export default function MyBetsPageClient({
   const betsToShow = activeTab === 'active' ? activeBets : settledBets
 
   return (
-    <div className="min-h-screen w-full bg-slate-50">
-      <main className="max-w-4xl mx-auto p-4 sm:p-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-6">Moje Zakłady</h1>
-
+    <div className="min-h-screen w-full bg-slate-50 ">
+      <main className="max-w-screen-lg mx-auto w-full pb-6 px-1  ">
         {/* Tabs for filtering */}
         <div className="flex border-b mb-6">
-          <Link
-            href={'/home'}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors text-slate-500 hover:text-slate-800`}
-          >
-            <Home className="h-4 w-4" />
-            Strona Główna
-          </Link>
           <button
             onClick={() => setActiveTab('active')}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'active' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
