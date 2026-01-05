@@ -16,7 +16,7 @@ export async function Footer() {
           © {new Date().getFullYear()} LSBet. Wszelkie prawa zastrzeżone.
         </p>
         <p className="text-xs mt-2 text-white/30">
-          {`Strona zrobiona na potrzeby gry RolePlay (VibeRP)`}
+          {`Strona zrobiona na potrzeby gry RolePlay (devGaming)`}
         </p>
       </div>
     </footer>
