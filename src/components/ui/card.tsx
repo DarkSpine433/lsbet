@@ -30,7 +30,7 @@ const CardTitle: React.FC<
 const CardDescription: React.FC<
   { ref?: React.Ref<HTMLParagraphElement> } & React.HTMLAttributes<HTMLParagraphElement>
 > = ({ className, ref, ...props }) => (
-  <p className={cn('text-sm text-muted-foreground', className)} ref={ref} {...props} />
+  <div className={cn('text-sm text-muted-foreground', className)} ref={ref} {...props} />
 )
 
 const CardContent: React.FC<

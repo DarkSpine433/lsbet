@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, FC, MouseEvent, useTransition, FormEvent } from 'react'
+import { useEffect, useState, FC, MouseEvent, useTransition, FormEvent, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -45,6 +45,9 @@ import {
 } from '@/components/ui/dialog'
 import { placeBetAction } from '@/app/actions/placeBet'
 import { Separator } from '@/components/ui/separator'
+import { MESSAGE_TYPES, WSMessage } from './types'
+import { useWebSocket } from './hooks/useWebSocket'
+import { Collection } from 'payload'
 
 // --- TYPES ---
 type SelectedBet = {
@@ -543,7 +546,7 @@ const BettingSlip: FC<BettingSlipProps> = ({
 // --- MAIN PAGE COMPONENT (PageClient) ---
 // ====================================================================
 export default function PageClient(props: PageClientProps) {
-  const { nickname, categories, bets, money } = props
+  const { nickname, categories, money } = props
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -557,6 +560,37 @@ export default function PageClient(props: PageClientProps) {
 
   const [clientMoney, setClientMoney] = useState(money)
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
+
+  const [bets, setBets] = useState<Bet[]>(props.bets)
+
+  const handleMessage = useCallback((message: WSMessage) => {
+    switch (message.type) {
+      case MESSAGE_TYPES.COLLECTION_DATA:
+        setBets((message as any).data.docs)
+        break
+      case MESSAGE_TYPES.COLLECTION_CHANGED:
+        if (message.collection == 'bets') {
+          switch (message.operation) {
+            case 'create':
+              setBets((prev) => [...prev, message.doc])
+              break
+            case 'update':
+              setBets((prev) => prev.map((bet) => (bet.id === message.doc.id ? message.doc : bet)))
+              break
+            case 'delete':
+              setBets((prev) => prev.filter((bet) => bet.id !== message.doc.id))
+              break
+          }
+        }
+        break
+    }
+  }, [])
+
+  const { status } = useWebSocket<WSMessage>({
+    collection: 'bets',
+    onMessage: handleMessage,
+  })
+  console.log('bets', bets, 'status', status)
 
   useEffect(() => {
     const hasCategoryParam = searchParams.has('category')
@@ -573,13 +607,6 @@ export default function PageClient(props: PageClientProps) {
     setClientMoney(money)
     setLoading(false)
   }, [searchParams, categories, selectedCategory, bets, money])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      router.refresh()
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [router])
 
   const addBet = (betDetails: AddBetDetails) => {
     if (betDetails.isBettingDisabled) {
@@ -802,6 +829,9 @@ export default function PageClient(props: PageClientProps) {
               </Button>
             </DialogTrigger>
             <DialogContent className="h-full max-h-[80dvh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Kupon</DialogTitle>
+              </DialogHeader>
               <BettingSlip
                 selectedBets={selectedBets}
                 bets={bets}

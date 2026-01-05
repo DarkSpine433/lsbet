@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import Account from '@/components/NavBar/Account/Account'
 import Notification from '@/components/NavBar/Notification'
+import Status from '@/components/NavBar/Status'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const payload = await getPayload({ config })
@@ -24,6 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   if (!user || !user.verified || user.banned) redirect('/')
   const moneySign = '$'
+
   return (
     <div className="bg-white">
       {user.role === 'admin' && (
@@ -42,11 +44,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="px-4 sm:px-6 py-4 max-w-screen-2xl mx-auto">
           <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-4 cursor-pointer">
+            <div className="flex items-center  cursor-pointer sm:translate-x-0 -translate-x-4">
               <Logo />
-            </Link>
+            </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
-              <Account user={user} />
+              <div className="w-fit h-fit relative">
+                <Account user={user} />
+                <Status className="absolute -top-0.5 -right-0.5" />
+              </div>
+
               <div className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 shadow-inner border border-slate-200/80">
                 <Wallet className="h-5 w-5 text-slate-500" />
                 <span className="font-semibold text-sm text-slate-800 tabular-nums">
