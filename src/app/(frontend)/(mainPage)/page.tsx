@@ -188,7 +188,7 @@ export default function LandingPage() {
                 Odbierz Bonus <ArrowRight className="ml-2 h-6 w-6" />
               </Button>
             </SignInSignUpDialog>
-            <Link href="/home">
+            <SignInSignUpDialog>
               <Button
                 size="lg"
                 variant="outline"
@@ -196,7 +196,7 @@ export default function LandingPage() {
               >
                 Zobacz Kursy
               </Button>
-            </Link>
+            </SignInSignUpDialog>
           </div>
         </div>
       </section>
