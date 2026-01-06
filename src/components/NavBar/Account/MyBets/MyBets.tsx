@@ -1,100 +1,102 @@
-import React, { cache } from 'react'
-import { getMeUser } from '@/utilities/getMeUser'
-import { getPayload } from 'payload'
-import configPromise from '@payload-config'
-import dynamic from 'next/dynamic'
-import CircularProgress from '@mui/material/CircularProgress'
-import { redirect } from 'next/navigation'
-import { Bet, PlacedBet } from '@/payload-types'
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { History, Loader2, Trophy } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { History, Wallet } from 'lucide-react'
+import { getMyBetsAction } from '@/app/actions/getBets' // Import Twojej akcji
+import dynamic from 'next/dynamic'
+import { Bet, PlacedBet } from '@/payload-types'
 
-// Dynamically import the client component with a loading state
 const MyBetsPageClient = dynamic(() => import('@/components/NavBar/Account/MyBets/MyBets.client'), {
   loading: () => (
-    <div className="flex h-screen w-full items-center justify-center">
-      <CircularProgress />
+    <div className="flex h-[400px] w-full items-center justify-center">
+      <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
     </div>
   ),
 })
 
-const getCashedPlacedBets = cache(async (userId: string): Promise<PlacedBet[]> => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'placed-bets',
-    where: {
-      user: {
-        equals: userId,
-      },
-    },
-    depth: 3, // This is correct! It should populate the team data.
-  })
-  return result.docs || []
-})
-const getCashedResultOfEventBeted = cache(async (eventId: string[]): Promise<Bet[]> => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'bets',
-    where: {
-      id: {
-        in: eventId,
-      },
-    },
-    depth: 0, // This is correct! It should populate the team data.
-  })
-  return result.docs || []
-})
-const MyBets = async () => {
-  const { user } = await getMeUser()
-  const moneySign = '$'
-  // Redirect to login if no user is found
-  if (!user) {
-    return redirect('/login')
+const MyBets = () => {
+  const [data, setData] = useState<{
+    placedBets: PlacedBet[]
+    results: Bet[]
+    user: { nickname: string; money: number }
+  } | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const fetchData = async () => {
+    setLoading(true)
+    const res = await getMyBetsAction()
+    if ('placedBets' in res) {
+      setData({
+        placedBets: res.placedBets as any,
+        results: res.results as any,
+        user: res.user as any,
+      })
+    }
+    setLoading(false)
   }
 
-  const placedBets = await getCashedPlacedBets(user.id)
-  // FIX: Changed `let` to `const` as `betsIds` is not reassigned.
-  const betsIds: string[] = []
-  placedBets.forEach((bet) => {
-    bet.selections.forEach((selection) => {
-      const eventId = (selection.betEvent as Bet)?.id
-      if (eventId && !betsIds.includes(eventId)) {
-        betsIds.push(eventId)
-      }
-    })
-  })
-  const resultOfEventBeted = await getCashedResultOfEventBeted(betsIds)
   return (
-    <>
-      <Dialog>
-        <DialogTrigger asChild>
-          <div className="flex items-center gap-3 p-2 rounded-md hover:bg-slate-200 cursor-pointer">
-            <History className="h-5 w-5 text-slate-500" />
-            <span className="text-lg font-medium text-slate-700">Moje Zakłady</span>
+    <Dialog onOpenChange={(open) => open && fetchData()}>
+      <DialogTrigger asChild>
+        <div className="group flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-900 transition-all cursor-pointer">
+          <div className="flex items-center gap-4">
+            <div className="p-2.5 rounded-xl bg-blue-600/10 text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <History className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-white uppercase tracking-wider">Moje Zakłady</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase">
+                Sprawdź historię i wyniki
+              </p>
+            </div>
           </div>
-        </DialogTrigger>
-        <DialogContent className="h-5/6 max-w-screen-xl overflow-y-auto w-full sm:w-11/12 px-0  m-0 sm:px-3 ">
-          <DialogHeader className="max-w-screen-lg mx-auto w-full">
-            <DialogTitle className="text-2xl sm:text-3xl font-bold text-slate-800  ">
-              Moje Zakłady
-            </DialogTitle>
-          </DialogHeader>
-          <MyBetsPageClient
-            nickname={user.email.split('@')[0]}
-            money={user.money || 0}
-            initialBets={placedBets}
-            resultOfEventBeted={resultOfEventBeted}
-          />
-        </DialogContent>
-      </Dialog>
-    </>
+          <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+        </div>
+      </DialogTrigger>
+
+      <DialogContent className="h-[90dvh] max-w-screen-xl bg-[#020617] border-slate-800 p-0 overflow-hidden flex flex-col shadow-2xl">
+        <DialogHeader className="p-8 border-b border-slate-800/50 bg-gradient-to-b from-blue-600/10 to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-2xl bg-blue-600/20 border border-blue-500/30">
+              <Trophy className="h-6 w-6 text-blue-500" />
+            </div>
+            <div>
+              <DialogTitle className="text-3xl font-black italic text-white uppercase tracking-tighter">
+                Historia <span className="text-blue-500">Gier</span>
+              </DialogTitle>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">
+                Przegląd Twojej aktywności
+              </p>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-950/20 custom-scrollbar">
+          {loading ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+              <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
+              <p className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                Pobieranie danych...
+              </p>
+            </div>
+          ) : data ? (
+            <MyBetsPageClient
+              nickname={data.user.nickname}
+              money={data.user.money}
+              initialBets={data.placedBets}
+              resultOfEventBeted={data.results}
+            />
+          ) : null}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 

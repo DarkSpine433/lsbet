@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, FC, MouseEvent, useTransition, FormEvent, useCallback } from 'react'
+import { useEffect, useState, FC, MouseEvent, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,8 +15,8 @@ import {
   CircleArrowOutUpLeft,
   Share2,
   Ticket,
-  Gift,
   ListFilter,
+  Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types'
@@ -47,7 +47,6 @@ import { placeBetAction } from '@/app/actions/placeBet'
 import { Separator } from '@/components/ui/separator'
 import { MESSAGE_TYPES, WSMessage } from './types'
 import { useWebSocket } from './hooks/useWebSocket'
-import { Collection } from 'payload'
 
 // --- TYPES ---
 type SelectedBet = {
@@ -77,20 +76,34 @@ type AddBetDetails = {
   isBettingDisabled?: boolean
 }
 
+type BettingSlipProps = {
+  selectedBets: SelectedBet[]
+  bets: Bet[]
+  removeBet: (betId: string) => void
+  updateStake: (betId: string, stake: number | string) => void
+  calculateTotalStake: () => number
+  calculatePotentialWin: () => number
+  handlePlaceBet: (closeDialog: () => void) => Promise<void>
+  clearBetSlip: () => void
+  handleRedirectToEvent: (e: MouseEvent, bet: SelectedBet) => void
+  isPlacingBet: boolean
+  moneySign: string
+}
+
 // ====================================================================
-// --- COMPONENT: CategorySidebar ---
+// --- COMPONENT: CategorySidebar (DARK) ---
 // ====================================================================
 const CategorySidebar: FC<{
   categories: Category[]
   selectedCategory: string
   setLoading: (loading: boolean) => void
-  setClientMoney: (newBalance: number) => void
-  onCategorySelect?: () => void // Optional: Callback to close dialog on mobile
-}> = ({ categories, selectedCategory, setLoading, setClientMoney, onCategorySelect }) => {
+  onCategorySelect?: () => void
+}> = ({ categories, selectedCategory, setLoading, onCategorySelect }) => {
   return (
-    <div className="p-4">
-      <h2 className="font-semibold text-lg text-slate-900 mb-4">Kategorie</h2>
-      <Separator className="my-4 bg-slate-200" />
+    <div className="p-4 pt-6">
+      <h2 className="font-bold text-sm uppercase tracking-widest text-slate-500 mb-6 px-2">
+        Dyscypliny
+      </h2>
       <div className="space-y-1">
         {categories.map((category) => (
           <Link
@@ -100,16 +113,25 @@ const CategorySidebar: FC<{
               if (selectedCategory !== category.title) {
                 setLoading(true)
               }
-              onCategorySelect?.() // Close dialog on mobile
+              onCategorySelect?.()
             }}
           >
             <div
-              className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors border cursor-pointer ${selectedCategory === category.title ? 'bg-blue-50 text-blue-700 border-blue-200' : 'hover:bg-slate-50 text-slate-700 border-transparent'}`}
+              className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all duration-200 border cursor-pointer ${
+                selectedCategory === category.title
+                  ? 'bg-blue-600/10 text-blue-400 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                  : 'hover:bg-slate-800/50 text-slate-400 border-transparent hover:text-slate-200'
+              }`}
             >
               <div className="flex items-center space-x-3">
-                <Trophy className="h-4 w-4" />
-                <span className="font-medium">{category.title}</span>
+                <Trophy
+                  className={`h-4 w-4 ${selectedCategory === category.title ? 'text-blue-400' : 'text-slate-500'}`}
+                />
+                <span className="font-bold text-sm tracking-tight">{category.title}</span>
               </div>
+              {selectedCategory === category.title && (
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+              )}
             </div>
           </Link>
         ))}
@@ -119,7 +141,7 @@ const CategorySidebar: FC<{
 }
 
 // ====================================================================
-// --- COMPONENT: EventCard ---
+// --- COMPONENT: EventCard (DARK) ---
 // ====================================================================
 const EventCard: FC<{
   bet: Bet
@@ -134,67 +156,72 @@ const EventCard: FC<{
   return (
     <Card
       key={bet.id}
-      className="bg-white shadow-md hover:shadow-xl border border-gray-200/80 rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 max-w-4xl mx-auto"
+      className="bg-slate-900 border-slate-800 shadow-2xl rounded-2xl overflow-hidden transition-all duration-300 hover:border-slate-700 max-w-4xl mx-auto"
       id={`${categoryTitle}-${bet.id}`}
     >
-      <CardHeader className="p-4 sm:p-6 border-b border-gray-200">
+      <CardHeader className="p-4 sm:p-6 border-b border-slate-800/50">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex flex-col gap-2">
-            <CardTitle className="text-lg sm:text-xl font-extrabold text-slate-800">
+            <CardTitle className="text-lg sm:text-xl font-black text-white italic tracking-tight">
               {bet.title}
             </CardTitle>
             <div className="flex items-center gap-4">
               <div className="flex items-center space-x-2">
                 <div
-                  className={`w-2.5 h-2.5 rounded-full ${isLive && !bet.endevent ? 'bg-red-500 animate-pulse' : 'bg-gray-500'}`}
-                ></div>
+                  className={`w-2 h-2 rounded-full ${isLive && !bet.endevent ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-slate-600'}`}
+                />
                 <span
-                  className={`text-xs sm:text-sm font-semibold tracking-wide ${isLive && !bet.endevent ? 'text-red-500' : 'text-gray-500'}`}
+                  className={`text-[10px] font-black tracking-[0.2em] uppercase ${isLive && !bet.endevent ? 'text-red-500' : 'text-slate-500'}`}
                 >
                   {isLive && !bet.endevent ? 'LIVE' : bet.endevent ? 'ZAKOŃCZONE' : 'WKRÓTCE'}
                 </span>
               </div>
-              <CardDescription>
-                <Badge
-                  variant="secondary"
-                  className="px-3 py-1 text-xs sm:text-sm font-medium rounded-full"
-                >
-                  {bet.starteventdate && formatDateTime(bet.starteventdate, true)}
-                </Badge>
-              </CardDescription>
+              <Badge
+                variant="outline"
+                className="border-slate-800 text-slate-400 bg-slate-800/30 text-[10px] uppercase tracking-widest px-3"
+              >
+                {bet.starteventdate && formatDateTime(bet.starteventdate, true)}
+              </Badge>
             </div>
           </div>
-          <div className="shrink-0 sm:ml-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleShare(bet, categoryTitle)}
-              className="text-slate-500 hover:bg-slate-900"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleShare(bet, categoryTitle)}
+            className="text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
 
-      <div className="p-4 sm:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+      <div className="p-4 sm:p-6 bg-gradient-to-b from-slate-900 to-[#020617]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
           {bet.team?.map((team) => (
             <div
               key={team.id}
-              className={`bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-200/80 hover:border-gray-300 transition-colors duration-300 ${bet.endevent && bet.typeofbet === 'win-lose' && team['win-lose'] ? 'border-green-500 bg-green-50' : ''}`}
+              className={`group relative bg-slate-800/30 rounded-2xl p-6 border transition-all duration-300 ${
+                bet.endevent && bet.typeofbet === 'win-lose' && team['win-lose']
+                  ? 'border-green-500/50 bg-green-500/5 shadow-[0_0_20px_rgba(34,197,94,0.05)]'
+                  : 'border-slate-800 hover:border-slate-600 hover:bg-slate-800/50'
+              }`}
             >
               <div className="text-center space-y-4">
-                <div className="relative w-24 h-24 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden shadow-inner bg-gray-100">
-                  <Media
-                    resource={team.logo}
-                    fill={true}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    imgClassName="w-full h-full object-cover"
-                  />
+                <div className="relative w-20 h-20 mx-auto rounded-full p-1 bg-gradient-to-tr from-slate-800 to-slate-700 shadow-inner">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-900">
+                    <Media
+                      resource={team.logo}
+                      fill={true}
+                      className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
+                    />
+                  </div>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-gray-800">{team.name}</h3>
-                <Badge>Kurs: {team.odds}</Badge>
+                <h3 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">
+                  {team.name}
+                </h3>
+                <div className="inline-block px-4 py-1.5 rounded-lg bg-blue-600/10 border border-blue-500/20 text-blue-400 font-black text-sm">
+                  {team.odds}
+                </div>
                 <Button
                   size="lg"
                   disabled={isBettingDisabled}
@@ -206,16 +233,16 @@ const EventCard: FC<{
                       odds: team.odds,
                       logo: team.logo,
                       category: categoryTitle,
-                      isBettingDisabled: isBettingDisabled,
+                      isBettingDisabled,
                     })
                   }
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm hover:shadow-md transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-slate-800 hover:bg-blue-600 text-white font-black py-6 rounded-xl border border-slate-700 hover:border-blue-500 transition-all duration-300 disabled:opacity-30"
                 >
-                  Wybierz drużynę
+                  WYBIERZ
                 </Button>
                 {bet.endevent && bet.typeofbet === 'win-lose' && (
                   <Badge
-                    className={`mt-2 ${team['win-lose'] ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                    className={`mt-2 ${team['win-lose'] ? 'bg-green-600' : 'bg-red-600'} text-white border-none font-bold uppercase text-[10px]`}
                   >
                     {team['win-lose'] ? 'WYGRANA' : 'PRZEGRANA'}
                   </Badge>
@@ -224,13 +251,16 @@ const EventCard: FC<{
             </div>
           ))}
         </div>
+
         {bet['draw-odds'] && (
-          <div className="w-full flex flex-col items-center justify-center mt-6 gap-2">
-            <Badge className="mx-auto text-center bg-blue-500">Kurs: {bet['draw-odds']}</Badge>
+          <div className="w-full flex flex-col items-center justify-center mt-8 gap-3 border-t border-slate-800 pt-6">
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              Opcja Remisu
+            </div>
             <Button
               size="lg"
               disabled={isBettingDisabled}
-              className="group relative bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 hover:from-purple-700 hover:via-pink-700 hover:to-red-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative bg-slate-800 hover:bg-slate-700 text-white font-black py-4 px-12 rounded-xl border border-slate-700 transition-all duration-300 disabled:opacity-30"
               onClick={() =>
                 addBet({
                   eventId: bet.id,
@@ -239,37 +269,29 @@ const EventCard: FC<{
                   odds: bet['draw-odds'],
                   logo: null,
                   category: categoryTitle,
-                  isBettingDisabled: isBettingDisabled,
+                  isBettingDisabled,
                 })
               }
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-              <span className="relative flex items-center space-x-3">
-                <span>REMIS</span>
+              <span className="flex items-center gap-3">
+                <ScaleIcon className="h-4 w-4 text-slate-400 group-hover:text-blue-400" />
+                REMIS: <span className="text-blue-400">{bet['draw-odds']}</span>
               </span>
-              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12"></div>
             </Button>
-            {bet.endevent && (
-              <Badge
-                className={`mt-2 ${bet.typeofbet === 'draw' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-              >
-                {bet.typeofbet === 'draw' ? 'WYGRANA' : 'PRZEGRANA'}
-              </Badge>
-            )}
           </div>
         )}
       </div>
-      <div className="bg-gray-50/80 p-3 border-t border-gray-200/80">
-        <div className="flex justify-between items-center text-xs text-gray-500">
+      <div className="bg-[#020617] p-3 border-t border-slate-800/50">
+        <div className="flex justify-between items-center text-[10px] text-slate-600 font-bold uppercase tracking-widest">
           <span className="flex items-center space-x-2">
             <div
-              className={`w-2 h-2 ${bet.stopbeting || bet.endevent ? 'bg-red-500' : 'bg-green-500'} rounded-full`}
-            ></div>
+              className={`w-1.5 h-1.5 ${bet.stopbeting || bet.endevent ? 'bg-red-500' : 'bg-green-500'} rounded-full shadow-sm`}
+            />
             <span>
               Zakłady {bet.endevent ? 'Zakończone' : bet.stopbeting ? 'Wstrzymane' : 'Otwarte'}
             </span>
           </span>
-          <span className="font-mono">Match ID: {bet.id}</span>
+          <span className="opacity-50">ID: {bet.id}</span>
         </div>
       </div>
     </Card>
@@ -277,22 +299,8 @@ const EventCard: FC<{
 }
 
 // ====================================================================
-// --- COMPONENT: BettingSlip ---
+// --- COMPONENT: BettingSlip (DARK) ---
 // ====================================================================
-interface BettingSlipProps {
-  selectedBets: SelectedBet[]
-  bets: Bet[]
-  removeBet: (id: string) => void
-  updateStake: (id: string, stake: number | string) => void
-  calculateTotalStake: () => number
-  calculatePotentialWin: () => number
-  handlePlaceBet: (closeDialog: () => void) => void
-  clearBetSlip: () => void
-  handleRedirectToEvent: (e: MouseEvent, bet: SelectedBet) => void
-  isPlacingBet: boolean
-  moneySign: string
-}
-
 const BettingSlip: FC<BettingSlipProps> = ({
   selectedBets,
   bets,
@@ -301,7 +309,6 @@ const BettingSlip: FC<BettingSlipProps> = ({
   calculateTotalStake,
   calculatePotentialWin,
   handlePlaceBet,
-  clearBetSlip,
   handleRedirectToEvent,
   isPlacingBet,
   moneySign,
@@ -309,133 +316,104 @@ const BettingSlip: FC<BettingSlipProps> = ({
   const [isAlertOpen, setIsAlertOpen] = useState(false)
 
   return (
-    <aside className="p-4 h-full flex flex-col">
-      <div className="border-b border-slate-200 shrink-0 pb-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900 text-lg">
-            {selectedBets.length > 1 ? 'Kupon AKO' : 'Kupon'}
-          </h2>
-          <Badge variant="secondary">{selectedBets.length}</Badge>
+    <aside className="p-4 h-full flex flex-col bg-slate-900">
+      <div className="border-b border-slate-800 shrink-0 pb-6 pt-2">
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <Ticket className="h-5 w-5 text-blue-500" />
+            <h2 className="font-black text-white text-lg tracking-tight italic">
+              {selectedBets.length > 1 ? 'KUPON AKO' : 'TWÓJ KUPON'}
+            </h2>
+          </div>
+          <Badge className="bg-blue-600 text-white font-black rounded-lg px-2 py-0.5">
+            {selectedBets.length}
+          </Badge>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto py-4">
+
+      <div className="flex-1 overflow-y-auto py-6 px-1 space-y-3 custom-scrollbar">
         {selectedBets.length === 0 ? (
-          <div className="text-center py-10 px-4 h-full flex flex-col justify-center items-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trophy className="h-8 w-8 text-slate-400" />
+          <div className="text-center py-20 px-4 h-full flex flex-col justify-center items-center">
+            <div className="w-16 h-16 bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-slate-700">
+              <Zap className="h-8 w-8 text-slate-600" />
             </div>
-            <p className="text-slate-500 text-sm font-medium">Twój kupon jest pusty</p>
-            <p className="text-slate-400 text-xs mt-1">Kliknij na kurs, aby dodać zakład.</p>
+            <p className="text-slate-300 text-sm font-bold uppercase tracking-tighter">
+              Brak selekcji
+            </p>
+            <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+              Wybierz kurs, aby przygotować swój zakład.
+            </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {selectedBets.map((bet) => {
-              const isDraw = bet.id.endsWith('-draw')
-              const originalEvent = isDraw ? bets.find((b) => b.id === bet.eventId) : null
-              const teamNames = originalEvent
-                ? originalEvent.team?.map((t) => t.name).join(' vs ')
-                : ''
-              return (
-                <div
-                  key={bet.id}
-                  className="bg-slate-50 p-3 rounded-lg space-y-3 border border-slate-200/80"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1">
-                      {isDraw ? (
-                        <div className="flex items-center justify-center w-8 h-8 bg-slate-200 rounded-full shrink-0 mt-0.5">
-                          <ScaleIcon className="h-4 w-4 text-slate-600" />
-                        </div>
-                      ) : (
-                        <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-inner bg-gray-100 shrink-0">
-                          <Media
-                            resource={bet.logo}
-                            fill={true}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <p className="font-semibold text-sm text-slate-800 leading-tight">
-                          {bet.name}
-                        </p>
-                        {isDraw && teamNames && (
-                          <p className="text-xs text-slate-500">{teamNames}</p>
-                        )}
-                        <p className="text-xs text-slate-500">
-                          Kurs:{' '}
-                          <span className="font-bold text-slate-700">
-                            {bet.odds?.toFixed(2) ?? 'N/A'}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Link
-                        href={`/home?category=${bet.category}#${bet.category}-${bet.eventId}`}
-                        onClick={(e) => handleRedirectToEvent(e, bet)}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-slate-500 hover:bg-slate-200 hover:text-slate-800"
-                        >
-                          <CircleArrowOutUpLeft className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeBet(bet.id)}
-                        className="h-8 w-8 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+          selectedBets.map((bet) => (
+            <div
+              key={bet.id}
+              className="bg-slate-800/40 p-4 rounded-2xl space-y-4 border border-slate-800 group hover:border-slate-700 transition-all"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3 flex-1">
+                  <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-slate-700 shrink-0">
+                    <Media resource={bet.logo} fill={true} className="w-full h-full object-cover" />
                   </div>
-                  {selectedBets.length === 1 && (
-                    <div className="flex items-center space-x-2 pt-2 border-t border-slate-200">
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        onClick={() => updateStake(bet.id, (bet.stake || 0) - 10)}
-                        className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                      <Input
-                        type="number"
-                        value={bet.stake || ''}
-                        onChange={(e) => updateStake(bet.id, e.target.value)}
-                        className="h-9 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800 focus-visible:ring-1 focus-visible:ring-blue-400"
-                      />
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        onClick={() => updateStake(bet.id, (bet.stake || 0) + 10)}
-                        className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex-1">
+                    <p className="font-bold text-sm text-white leading-tight">{bet.name}</p>
+                    <p className="text-[11px] font-bold text-blue-500 mt-1 uppercase tracking-widest">
+                      Kurs: {bet.odds?.toFixed(2) ?? 'N/A'}
+                    </p>
+                  </div>
                 </div>
-              )
-            })}
-          </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeBet(bet.id)}
+                  className="h-7 w-7 text-slate-600 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {selectedBets.length === 1 && (
+                <div className="flex items-center space-x-2 pt-2 border-t border-slate-800/50">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => updateStake(bet.id, (bet.stake || 0) - 10)}
+                    className="h-8 w-10 bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <Input
+                    type="number"
+                    value={bet.stake || ''}
+                    onChange={(e) => updateStake(bet.id, e.target.value)}
+                    className="h-8 bg-slate-900 border-slate-700 text-white text-center font-bold text-sm focus:ring-blue-500/50"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => updateStake(bet.id, (bet.stake || 0) + 10)}
+                    className="h-8 w-10 bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          ))
         )}
       </div>
+
       {selectedBets.length > 0 && (
-        <div className="pt-4 border-t border-slate-200 shrink-0 space-y-4">
+        <div className="pt-6 border-t border-slate-800 shrink-0 space-y-6">
           {selectedBets.length > 1 && (
-            <div className="space-y-2">
-              <label className="font-semibold text-sm text-slate-800">Stawka Kuponu</label>
+            <div className="space-y-3 bg-slate-800/20 p-4 rounded-2xl border border-slate-800">
+              <label className="font-bold text-xs text-slate-500 uppercase tracking-widest px-1">
+                Stawka Łączna
+              </label>
               <div className="flex items-center space-x-2">
                 <Button
-                  variant="secondary"
-                  size="icon"
                   onClick={() => updateStake('combined', (selectedBets[0]?.stake ?? 0) - 10)}
-                  className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
+                  className="bg-slate-800 hover:bg-slate-700 border-slate-700 h-10 w-12 text-white"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
@@ -443,99 +421,99 @@ const BettingSlip: FC<BettingSlipProps> = ({
                   type="number"
                   value={selectedBets[0]?.stake || ''}
                   onChange={(e) => updateStake('combined', e.target.value)}
-                  className="h-9 text-center font-bold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none bg-slate-200 text-slate-800 focus-visible:ring-1 focus-visible:ring-blue-400"
+                  className="bg-slate-900 border-slate-700 h-10 text-center font-black text-white"
                 />
                 <Button
-                  variant="secondary"
-                  size="icon"
                   onClick={() => updateStake('combined', (selectedBets[0]?.stake ?? 0) + 10)}
-                  className="h-9 w-12 bg-slate-200 text-slate-800 hover:bg-slate-300"
+                  className="bg-slate-800 hover:bg-slate-700 border-slate-700 h-10 w-12 text-white"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           )}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-600">Łączna stawka:</span>
-              <span className="font-bold text-slate-900">
+
+          <div className="space-y-3 px-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-slate-500 font-bold uppercase tracking-widest">Stawka:</span>
+              <span className="font-black text-white">
                 {calculateTotalStake().toFixed(2)} {moneySign}
               </span>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-600">Potencjalna wygrana:</span>
-              <span className="font-bold text-lg text-green-600">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 font-bold uppercase tracking-widest text-xs">
+                Do wygrania:
+              </span>
+              <span className="font-black text-xl text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.2)]">
                 {calculatePotentialWin().toFixed(2)} {moneySign}
               </span>
             </div>
           </div>
-          <div>
-            <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-              <AlertDialogTrigger asChild>
-                <Button
-                  size="lg"
-                  disabled={selectedBets.length === 0 || calculateTotalStake() <= 0}
-                  className="w-full h-12 font-bold text-lg bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-red-500/30 transition-all duration-300 disabled:bg-slate-300 disabled:shadow-none disabled:cursor-not-allowed"
-                >
-                  Postaw Zakład
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-slate-50">
-                <AlertDialogHeader className="items-center">
-                  <div className="rounded-full bg-green-100 p-3">
-                    <CheckCircle2 className="h-8 w-8 text-green-600" />
-                  </div>
-                  <AlertDialogTitle className="text-2xl font-bold pt-2 text-slate-800">
-                    Potwierdź swój zakład
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-center">
-                    <p className="text-slate-500">Ewentualna wygrana</p>
-                    <p className="text-3xl font-bold text-green-600 py-2">
-                      {calculatePotentialWin().toFixed(2)} {moneySign}
+
+          <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="lg"
+                disabled={selectedBets.length === 0 || calculateTotalStake() <= 0}
+                className="w-full h-14 font-black text-lg bg-blue-600 hover:bg-blue-500 text-white rounded-2xl shadow-xl shadow-blue-600/20 transition-all duration-300 disabled:bg-slate-800 disabled:text-slate-600"
+              >
+                POSTAW ZAKŁAD
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-slate-900 border-slate-800 text-white">
+              <AlertDialogHeader className="items-center pb-4">
+                <div className="rounded-full bg-blue-500/10 p-4 mb-2">
+                  <CheckCircle2 className="h-10 w-10 text-blue-500" />
+                </div>
+                <AlertDialogTitle className="text-2xl font-black italic tracking-tight">
+                  POTWIERDŹ ZAKŁAD
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-slate-400 text-center">
+                  Grasz bez podatku! Całość wygranej trafia na Twoje konto.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="bg-slate-800/50 rounded-2xl p-6 mb-4 border border-slate-800">
+                <div className="flex justify-between items-center text-center">
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                      Stawka
                     </p>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="flex justify-between items-center border-t border-b py-4">
-                  <div className="text-center flex-1">
-                    <p className="text-sm text-slate-500">Stawka</p>
-                    <p className="font-bold text-slate-800">
+                    <p className="text-xl font-black">
                       {calculateTotalStake().toFixed(2)} {moneySign}
                     </p>
                   </div>
-                  <div className="border-l h-10"></div>
-                  <div className="text-center flex-1">
-                    <p className="text-sm text-slate-500">Kurs</p>
-                    <p className="font-bold text-slate-800">
-                      {(calculatePotentialWin() / (calculateTotalStake() || 1)).toFixed(2)}
+                  <div className="h-10 w-px bg-slate-700" />
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                      Potencjał
+                    </p>
+                    <p className="text-xl font-black text-green-400">
+                      {calculatePotentialWin().toFixed(2)}
                     </p>
                   </div>
                 </div>
-                <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
-                  <AlertDialogAction
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handlePlaceBet(() => setIsAlertOpen(false))
-                    }}
-                    disabled={isPlacingBet}
-                    className="w-full bg-red-600 hover:bg-red-700"
-                  >
-                    {isPlacingBet ? (
-                      <CircularProgress size={20} color="inherit" />
-                    ) : (
-                      'Potwierdź zakład'
-                    )}
-                  </AlertDialogAction>
-                  <AlertDialogCancel
-                    disabled={isPlacingBet}
-                    className="w-full mt-0 border-none hover:bg-slate-300 bg-slate-200 hover:text-slate-900 text-slate-800"
-                  >
-                    Anuluj
-                  </AlertDialogCancel>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+              </div>
+              <AlertDialogFooter className="sm:flex-col gap-2">
+                <AlertDialogAction
+                  onClick={(e) => {
+                    e.preventDefault()
+                    handlePlaceBet(() => setIsAlertOpen(false))
+                  }}
+                  disabled={isPlacingBet}
+                  className="w-full bg-blue-600 hover:bg-blue-500 font-black h-12 rounded-xl"
+                >
+                  {isPlacingBet ? (
+                    <CircularProgress size={24} className="text-white" />
+                  ) : (
+                    'ZATWIERDŹ'
+                  )}
+                </AlertDialogAction>
+                <AlertDialogCancel className="w-full bg-transparent border-slate-800 hover:bg-slate-800 text-slate-400 font-bold h-12 rounded-xl">
+                  ANULUJ
+                </AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       )}
     </aside>
@@ -543,10 +521,10 @@ const BettingSlip: FC<BettingSlipProps> = ({
 }
 
 // ====================================================================
-// --- MAIN PAGE COMPONENT (PageClient) ---
+// --- MAIN PAGE COMPONENT (DARK) ---
 // ====================================================================
 export default function PageClient(props: PageClientProps) {
-  const { nickname, categories, money } = props
+  const { categories, money } = props
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -556,13 +534,12 @@ export default function PageClient(props: PageClientProps) {
   const [loading, setLoading] = useState(false)
   const [isPlacingBet, setIsPlacingBet] = useState(false)
   const [selectedBets, setSelectedBets] = useState<SelectedBet[]>([])
-  const moneySign = 'PLN'
-
   const [clientMoney, setClientMoney] = useState(money)
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
-
   const [bets, setBets] = useState<Bet[]>(props.bets)
+  const moneySign = 'PLN'
 
+  // WebSocket / Data logic remains the same...
   const handleMessage = useCallback((message: WSMessage) => {
     switch (message.type) {
       case MESSAGE_TYPES.COLLECTION_DATA:
@@ -586,11 +563,7 @@ export default function PageClient(props: PageClientProps) {
     }
   }, [])
 
-  const { status } = useWebSocket<WSMessage>({
-    collection: 'bets',
-    onMessage: handleMessage,
-  })
-  console.log('bets', bets, 'status', status)
+  useWebSocket<WSMessage>({ collection: 'bets', onMessage: handleMessage })
 
   useEffect(() => {
     const hasCategoryParam = searchParams.has('category')
@@ -601,13 +574,12 @@ export default function PageClient(props: PageClientProps) {
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category') ?? categories[0]?.title
-    if (categoryFromUrl !== selectedCategory) {
-      setSelectedCategory(categoryFromUrl)
-    }
+    if (categoryFromUrl !== selectedCategory) setSelectedCategory(categoryFromUrl)
     setClientMoney(money)
     setLoading(false)
-  }, [searchParams, categories, selectedCategory, bets, money])
+  }, [searchParams, categories, selectedCategory, money])
 
+  // Action handlers (addBet, removeBet, updateStake, etc.) remain functionally same...
   const addBet = (betDetails: AddBetDetails) => {
     if (betDetails.isBettingDisabled) {
       toast.error('Zakłady na to wydarzenie są niedostępne.')
@@ -627,17 +599,17 @@ export default function PageClient(props: PageClientProps) {
       stake: 10,
     }
     setSelectedBets((prev) => [...prev, newBet])
-    toast.success(`Dodano ${betDetails.teamName} do Twojego kuponu!`)
+    toast.success(`Dodano ${betDetails.teamName} do kuponu!`, {
+      style: { background: '#0f172a', color: '#fff', border: '1px solid #1e293b' },
+    })
   }
 
-  const removeBet = (betId: string) => {
+  const removeBet = (betId: string) =>
     setSelectedBets((prev) => prev.filter((bet) => bet.id !== betId))
-  }
 
   const updateStake = (betId: string, stake: number | string) => {
     const numericStake = typeof stake === 'string' && stake === '' ? 0 : parseFloat(stake as string)
     const validStake = Math.max(0, isNaN(numericStake) ? 0 : numericStake)
-
     if (selectedBets.length > 1) {
       setSelectedBets((prev) => prev.map((bet) => ({ ...bet, stake: validStake })))
     } else {
@@ -647,125 +619,99 @@ export default function PageClient(props: PageClientProps) {
     }
   }
 
-  const calculateTotalStake = () => {
-    if (selectedBets.length > 1) {
-      return selectedBets[0]?.stake ?? 0
-    }
-    return selectedBets.reduce((total, bet) => total + bet.stake, 0)
-  }
-
-  const calculatePotentialWin = () => {
-    if (selectedBets.length > 1) {
-      const combinedOdds = selectedBets.reduce((total, bet) => total * (bet.odds ?? 1), 1)
-      const stake = selectedBets[0]?.stake ?? 0
-      return stake * combinedOdds
-    }
-    return selectedBets.reduce((total, bet) => total + bet.stake * (bet.odds ?? 0), 0)
-  }
+  const calculateTotalStake = () =>
+    selectedBets.length > 1
+      ? (selectedBets[0]?.stake ?? 0)
+      : selectedBets.reduce((t, b) => t + b.stake, 0)
+  const calculatePotentialWin = () =>
+    selectedBets.length > 1
+      ? (selectedBets[0]?.stake ?? 0) * selectedBets.reduce((t, b) => t * (b.odds ?? 1), 1)
+      : selectedBets.reduce((t, b) => t + b.stake * (b.odds ?? 0), 0)
 
   const handlePlaceBet = async (closeDialog: () => void) => {
     setIsPlacingBet(true)
     try {
       const totalStake = calculateTotalStake()
-
       if (totalStake <= 0) {
         toast.error('Stawka musi być większa niż 0.')
-        setIsPlacingBet(false)
         return
       }
-
       if ((clientMoney || 0) < totalStake) {
         toast.error('Niewystarczające środki.')
-        setIsPlacingBet(false)
         return
       }
-
       const result = await placeBetAction(selectedBets)
-
       if (result.success) {
         toast.success(result.message)
-        const newBalance = parseFloat(((clientMoney || 0) - totalStake).toFixed(2))
-        setClientMoney(newBalance)
-        clearBetSlip()
-        closeDialog() // Close the dialog on success
-      } else {
-        toast.error(result.message)
-      }
-    } catch (error) {
+        setClientMoney(parseFloat(((clientMoney || 0) - totalStake).toFixed(2)))
+        setSelectedBets([])
+        closeDialog()
+      } else toast.error(result.message)
+    } catch {
       toast.error('Wystąpił nieoczekiwany błąd.')
     } finally {
       setIsPlacingBet(false)
     }
   }
 
-  const clearBetSlip = () => {
-    setSelectedBets([])
-  }
-
   const handleRedirectToEvent = (e: MouseEvent, bet: SelectedBet) => {
     if (bet.category === selectedCategory) {
       e.preventDefault()
-      const element = document.getElementById(`${bet.category}-${bet.eventId}`)
-      element?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    } else {
-      setLoading(true)
-    }
+      document
+        .getElementById(`${bet.category}-${bet.eventId}`)
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    } else setLoading(true)
   }
 
   const handleShare = async (bet: Bet, categoryTitle: string) => {
     const url = `${window.location.origin}/home?category=${categoryTitle}#${categoryTitle}-${bet.id}`
-    const shareData = {
-      title: `Zakład na: ${bet.title}`,
-      text: `Sprawdź ten zakład na ${bet.title}! Kursy i więcej informacji znajdziesz tutaj:`,
-      url: url,
-    }
-
     try {
-      if (navigator.share) {
-        await navigator.share(shareData)
-      } else {
+      if (navigator.share) await navigator.share({ title: `Zakład: ${bet.title}`, url })
+      else {
         await navigator.clipboard.writeText(url)
-        toast.success('Link do wydarzenia skopiowany do schowka!')
+        toast.success('Link skopiowany!')
       }
-    } catch (error) {
-      console.error('Błąd udostępniania:', error)
-      toast.error('Nie udało się udostępnić wydarzenia.')
+    } catch {
+      toast.error('Błąd udostępniania.')
     }
   }
 
   return (
-    <div className="min-h-screen w-full bg-white">
+    <div className="min-h-screen w-full bg-[#020617] text-white">
       <div className="flex flex-col xl:flex-row max-w-screen-2xl mx-auto" id="top">
-        <aside className="hidden xl:block xl:w-64 xl:shrink-0 bg-white border-r border-slate-200">
-          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+        {/* Sidebar Lewy */}
+        <aside className="hidden xl:block xl:w-72 xl:shrink-0 bg-slate-900 border-r border-slate-800/60">
+          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
             <CategorySidebar
               categories={categories}
               selectedCategory={selectedCategory}
               setLoading={setLoading}
-              setClientMoney={setClientMoney}
             />
           </div>
         </aside>
 
-        <main className="flex-1 p-4 min-h-dvh sm:p-6 bg-gray-50 order-first xl:order-none pb-24 xl:pb-6">
+        {/* Główny Kontent */}
+        <main className="flex-1 p-4 sm:p-8 bg-[#020617] order-first xl:order-none pb-32 xl:pb-8">
           {loading ? (
-            <div className="flex justify-center items-center h-full min-h-[400px]">
-              <CircularProgress />
+            <div className="flex justify-center items-center h-[60vh]">
+              <CircularProgress className="text-blue-500" />
             </div>
           ) : (
-            <div className="space-y-8 max-w-6xl mx-auto">
+            <div className="space-y-6 max-w-5xl mx-auto">
               {bets.length > 0 ? (
                 bets.map((bet: Bet) => (
                   <EventCard key={bet.id} bet={bet} addBet={addBet} handleShare={handleShare} />
                 ))
               ) : (
-                <div className="text-center py-20">
-                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Trophy className="h-12 w-12 text-slate-400" />
+                <div className="text-center py-32 bg-slate-900/40 rounded-[3rem] border border-slate-800 border-dashed">
+                  <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Trophy className="h-10 w-10 text-slate-700" />
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-700">Brak aktywnych zakładów</h3>
-                  <p className="text-slate-500 text-sm mt-2">
-                    Aktualnie nie ma aktywnych zakładów w tej kategorii.
+                  <h3 className="text-2xl font-black text-slate-500 italic tracking-tight">
+                    Brak aktywnych wydarzeń
+                  </h3>
+                  <p className="text-slate-600 font-medium mt-2">
+                    Wybierz inną kategorię lub wróć później.
                   </p>
                 </div>
               )}
@@ -773,7 +719,8 @@ export default function PageClient(props: PageClientProps) {
           )}
         </main>
 
-        <aside className="hidden xl:block xl:w-96 xl:shrink-0 bg-white border-l border-slate-200">
+        {/* Sidebar Prawy (Kupon) */}
+        <aside className="hidden xl:block xl:w-96 xl:shrink-0 bg-slate-900 border-l border-slate-800/60">
           <div className="sticky top-16 h-[calc(100vh-4rem)]">
             <BettingSlip
               selectedBets={selectedBets}
@@ -783,7 +730,7 @@ export default function PageClient(props: PageClientProps) {
               calculateTotalStake={calculateTotalStake}
               calculatePotentialWin={calculatePotentialWin}
               handlePlaceBet={handlePlaceBet}
-              clearBetSlip={clearBetSlip}
+              clearBetSlip={() => setSelectedBets([])}
               handleRedirectToEvent={handleRedirectToEvent}
               isPlacingBet={isPlacingBet}
               moneySign={moneySign}
@@ -791,25 +738,27 @@ export default function PageClient(props: PageClientProps) {
           </div>
         </aside>
 
-        {/* Mobile Bottom Bar */}
-        <div className="xl:hidden z-40 fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2 flex justify-around items-center shadow-lg text-slate-800">
+        {/* Mobilny Pasek Dolny */}
+        <div className="xl:hidden z-40 fixed bottom-0 left-0 right-0 bg-[#0f172a]/90 backdrop-blur-xl border-t border-slate-800 p-3 flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="ghost" className="flex flex-col h-auto p-2">
-                <ListFilter className="h-6 w-6 text-slate-600" />
-                <span className="text-xs">Kategorie</span>
+              <Button
+                variant="ghost"
+                className="flex flex-col h-auto p-2 text-slate-400 hover:text-white"
+              >
+                <ListFilter className="h-6 w-6 mb-1" />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Sporty</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="h-full max-h-[80dvh] flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Kategorie i Opcje</DialogTitle>
-              </DialogHeader>
-              <div className="overflow-y-auto -mx-6 px-6 flex-1">
+            <DialogContent className="h-full max-h-[85dvh] bg-slate-900 border-slate-800 text-white flex flex-col p-0">
+              <div className="p-6 border-b border-slate-800">
+                <h2 className="text-xl font-black italic">WYBIERZ DYSCYPLINĘ</h2>
+              </div>
+              <div className="overflow-y-auto px-2 pb-6">
                 <CategorySidebar
                   categories={categories}
                   selectedCategory={selectedCategory}
                   setLoading={setLoading}
-                  setClientMoney={setClientMoney}
                   onCategorySelect={() => setIsCategoryDialogOpen(false)}
                 />
               </div>
@@ -818,20 +767,22 @@ export default function PageClient(props: PageClientProps) {
 
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="ghost" className="flex flex-col h-auto p-2 relative">
-                <Ticket className="h-6 w-6 text-slate-600" />
-                <span className="text-xs">Kupon</span>
-                {selectedBets.length > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 bg-red-500 text-white">
-                    {selectedBets.length}
-                  </Badge>
-                )}
+              <Button
+                variant="ghost"
+                className="flex flex-col h-auto p-2 relative text-slate-400 hover:text-white"
+              >
+                <div className="relative">
+                  <Ticket className="h-6 w-6 mb-1" />
+                  {selectedBets.length > 0 && (
+                    <div className="absolute -top-1 -right-1 h-4 w-4 bg-blue-600 rounded-full text-[9px] font-black flex items-center justify-center text-white shadow-lg">
+                      {selectedBets.length}
+                    </div>
+                  )}
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest">Kupon</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="h-full max-h-[80dvh] flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Kupon</DialogTitle>
-              </DialogHeader>
+            <DialogContent className="h-full max-h-[85dvh] bg-slate-900 border-slate-800 text-white flex flex-col p-0">
               <BettingSlip
                 selectedBets={selectedBets}
                 bets={bets}
@@ -840,7 +791,7 @@ export default function PageClient(props: PageClientProps) {
                 calculateTotalStake={calculateTotalStake}
                 calculatePotentialWin={calculatePotentialWin}
                 handlePlaceBet={handlePlaceBet}
-                clearBetSlip={clearBetSlip}
+                clearBetSlip={() => setSelectedBets([])}
                 handleRedirectToEvent={handleRedirectToEvent}
                 isPlacingBet={isPlacingBet}
                 moneySign={moneySign}

@@ -1,184 +1,375 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
-  Play,
-  Shield,
-  Headphones,
-  Menu,
+  Trophy,
+  ShieldCheck,
+  Zap,
   TrendingUp,
   Users,
-  Zap,
   Award,
-  Globe,
-  Sparkles,
   ArrowRight,
-  ChevronDown,
   DollarSign,
+  ChevronDown,
+  ChevronRight,
+  HelpCircle,
+  CheckCircle2,
+  Activity,
 } from 'lucide-react'
-import Link from 'next/link'
-import { FloatingElements } from '@/components/MainPage/FloatingElements'
-import { Logo } from '@/components/Logo/Logo'
 import { AnimatedCounter } from '@/components/MainPage/AnimatedCounter'
-import { GlassCard } from '@/components/MainPage/GlassCard'
 import SignInSignUpDialog from '@/components/MainPage/SignInSignUpDialog'
-import { getMeUser } from '@/utilities/getMeUser'
 
-export default function HomePage() {
+// --- CUSTOM ACCORDION COMPONENT (DARK VERSION) ---
+const AccordionItem = ({
+  title,
+  content,
+  isOpen,
+  onClick,
+}: {
+  title: string
+  content: string
+  isOpen: boolean
+  onClick: () => void
+}) => {
+  return (
+    <div
+      className={`border transition-all duration-300 rounded-2xl mb-4 overflow-hidden ${
+        isOpen
+          ? 'border-blue-500/50 bg-slate-900 shadow-lg shadow-blue-500/10'
+          : 'border-slate-800 bg-slate-900/50 hover:border-slate-700'
+      }`}
+    >
+      <button
+        onClick={onClick}
+        className="w-full flex items-center justify-between p-6 text-left focus:outline-none group"
+      >
+        <div className="flex items-center gap-4">
+          <div
+            className={`p-2 rounded-lg transition-colors ${isOpen ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500 group-hover:bg-slate-700'}`}
+          >
+            <HelpCircle className="h-5 w-5" />
+          </div>
+          <span
+            className={`font-bold text-lg transition-colors ${isOpen ? 'text-white' : 'text-slate-300'}`}
+          >
+            {title}
+          </span>
+        </div>
+        <ChevronDown
+          className={`h-5 w-5 transition-transform duration-300 ${isOpen ? 'rotate-180 text-blue-500' : 'text-slate-600'}`}
+        />
+      </button>
+
+      <div
+        className={`transition-all duration-500 ease-in-out overflow-hidden ${
+          isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="p-6 pt-0 text-slate-400 leading-relaxed border-t border-slate-800/50 mt-[-1px]">
+          {content}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// --- FEATURE CARD COMPONENT (DARK VERSION) ---
+function FeatureCard({
+  icon,
+  title,
+  description,
+  status,
+}: {
+  icon: React.ReactNode
+  title: string
+  description: string
+  status: string
+}) {
+  return (
+    <Card className="bg-slate-900 border-slate-800 shadow-xl hover:border-blue-500/50 transition-all duration-300 rounded-2xl overflow-hidden group">
+      <CardHeader className="p-6 border-b border-slate-800/50">
+        <div className="flex items-center gap-3 mb-4">
+          <Badge
+            variant="outline"
+            className="text-[10px] font-bold tracking-widest uppercase py-0 px-2 text-blue-500 border-blue-500/20 bg-blue-500/5"
+          >
+            {status}
+          </Badge>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-slate-800 text-blue-500 rounded-xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+            {icon}
+          </div>
+          <CardTitle className="text-xl font-bold text-white">{title}</CardTitle>
+        </div>
+      </CardHeader>
+      <div className="p-6">
+        <CardDescription className="text-slate-400 text-base leading-relaxed">
+          {description}
+        </CardDescription>
+      </div>
+    </Card>
+  )
+}
+
+export default function LandingPage() {
   const [isVisible, setIsVisible] = useState(false)
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0)
 
   useEffect(() => {
     setIsVisible(true)
   }, [])
 
+  const faqData = [
+    {
+      question: 'Co oznacza gra bez podatku?',
+      answer:
+        'W naszej platformie bierzemy 12% podatek obrotowy na siebie. Ty otrzymujesz pełną kwotę wygranej wynikającą z przemnożenia stawki przez kurs.',
+    },
+    {
+      question: 'Jak szybko otrzymam swoją wygraną?',
+      answer: 'Większość wygranych trafia na konto bankowe gracza w czasie krótszym niż 24 godzin.',
+    },
+    {
+      question: 'Czy platforma jest legalna?',
+      answer:
+        'Tak, działamy w oparciu o pełną licencję i certyfikowane systemy losujące oraz rozliczające, zapewniając 100% bezpieczeństwa.',
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-red-900 relative overflow-hidden">
-      {/* Animated background elements with patriotic colors */}
-      <FloatingElements />
+    <div className="min-h-screen bg-[#020617] text-slate-100 selection:bg-blue-500/30">
+      {/* 1. HERO SECTION */}
+      <section className="relative pt-20 pb-32 md:pt-32 md:pb-48 px-4 overflow-hidden">
+        {/* Deep Glow Effects */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-red-600/5 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Mouse follower gradient with patriotic colors */}
-      <div className="fixed w-96 h-96 bg-gradient-to-r from-blue-500/20 to-red-500/20 rounded-full blur-3xl pointer-events-none transition-all duration-300 ease-out" />
-
-      {/* Hero Section */}
-      <main className="relative z-10 container mx-auto px-4 pt-10 pb-20 md:py-20">
-        <div className="text-center max-w-6xl mx-auto">
-          {/* Animated Badge */}
+        <div className="max-w-5xl mx-auto text-center space-y-8 relative z-10">
           <div
-            className={`inline-flex items-center space-x-2 bg-gradient-to-r from-blue-500/20 to-red-500/20 backdrop-blur-lg border border-white/20 rounded-full px-6 py-3 mb-8 transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
+            className={`flex justify-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           >
-            <DollarSign className="h-4 w-4 text-green-400 animate-pulse" />
-            <span className="text-white/90 font-medium md:text-base text-sm">
-              Zarabiaj Dzięki Naszej Platformie
-            </span>
-            <Badge className="bg-gradient-to-r from-red-500 to-blue-500 text-white border-0">
-              LIVE
+            <Badge className="px-4 py-1.5 text-blue-400 bg-blue-500/10 border-blue-500/20 flex items-center gap-2 rounded-full hover:bg-blue-500/30">
+              <Activity className="h-3 w-3 animate-pulse" />
+              Platforma Zakładów Live 2.0
             </Badge>
           </div>
 
-          {/* Main Logo/Badge */}
-
-          {/* Main Headline with Staggered Animation */}
-          <div className="space-y-4 mb-8">
-            <h1 className="text-6xl md:text-8xl font-black text-white leading-tight">
-              <span
-                className={`block transition-all duration-1000 delay-900 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'}`}
-              >
-                GRAJ
-              </span>
-              <span
-                className={`block bg-gradient-to-r from-blue-400 via-white to-red-400 bg-clip-text text-transparent animate-gradient-x transition-all duration-1000 delay-1100 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}
-              >
-                BEZ PODATKU
-              </span>
-            </h1>
-          </div>
-
-          {/* Subtitle with Typewriter Effect */}
-          <div
-            className={`space-y-4 mb-12 transition-all duration-1000 delay-1300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'}`}
+          <h1
+            className={`text-5xl md:text-8xl font-black text-white tracking-tight transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
           >
-            <p className="text-xl md:text-3xl text-white/90 max-w-4xl mx-auto leading-relaxed font-light">
-              Na zakłady pojedyncze oraz łączone.{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-red-400 font-semibold">
-                Spróbuj pomnożyć
-              </span>{' '}
-              swój majątek z nami.
-            </p>
-            <p className="text-lg text-white/70 max-w-3xl mx-auto">
-              Dołącz do tysięcy zwycięzców, którzy ufają naszej platformie dla bezpiecznych,
-              szybkich i zyskownych zakładów.
-            </p>
-          </div>
+            Graj{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">
+              Bez Podatku
+            </span>{' '}
+            <br />
+            Wygrywaj 100%
+          </h1>
 
-          {/* CTA Button with Pulse Animation */}
+          <p
+            className={`text-lg md:text-2xl text-slate-400 max-w-3xl mx-auto leading-relaxed transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          >
+            Najszybsza platforma bukmacherska w regionie. <br className="hidden md:block" />
+            Błyskawiczne kursy, zero opóźnień i wypłaty realizowane w czasie rzeczywistym.
+          </p>
 
-          <SignInSignUpDialog signUp>
-            <div
-              className={`mb-16 transition-all duration-1000 delay-1500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
-            >
+          <div
+            className={`flex flex-col sm:flex-row gap-4 justify-center pt-8 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          >
+            <SignInSignUpDialog signUp>
               <Button
                 size="lg"
-                className="group relative bg-gradient-to-r from-red-600 to-blue-700 hover:from-red-700 hover:to-blue-800 text-white px-16 py-8 text-2xl font-bold rounded-2xl shadow-2xl hover:shadow-red-500/25 transform hover:scale-105 transition-all duration-300 overflow-hidden"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold h-16 px-12 text-lg rounded-2xl shadow-xl shadow-blue-600/20 transition-all hover:scale-105"
               >
-                <span className="absolute inset-0 bg-gradient-to-r from-red-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <span className="relative flex items-center space-x-3">
-                  <span>ZAŁÓŻ KONTO</span>
-                  <ArrowRight className="h-6 w-6 group-hover:translate-x-1 transition-transform duration-300" />
-                </span>
-                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+                Odbierz Bonus <ArrowRight className="ml-2 h-6 w-6" />
               </Button>
-            </div>
-          </SignInSignUpDialog>
-          {/* Animated Stats */}
-          <div
-            className={`grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 transition-all duration-1000 delay-1700 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
-          >
-            {[
-              { icon: Users, label: 'Aktywni Użytkownicy', value: 500, suffix: '+' },
-              { icon: TrendingUp, label: 'Wskaźnik Wypłat', value: 98, suffix: '%' },
-              { icon: Award, label: 'Dzienni Zwycięzcy', value: 100, suffix: '+' },
-            ].map((stat, index) => (
-              <div
-                key={stat.label}
-                className="text-center group"
-                style={{ animationDelay: `${1700 + index * 200}ms` }}
+            </SignInSignUpDialog>
+            <SignInSignUpDialog>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-slate-800 bg-slate-900/50 text-white hover:bg-slate-800 h-16 px-12 text-lg rounded-2xl"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-lg rounded-2xl mb-4 group-hover:scale-110 transition-all duration-300 border border-white/10">
-                  <stat.icon className="h-8 w-8 text-white/80" />
-                </div>
-                <div className="text-3xl font-black text-white mb-2">
-                  <AnimatedCounter end={stat.value} suffix={stat.suffix} />
-                </div>
-                <p className="text-white/60 font-medium">{stat.label}</p>
-              </div>
-            ))}
+                Zobacz Kursy
+              </Button>
+            </SignInSignUpDialog>
           </div>
         </div>
+      </section>
 
-        {/* Features Section with Glass Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      {/* 2. STATS BAR (DARK CARD) */}
+      <div className="max-w-6xl mx-auto -mt-16 relative z-20 px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            {
-              icon: Play,
-              title: 'ZAKŁADY LIVE',
-              description:
-                'Obstawiaj mecze na żywo z kursami w czasie rzeczywistym i natychmiastowymi aktualizacjami. Nigdy nie przegap okazji na wygraną.',
-              gradient: 'from-blue-500 to-blue-600',
-              delay: 1900,
-            },
-            {
-              icon: Shield,
-              title: 'BEZPIECZNE PŁATNOŚCI',
-              description:
-                'Twoje środki są chronione zabezpieczeniami na poziomie bankowym. Szybkie wpłaty i natychmiastowe wypłaty gwarantowane.',
-              gradient: 'from-red-500 to-red-600',
-              delay: 2100,
-            },
-            {
-              icon: Headphones,
-              title: 'WSPARCIE 24/7',
-              description:
-                'Nasz zespół ekspertów jest dostępny przez całą dobę, aby pomóc Ci z wszelkimi pytaniami lub problemami.',
-              gradient: 'from-blue-600 to-red-600',
-              delay: 2300,
-            },
-          ].map((feature, index) => (
-            <GlassCard key={feature.title} delay={feature.delay}>
-              <div className="p-8 text-center group">
-                <div
-                  className={`inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br ${feature.gradient} rounded-3xl mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-lg`}
-                >
-                  <feature.icon className="h-10 w-10 text-white" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-4">{feature.title}</h3>
-                <p className="text-white/70 leading-relaxed">{feature.description}</p>
-              </div>
-            </GlassCard>
+            { label: 'Aktywnych Graczy', value: 12500, suffix: '+' },
+            { label: 'Suma Wypłacona', value: 2000000, suffix: '$' },
+            { label: 'Wypłata w średnio', value: 8, suffix: ' min' },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center text-center"
+            >
+              <span className="text-4xl font-black text-white tracking-tight">
+                <AnimatedCounter end={stat.value} suffix={stat.suffix} />
+              </span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] mt-3">
+                {stat.label}
+              </span>
+            </div>
           ))}
         </div>
-      </main>
+      </div>
+
+      {/* 3. FEATURES (GRID) */}
+      <section className="py-32 px-4 max-w-6xl mx-auto">
+        <div className="text-center mb-20">
+          <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
+            Standardy PRO
+          </h2>
+          <div className="h-1.5 w-20 bg-blue-600 mx-auto mt-6 rounded-full shadow-[0_0_15px_rgba(37,99,235,0.5)]" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <FeatureCard
+            icon={<Zap className="h-6 w-6" />}
+            status="REAL-TIME"
+            title="Szybkie Zakłady"
+            description="Nasza autorska technologia 'One-Click' pozwala na zawieranie zakładów w ułamku sekundy bez zbędnych potwierdzeń."
+          />
+          <FeatureCard
+            icon={<ShieldCheck className="h-6 w-6" />}
+            status="SECURE"
+            title="Gwarancja Wypłat"
+            description="Twoje środki są przechowywane na oddzielnych, zabezpieczonych kontach. Gwarantujemy wypłacalność w każdych warunkach."
+          />
+          <FeatureCard
+            icon={<Trophy className="h-6 w-6" />}
+            status="ELITE"
+            title="Kursy Premium"
+            description="Eliminujemy marże na najważniejsze wydarzenia sportowe, oferując najwyższe wygrane w branży."
+          />
+        </div>
+      </section>
+
+      {/* 4. MOCKUP PREVIEW (DARK UI) */}
+      <section className="py-24 bg-slate-900/30 border-y border-slate-800/50">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="space-y-8">
+              <Badge className="bg-blue-600 text-white border-none px-4 py-1">NOWOŚĆ</Badge>
+              <h2 className="text-4xl md:text-6xl font-bold leading-tight text-white">
+                Najlepszy Interface <br />
+                <span className="text-blue-500 text-shadow-glow">Na Rynku</span>
+              </h2>
+              <p className="text-slate-400 text-xl leading-relaxed">
+                Zaprojektowaliśmy panel, który nie rozprasza. Skup się na tym co ważne - na analizie
+                i wygrywaniu.
+              </p>
+              <div className="space-y-4">
+                {[
+                  'Ciemny motyw oszczędzający wzrok',
+                  'Intuicyjny kreator kuponów',
+                  'Powiadomienia o wynikach push',
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-4 text-slate-200 font-medium">
+                    <div className="h-6 w-6 rounded-full bg-blue-500/10 flex items-center justify-center">
+                      <CheckCircle2 className="h-4 w-4 text-blue-500" />
+                    </div>
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-blue-400 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+              <div className="relative bg-[#0f172a] border border-slate-800 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden">
+                {/* Mock UI Header */}
+                <div className="flex justify-between items-center mb-8 border-b border-slate-800 pb-6">
+                  <div className="flex gap-2">
+                    <div className="h-3 w-3 rounded-full bg-slate-700" />
+                    <div className="h-3 w-3 rounded-full bg-slate-700" />
+                  </div>
+                  <div className="h-4 w-32 bg-slate-800 rounded-full" />
+                  <div className="w-8 h-8 rounded-lg bg-blue-600/20" />
+                </div>
+                {/* Mock Content */}
+                <div className="space-y-4">
+                  <div className="h-24 bg-slate-800/50 rounded-2xl border border-slate-800 p-4">
+                    <div className="flex justify-between items-center h-full">
+                      <div className="w-12 h-12 bg-slate-700 rounded-xl" />
+                      <div className="text-2xl font-black text-white italic">3 : 1</div>
+                      <div className="w-12 h-12 bg-slate-700 rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="h-12 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-sm">
+                      1.85
+                    </div>
+                    <div className="h-12 bg-slate-800 rounded-xl flex items-center justify-center font-bold text-sm">
+                      3.40
+                    </div>
+                    <div className="h-12 bg-slate-800 rounded-xl flex items-center justify-center font-bold text-sm">
+                      4.20
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. FAQ SECTION */}
+      <section className="py-32 px-4 max-w-3xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-white italic">FAQ</h2>
+          <p className="text-slate-500 mt-4 font-medium uppercase tracking-[0.3em] text-xs">
+            Pytania i odpowiedzi
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {faqData.map((faq, index) => (
+            <AccordionItem
+              key={index}
+              title={faq.question}
+              content={faq.answer}
+              isOpen={openFaqIndex === index}
+              onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* 6. FINAL CTA (DARK NAVY) */}
+      <section className="py-24 px-4">
+        <div className="max-w-6xl mx-auto bg-gradient-to-br from-blue-700 to-blue-900 rounded-[3rem] p-12 px-4 md:px-20 md:p-20 text-center text-white relative overflow-hidden shadow-[0_20px_50px_rgba(37,99,235,0.3)]">
+          <div className="relative z-10 space-y-8">
+            <h2 className="text-4xl md:text-7xl font-black tracking-tighter">WEJDŹ DO GRY.</h2>
+            <p className="text-blue-100 text-xl max-w-xl mx-auto font-medium">
+              Zarejestruj się i odbierz darmowy freebet na start. Dołącz do społeczności
+              profesjonalnych graczy.
+            </p>
+            <div className="pt-6">
+              <SignInSignUpDialog signUp>
+                <Button
+                  size="lg"
+                  className="bg-white text-blue-700 hover:bg-slate-100 font-black h-20 px-5 sm:px-16 text-2xl rounded-2xl transition-transform hover:scale-105 active:scale-95 shadow-2xl"
+                >
+                  ZAREJESTRUJ SIĘ
+                </Button>
+              </SignInSignUpDialog>
+            </div>
+          </div>
+          {/* Decorative shapes */}
+          <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent pointer-events-none" />
+        </div>
+      </section>
     </div>
   )
 }
