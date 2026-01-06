@@ -45,8 +45,6 @@ import {
 } from '@/components/ui/dialog'
 import { placeBetAction } from '@/app/actions/placeBet'
 import { Separator } from '@/components/ui/separator'
-import { MESSAGE_TYPES, WSMessage } from './types'
-import { useWebSocket } from './hooks/useWebSocket'
 
 // --- TYPES ---
 type SelectedBet = {
@@ -88,6 +86,7 @@ type BettingSlipProps = {
   handleRedirectToEvent: (e: MouseEvent, bet: SelectedBet) => void
   isPlacingBet: boolean
   moneySign: string
+  lastUpdated: Date | null
 }
 
 // ====================================================================
@@ -309,9 +308,11 @@ const BettingSlip: FC<BettingSlipProps> = ({
   calculateTotalStake,
   calculatePotentialWin,
   handlePlaceBet,
+  clearBetSlip,
   handleRedirectToEvent,
   isPlacingBet,
   moneySign,
+  lastUpdated,
 }) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false)
 
@@ -538,32 +539,58 @@ export default function PageClient(props: PageClientProps) {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [bets, setBets] = useState<Bet[]>(props.bets)
   const moneySign = 'PLN'
+  const [isOnline, setIsOnline] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
+  const [nextSyncIn, setNextSyncIn] = useState(60)
 
-  // WebSocket / Data logic remains the same...
-  const handleMessage = useCallback((message: WSMessage) => {
-    switch (message.type) {
-      case MESSAGE_TYPES.COLLECTION_DATA:
-        setBets((message as any).data.docs)
-        break
-      case MESSAGE_TYPES.COLLECTION_CHANGED:
-        if (message.collection == 'bets') {
-          switch (message.operation) {
-            case 'create':
-              setBets((prev) => [...prev, message.doc])
-              break
-            case 'update':
-              setBets((prev) => prev.map((bet) => (bet.id === message.doc.id ? message.doc : bet)))
-              break
-            case 'delete':
-              setBets((prev) => prev.filter((bet) => bet.id !== message.doc.id))
-              break
-          }
+  // Fetch bets function
+
+  // 1. Funkcja pobierająca dane
+  const fetchBets = async (category?: string) => {
+    const currentCat = category
+      ? category
+      : new URLSearchParams(window.location.search).get('category') || ''
+    try {
+      const res = await fetch(
+        `/api/bets?where[or][0][category.title][equals]=${encodeURIComponent(currentCat)}`,
+      )
+      if (res.ok) {
+        const data = await res.json()
+        setBets(data.docs || [])
+        setLastUpdated(new Date())
+        setNextSyncIn(60) // Reset licznika po udanym pobraniu
+      }
+    } catch (e) {
+      console.error('Sync error:', e)
+      setNextSyncIn(60) // Reset nawet przy błędzie, by spróbować ponownie
+    }
+  }
+  useEffect(() => {
+    // 2. Interwał odliczania (co 1 sekundę)
+    const timer = setInterval(() => {
+      setNextSyncIn((prev) => {
+        if (prev <= 1) {
+          fetchBets() // Wywołaj pobieranie danych
+          return 60
         }
-        break
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+  // Online/Offline detection
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+    setIsOnline(navigator.onLine)
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
     }
   }, [])
-
-  useWebSocket<WSMessage>({ collection: 'bets', onMessage: handleMessage })
 
   useEffect(() => {
     const hasCategoryParam = searchParams.has('category')
@@ -574,9 +601,12 @@ export default function PageClient(props: PageClientProps) {
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get('category') ?? categories[0]?.title
-    if (categoryFromUrl !== selectedCategory) setSelectedCategory(categoryFromUrl)
+    if (categoryFromUrl !== selectedCategory) {
+      setSelectedCategory(categoryFromUrl)
+      setLoading(true)
+      fetchBets(categoryFromUrl).finally(() => setLoading(false))
+    }
     setClientMoney(money)
-    setLoading(false)
   }, [searchParams, categories, selectedCategory, money])
 
   // Action handlers (addBet, removeBet, updateStake, etc.) remain functionally same...
@@ -678,6 +708,24 @@ export default function PageClient(props: PageClientProps) {
 
   return (
     <div className="min-h-screen w-full bg-[#020617] text-white">
+      {lastUpdated && (
+        <Badge className="fixed bottom-20 left-3 text-center z-40 bg-slate-900/80 backdrop-blur-sm border-slate-800 hover:bg-slate-800 transition-colors flex flex-col items-start gap-1">
+          <p className="text-[9px] text-slate-500 ">synchronizacja danych</p>
+          <div className="flex items-center justify-between w-full gap-1">
+            <p className="text-[9px] text-slate-300  flex items-center gap-1">
+              <span className="relative flex h-2 w-2 scale-75">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              {lastUpdated.toLocaleTimeString('pl-PL')}
+            </p>
+            <div className="flex items-center gap-1 border-l border-slate-700 pl-1">
+              <span className="text-[9px] text-slate-500 ">za</span>
+              <span className="text-[9px] text-blue-500 ">{nextSyncIn}s</span>
+            </div>
+          </div>
+        </Badge>
+      )}
       <div className="flex flex-col xl:flex-row max-w-screen-2xl mx-auto" id="top">
         {/* Sidebar Lewy */}
         <aside className="hidden xl:block xl:w-72 xl:shrink-0 bg-slate-900 border-r border-slate-800/60">
@@ -734,20 +782,21 @@ export default function PageClient(props: PageClientProps) {
               handleRedirectToEvent={handleRedirectToEvent}
               isPlacingBet={isPlacingBet}
               moneySign={moneySign}
+              lastUpdated={lastUpdated}
             />
           </div>
         </aside>
 
         {/* Mobilny Pasek Dolny */}
-        <div className="xl:hidden z-40 fixed bottom-0 left-0 right-0 bg-[#0f172a]/90 backdrop-blur-xl border-t border-slate-800 p-3 flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <div className="xl:hidden z-30 fixed bottom-0 left-0 right-0 bg-[#0f172a]/90 backdrop-blur-xl border-t border-slate-800 px-3 pt-1 flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
           <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 variant="ghost"
                 className="flex flex-col h-auto p-2 text-slate-400 hover:text-white"
               >
-                <ListFilter className="h-6 w-6 mb-1" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">Sporty</span>
+                <ListFilter className="h-4 w-4 mb-1" />
+                <span className="text-[9px] font-bold uppercase tracking-widest">Sporty</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="h-full max-h-[85dvh] bg-slate-900 border-slate-800 text-white flex flex-col p-0">
@@ -772,14 +821,14 @@ export default function PageClient(props: PageClientProps) {
                 className="flex flex-col h-auto p-2 relative text-slate-400 hover:text-white"
               >
                 <div className="relative">
-                  <Ticket className="h-6 w-6 mb-1" />
+                  <Ticket className="h-4 w-4 mb-1" />
                   {selectedBets.length > 0 && (
                     <div className="absolute -top-1 -right-1 h-4 w-4 bg-blue-600 rounded-full text-[9px] font-black flex items-center justify-center text-white shadow-lg">
                       {selectedBets.length}
                     </div>
                   )}
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest">Kupon</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest">Kupon</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="h-full max-h-[85dvh] bg-slate-900 border-slate-800 text-white flex flex-col p-0">
@@ -795,10 +844,18 @@ export default function PageClient(props: PageClientProps) {
                 handleRedirectToEvent={handleRedirectToEvent}
                 isPlacingBet={isPlacingBet}
                 moneySign={moneySign}
+                lastUpdated={lastUpdated}
               />
             </DialogContent>
           </Dialog>
         </div>
+      </div>{' '}
+      <div
+        className={`${isOnline ? 'opacity-0 translate-y-6' : ' opacity-100'} 
+            transition-all duration-300 ease-in-out fixed bottom-0 transform left-0 text-center
+            bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-b-md pointer-events-none w-full z-40 h-fit`}
+      >
+        OFFLINE
       </div>
     </div>
   )
