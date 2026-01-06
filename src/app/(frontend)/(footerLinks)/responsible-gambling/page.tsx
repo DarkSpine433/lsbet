@@ -18,7 +18,7 @@ export default function ResponsibleGambling() {
           <Badge className="bg-blue-600 text-white uppercase tracking-widest font-black italic px-4 py-1">
             Fair Play
           </Badge>
-          <h1 className="text-5xl font-black italic uppercase tracking-tighter text-white">
+          <h1 className="text-4xl sm:text-5xl font-black italic uppercase tracking-tighter text-white">
             Odpowiedzialna <span className="text-blue-500">Gra</span>
           </h1>
           <p className="text-slate-400 font-medium">

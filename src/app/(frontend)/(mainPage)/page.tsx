@@ -348,7 +348,7 @@ export default function LandingPage() {
 
       {/* 6. FINAL CTA (DARK NAVY) */}
       <section className="py-24 px-4">
-        <div className="max-w-6xl mx-auto bg-gradient-to-br from-blue-700 to-blue-900 rounded-[3rem] p-12 md:p-20 text-center text-white relative overflow-hidden shadow-[0_20px_50px_rgba(37,99,235,0.3)]">
+        <div className="max-w-6xl mx-auto bg-gradient-to-br from-blue-700 to-blue-900 rounded-[3rem] p-12 px-4 md:px-20 md:p-20 text-center text-white relative overflow-hidden shadow-[0_20px_50px_rgba(37,99,235,0.3)]">
           <div className="relative z-10 space-y-8">
             <h2 className="text-4xl md:text-7xl font-black tracking-tighter">WEJDŹ DO GRY.</h2>
             <p className="text-blue-100 text-xl max-w-xl mx-auto font-medium">
@@ -359,7 +359,7 @@ export default function LandingPage() {
               <SignInSignUpDialog signUp>
                 <Button
                   size="lg"
-                  className="bg-white text-blue-700 hover:bg-slate-100 font-black h-20 px-16 text-2xl rounded-2xl transition-transform hover:scale-105 active:scale-95 shadow-2xl"
+                  className="bg-white text-blue-700 hover:bg-slate-100 font-black h-20 px-5 sm:px-16 text-2xl rounded-2xl transition-transform hover:scale-105 active:scale-95 shadow-2xl"
                 >
                   ZAREJESTRUJ SIĘ
                 </Button>
