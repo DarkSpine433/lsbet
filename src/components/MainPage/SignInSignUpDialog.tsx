@@ -1,4 +1,5 @@
 'use client'
+
 import {
   Dialog,
   DialogContent,
@@ -13,17 +14,17 @@ import { CardContent, CardDescription, CardHeader, CardTitle } from '@/component
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import SubmitButtonClient from '@/components/ui/SubmitButton.client'
-import { CheckCircle, LogIn, UserPlus } from 'lucide-react'
+import { CheckCircle, LogIn, UserPlus, ShieldCheck, Mail, Loader2 } from 'lucide-react'
 
 import Form from 'next/form'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
 type Props = {
   children?: React.ReactNode
   signUp?: boolean
-  isLoading?: boolean
 }
 
 const SignInSignUpDialog = (props: Props) => {
@@ -40,14 +41,10 @@ const SignInSignUpDialog = (props: Props) => {
 
   const handleLogin = async (FormData: FormData) => {
     setIsLoading(true)
-
     const nickname = FormData.get('nickname') as string
     const password = FormData.get('password') as string
 
-    const response = await signIn({
-      nickname: nickname,
-      password: password,
-    })
+    const response = await signIn({ nickname, password })
     if (response.isSuccess === false) {
       setNickname(nickname)
       setPassword(password)
@@ -62,16 +59,14 @@ const SignInSignUpDialog = (props: Props) => {
     }
     setIsLoading(false)
   }
+
   const handleOauthSignUp = async (FormData: FormData) => {
+    setIsLoading(true)
     const nickname = FormData.get('nickname') as string
     const password = FormData.get('password') as string
     const passwordConfirm = FormData.get('passwordConfirm') as string
 
-    const response = await signUp({
-      nickname: nickname,
-      password: password,
-      passwordConfirm: passwordConfirm,
-    })
+    const response = await signUp({ nickname, password, passwordConfirm })
     if (response.isSuccess === false) {
       setNickname(nickname)
       setPassword(password)
@@ -83,206 +78,173 @@ const SignInSignUpDialog = (props: Props) => {
     }
 
     setResponse(response)
+    setIsLoading(false)
   }
 
   return (
-    <>
-      <Dialog>
-        <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent>
-          <DialogHeader className="sr-only">
-            <DialogTitle>Zaloguj się lub zarejestruj się</DialogTitle>
-          </DialogHeader>
-          <DialogContent className="min-h-96 bg-background [&>*]:text-slate-100">
-            <Tabs defaultValue={signInOrSignUp} className="w-full max-w-5xl">
-              <div className="w-full flex justify-center ">
-                <TabsList>
-                  <TabsTrigger value="sign-In">Zaloguj się</TabsTrigger>
-                  <TabsTrigger value="sign-Up">Zarejestruj się</TabsTrigger>
-                </TabsList>
-              </div>
-              <TabsContent value="sign-In">
-                <div className="container flex items-center justify-center min-h-96  py-12 px-4">
-                  <div className="w-full max-w-md shadow-lg border-0">
-                    <CardHeader className="space-y-1 pb-6">
-                      <div className="flex justify-center mb-2">
-                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <LogIn className="h-6 w-6 text-primary" />
-                        </div>
-                      </div>
-                      <CardTitle className="text-2xl font-bold text-center">Logowanie</CardTitle>
-                      <CardDescription className="text-center text-muted-foreground">
-                        Zaloguj się do swojego konta
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Form
-                        action={handleLogin}
-                        onChange={() => {
-                          setResponse({} as signUpRetrunType)
-                        }}
-                        className={`${isLoading && 'animate-pulse opacity-50'} space-y-4`}
-                        formMethod="post"
-                      >
-                        <div className="space-y-2">
-                          <Label htmlFor="email" className="text-sm font-medium">
-                            Nick OOC {`(Forum)`} <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            type="text"
-                            name="nickname"
-                            id="nickname"
-                            required
-                            defaultValue={nickname}
-                            className="h-10"
-                          />
-                        </div>
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="max-w-md w-full bg-[#020617] border-slate-800 p-0 overflow-hidden shadow-2xl">
+        <DialogHeader className="p-8 pb-4 border-b border-slate-800/50 bg-gradient-to-b from-blue-600/10 to-transparent">
+          <DialogTitle className="text-2xl font-black italic text-white uppercase tracking-tighter flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-600/20 border border-blue-500/30">
+              <ShieldCheck className="h-5 w-5 text-blue-500" />
+            </div>
+            Weryfikacja <span className="text-blue-500">Dostępu</span>
+          </DialogTitle>
+        </DialogHeader>
 
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="password" className="text-sm font-medium">
-                              Hasło <span className="text-destructive">*</span>
-                            </Label>
-                          </div>
-                          <Input
-                            type="password"
-                            name="password"
-                            id="password"
-                            required
-                            defaultValue={password}
-                            className="h-10"
-                          />
-                        </div>
+        <div className="p-6 bg-slate-950/20">
+          <Tabs defaultValue={signInOrSignUp} className="w-full">
+            <TabsList className="grid grid-cols-2 bg-slate-900 border border-slate-800 p-1 h-12 rounded-xl mb-8">
+              <TabsTrigger
+                value="sign-In"
+                className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black uppercase italic text-[10px] tracking-widest transition-all"
+              >
+                Logowanie
+              </TabsTrigger>
+              <TabsTrigger
+                value="sign-Up"
+                className="rounded-lg data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black uppercase italic text-[10px] tracking-widest transition-all"
+              >
+                Rejestracja
+              </TabsTrigger>
+            </TabsList>
 
-                        {response.kind === 'error' && (
-                          <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm font-medium">
-                            {response.message}
-                          </div>
-                        )}
-
-                        <SubmitButtonClient text="Zaloguj się" isSuccess={response.isSuccess} />
-                      </Form>
-                    </CardContent>
-                  </div>
+            {/* TAB: LOGIN */}
+            <TabsContent value="sign-In" className="mt-0">
+              <Form
+                action={handleLogin}
+                onChange={() => setResponse({} as signUpRetrunType)}
+                className="space-y-5"
+                formMethod="post"
+              >
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+                    Nick OOC (Forum)
+                  </Label>
+                  <Input
+                    name="nickname"
+                    required
+                    defaultValue={nickname}
+                    className="bg-slate-950 border-slate-800 text-white h-11 rounded-xl focus-visible:ring-blue-600 transition-all shadow-inner"
+                    placeholder="Wpisz swój nick..."
+                  />
                 </div>
-              </TabsContent>
-              <TabsContent value="sign-Up">
-                {response.isSuccess === false || response.isSuccess === undefined ? (
-                  <div
-                    className={`container flex items-center justify-center min-h-96 py-12 px-4 ${isLoading && 'animate-spin'}`}
-                  >
-                    <div className="w-full max-w-md shadow-lg border-0">
-                      <CardHeader className="space-y-1 pb-6">
-                        <div className="flex justify-center mb-2">
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                            <UserPlus className="h-6 w-6 text-primary" />
-                          </div>
-                        </div>
-                        <CardTitle className="text-2xl font-bold text-center">
-                          Rejestracja
-                        </CardTitle>
-                        <CardDescription className="text-center text-muted-foreground">
-                          Utwórz nowe konto, aby rozpocząć
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <Form
-                          action={handleOauthSignUp}
-                          onChange={() => {
-                            setResponse({} as signUpRetrunType)
-                          }}
-                          className={`${isLoading && 'animate-pulse opacity-50'} space-y-4`}
-                          formMethod="post"
-                        >
-                          <div className="space-y-2">
-                            <Label htmlFor="nickname" className="text-sm font-medium">
-                              Nick OOC {`(Forum)`} <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                              type="text"
-                              name="nickname"
-                              id="nickname"
-                              required
-                              defaultValue={nickname}
-                              className="h-10"
-                            />
-                          </div>
 
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <Label htmlFor="password" className="text-sm font-medium">
-                                Hasło <span className="text-destructive">*</span>
-                              </Label>
-                              <span className="text-xs text-muted-foreground">(min. 6 znaków)</span>
-                            </div>
-                            <Input
-                              type="password"
-                              name="password"
-                              id="password"
-                              minLength={6}
-                              defaultValue={password}
-                              className="h-10"
-                            />
-                            {response.kind === 'passwordError' && (
-                              <p className="text-sm text-destructive mt-1">{response.message}</p>
-                            )}
-                          </div>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+                    Hasło
+                  </Label>
+                  <Input
+                    type="password"
+                    name="password"
+                    required
+                    defaultValue={password}
+                    className="bg-slate-950 border-slate-800 text-white h-11 rounded-xl focus-visible:ring-blue-600 transition-all shadow-inner"
+                    placeholder="••••••••"
+                  />
+                </div>
 
-                          <div className="space-y-2">
-                            <Label htmlFor="passwordConfirm" className="text-sm font-medium">
-                              Powtórz Hasło <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                              type="password"
-                              name="passwordConfirm"
-                              id="passwordConfirm"
-                              minLength={6}
-                              defaultValue={passwordConfirm}
-                              className="h-10"
-                            />
-                          </div>
-
-                          {response.kind === 'error' && (
-                            <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm font-medium">
-                              {response.message}
-                            </div>
-                          )}
-
-                          <SubmitButtonClient
-                            text="Zarejestruj się"
-                            isSuccess={response.isSuccess}
-                          />
-                        </Form>
-                      </CardContent>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center w-full p-4 md:p-8">
-                    <div className="max-w-md w-full overflow-hidden border-0 shadow-lg">
-                      <div className="h-2 bg-gradient-to-r from-emerald-500 to-teal-500" />
-                      <CardHeader className="flex flex-col items-center pt-8 pb-2">
-                        <div className="rounded-full bg-emerald-100 p-3 mb-4">
-                          <CheckCircle className="h-10 w-10 text-emerald-600" />
-                        </div>
-                      </CardHeader>
-                      <CardContent className="text-center px-6 pb-8 space-y-6">
-                        <h2 className="text-3xl font-bold tracking-tight ">
-                          Dziękujemy za rejestrację
-                        </h2>
-                        <div className="space-y-2 text-muted-foreground">
-                          Skontaktujemy się w ciągu 24h przez e-mail albo Forum, aby zweryfikować
-                          twoje konto.
-                        </div>
-                      </CardContent>
-                    </div>
+                {response.kind === 'error' && (
+                  <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold uppercase tracking-tight text-center">
+                    {response.message}
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
-          </DialogContent>
-        </DialogContent>
-      </Dialog>
-    </>
+
+                <div className="pt-2">
+                  <SubmitButtonClient text="Zaloguj do systemu" isSuccess={response.isSuccess} />
+                </div>
+              </Form>
+            </TabsContent>
+
+            {/* TAB: SIGN UP */}
+            <TabsContent value="sign-Up" className="mt-0">
+              {response.isSuccess ? (
+                <div className="text-center py-8 space-y-6">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center animate-bounce">
+                    <CheckCircle className="h-8 w-8 text-green-500" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-black italic uppercase text-white">
+                      Wysłano Zgłoszenie
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                      Twoje konto czeka na weryfikację. Skontaktujemy się z Tobą przez{' '}
+                      <span className="text-blue-500">Forum devGaming</span> w ciągu 24h.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <Form
+                  action={handleOauthSignUp}
+                  onChange={() => setResponse({} as signUpRetrunType)}
+                  className="space-y-4"
+                  formMethod="post"
+                >
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+                      Nick OOC (Forum)
+                    </Label>
+                    <Input
+                      name="nickname"
+                      required
+                      defaultValue={nickname}
+                      className="bg-slate-950 border-slate-800 text-white h-11 rounded-xl focus-visible:ring-blue-600 transition-all"
+                      placeholder="Twój nick z forum..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+                      Hasło
+                    </Label>
+                    <Input
+                      type="password"
+                      name="password"
+                      minLength={6}
+                      defaultValue={password}
+                      className="bg-slate-950 border-slate-800 text-white h-11 rounded-xl focus-visible:ring-blue-600 transition-all"
+                      placeholder="Min. 6 znaków"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+                      Powtórz Hasło
+                    </Label>
+                    <Input
+                      type="password"
+                      name="passwordConfirm"
+                      minLength={6}
+                      defaultValue={passwordConfirm}
+                      className="bg-slate-950 border-slate-800 text-white h-11 rounded-xl focus-visible:ring-blue-600 transition-all"
+                      placeholder="Weryfikacja hasła"
+                    />
+                  </div>
+
+                  {response.kind === 'error' && (
+                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-bold text-center">
+                      {response.message}
+                    </div>
+                  )}
+
+                  <div className="pt-2">
+                    <SubmitButtonClient text="Utwórz konto gracza" isSuccess={response.isSuccess} />
+                  </div>
+                </Form>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="p-6 border-t border-slate-800 bg-[#020617] text-center">
+          <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">
+            Zabezpieczone przez system <span className="text-blue-900">LSBet Shield</span>
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
