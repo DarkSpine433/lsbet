@@ -9,6 +9,10 @@ export const PlacedBets: CollectionConfig = {
     update: isAdmin,
     delete: isAdmin,
   },
+  admin: {
+    group: 'Betting',
+    defaultColumns: ['user', 'betType', 'stake', 'totalOdds', 'potentialWin', 'status'],
+  },
   fields: [
     {
       name: 'user',

@@ -709,19 +709,40 @@ export default function PageClient(props: PageClientProps) {
   return (
     <div className="min-h-screen w-full bg-[#020617] text-white">
       {lastUpdated && (
-        <Badge className="fixed bottom-20 left-3 text-center z-40 bg-slate-900/80 backdrop-blur-sm border-slate-800 hover:bg-slate-800 transition-colors flex flex-col items-start gap-1">
-          <p className="text-[9px] text-slate-500 ">synchronizacja danych</p>
-          <div className="flex items-center justify-between w-full gap-1">
-            <p className="text-[9px] text-slate-300  flex items-center gap-1">
-              <span className="relative flex h-2 w-2 scale-75">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        <Badge
+          variant="outline"
+          className="fixed top-[67px] left-1/2 -translate-x-1/2   z-40 
+               flex items-center gap-2 px-3 py-1.5 
+               bg-slate-900/90 backdrop-blur-md border-slate-800 
+               shadow-[0_4_20px_rgba(0,0,0,0.4)] transition-all duration-300"
+        >
+          {/* Pulsująca kropka statusu */}
+          <div className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+          </div>
+
+          <div className="flex items-center gap-2 divide-x divide-slate-800">
+            {/* Czas ostatniej synchronizacji */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                Live
               </span>
-              {lastUpdated.toLocaleTimeString('pl-PL')}
-            </p>
-            <div className="flex items-center gap-1 border-l border-slate-700 pl-1">
-              <span className="text-[9px] text-slate-500 ">za</span>
-              <span className="text-[9px] text-blue-500 ">{nextSyncIn}s</span>
+              <span className="text-[10px] font-bold text-slate-200 tabular-nums">
+                {lastUpdated.toLocaleTimeString('pl-PL', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit',
+                })}
+              </span>
+            </div>
+
+            {/* Odliczanie do następnej synchronizacji */}
+            <div className="pl-2 flex items-center gap-1">
+              <span className="text-[9px] text-slate-500 font-bold uppercase">Next:</span>
+              <span className="text-[10px] text-blue-500 font-black tabular-nums w-6">
+                {nextSyncIn}s
+              </span>
             </div>
           </div>
         </Badge>

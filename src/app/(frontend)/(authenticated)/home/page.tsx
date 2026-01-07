@@ -16,10 +16,15 @@ type Props = {
 const page = async (props: Props) => {
   const { searchParams } = props
   const params = await searchParams
-  const { category } = await params
-  const { user } = await getMeUser()
   const getCategories = await getCashedCategories()
-  const getBets = await getBetsByCategory({ category: category as string })
+
+  // Ustalenie domyślnej kategorii, jeśli brak w URL
+  const defaultCategory = getCategories[0]?.title || ''
+  const currentCategory = (params.category as string) || defaultCategory
+
+  const { user } = await getMeUser()
+  const getBets = await getBetsByCategory({ category: currentCategory })
+
   return (
     <>
       <PageClient

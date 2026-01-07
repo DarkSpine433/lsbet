@@ -22,6 +22,7 @@ export const Bets: CollectionConfig<'bets'> = {
     title: true,
   },
   admin: {
+    group: 'Betting',
     defaultColumns: ['title', 'slug', 'updatedAt'],
   },
   fields: [

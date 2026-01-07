@@ -1,18 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
-import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
 import { slugField } from '@/fields/slug'
+import { authenticated } from '@/access/authenticated'
+import { anyone } from '@/access/anyone'
 
-export const Categories: CollectionConfig = {
-  slug: 'categories',
+export const CasinoCategories: CollectionConfig = {
+  slug: 'casino-categories',
   access: {
     create: authenticated,
     delete: authenticated,
     read: anyone,
     update: authenticated,
   },
-  admin: { group: 'Betting', useAsTitle: 'title' },
+  admin: { group: 'Casino', useAsTitle: 'title' },
   fields: [
     {
       name: 'title',
