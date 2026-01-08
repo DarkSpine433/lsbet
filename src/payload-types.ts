@@ -77,6 +77,7 @@ export interface Config {
     'cupon-codes': CuponCode;
     'casino-games': CasinoGame;
     'casino-categories': CasinoCategory;
+    'casino-wins': CasinoWin;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
@@ -100,6 +101,7 @@ export interface Config {
     'cupon-codes': CuponCodesSelect<false> | CuponCodesSelect<true>;
     'casino-games': CasinoGamesSelect<false> | CasinoGamesSelect<true>;
     'casino-categories': CasinoCategoriesSelect<false> | CasinoCategoriesSelect<true>;
+    'casino-wins': CasinoWinsSelect<false> | CasinoWinsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -660,13 +662,13 @@ export interface CuponCode {
 export interface CasinoGame {
   id: string;
   title: string;
-  slug?: string | null;
   description: string;
+  rules: string;
   category: string | CasinoCategory;
   gamelogo: string | Media;
-  serverLogic: string;
-  clientLogic: string;
   publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -680,6 +682,20 @@ export interface CasinoCategory {
   title: string;
   slug?: string | null;
   slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "casino-wins".
+ */
+export interface CasinoWin {
+  id: string;
+  user: string | User;
+  gameTitle: string;
+  betAmount: number;
+  winAmount: number;
+  multiplier: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -838,6 +854,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'casino-categories';
         value: string | CasinoCategory;
+      } | null)
+    | ({
+        relationTo: 'casino-wins';
+        value: string | CasinoWin;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -1253,13 +1273,13 @@ export interface CuponCodesSelect<T extends boolean = true> {
  */
 export interface CasinoGamesSelect<T extends boolean = true> {
   title?: T;
-  slug?: T;
   description?: T;
+  rules?: T;
   category?: T;
   gamelogo?: T;
-  serverLogic?: T;
-  clientLogic?: T;
   publishedAt?: T;
+  slug?: T;
+  slugLock?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1272,6 +1292,19 @@ export interface CasinoCategoriesSelect<T extends boolean = true> {
   title?: T;
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "casino-wins_select".
+ */
+export interface CasinoWinsSelect<T extends boolean = true> {
+  user?: T;
+  gameTitle?: T;
+  betAmount?: T;
+  winAmount?: T;
+  multiplier?: T;
   updatedAt?: T;
   createdAt?: T;
 }
