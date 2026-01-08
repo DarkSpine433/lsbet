@@ -22,6 +22,7 @@ import { PlacedBets } from './collections/PlaceBets'
 import { CuponCodes } from './collections/CuponCodes'
 import { CasinoGames } from './collections/CasinoGames'
 import { CasinoCategories } from './collections/CasinoCategories'
+import { CasinoWins } from './collections/CasinoWins'
 
 const validateEnv = (key: string, required: boolean = true): string => {
   const value = process.env[key]
@@ -174,6 +175,7 @@ export default buildConfig({
     CuponCodes,
     CasinoGames,
     CasinoCategories,
+    CasinoWins,
   ],
   csrf: getAllowedDomains(),
   cors: getAllowedDomains(),

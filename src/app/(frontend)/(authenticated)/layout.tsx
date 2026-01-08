@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Main Header */}
       <header className="sticky top-0 z-40 bg-[#020617]/80 backdrop-blur-xl border-b border-slate-800/60">
         <div className="px-4 sm:px-8 py-3 md:py-4 max-w-screen-2xl mx-auto flex items-center justify-between">
-          <Logo className="h-2 w-auto" priority="high" loading="eager" />
+          <Logo className="h-2 w-auto mr-2" priority="high" loading="eager" />
 
           <div className="flex items-center space-x-4">
             {/* Wallet */}
@@ -50,9 +50,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <span className="text-[9px] font-black text-slate-500 uppercase leading-none mb-1">
                   Saldo
                 </span>
-                <span className="font-black text-sm text-white leading-none">
-                  {user.money?.toFixed(2)}{' '}
-                  <span className="text-blue-500 text-[10px] ml-0.5">{moneySign}</span>
+                <span className="font-black text-sm text-white leading-none flex items-center">
+                  {user.money?.toFixed(2)}
+
+                  <div className="text-blue-500 text-[10px] ml-0.5 "> {moneySign}</div>
                 </span>
               </div>
             </div>

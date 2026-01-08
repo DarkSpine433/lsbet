@@ -11,9 +11,9 @@ import {
   CircleUser,
   Activity,
   CalendarDays,
+  Trophy, // Dodano ikonę
 } from 'lucide-react'
 import LogoutButton from '../../ui/logout-button'
-// KLUCZOWA ZMIANA: Importujemy TYLKO typy
 import type { User } from '@/payload-types'
 import {
   Dialog,
@@ -29,6 +29,7 @@ import ChangePwd from './ChangePwd'
 import CodeCupons from './CodeCupons'
 import MyBets from './MyBets/MyBets'
 import { formatDateTime } from '@/utilities/formatDateTime'
+import MyCasinoWins from './MyCasinoWins'
 
 type Props = {
   user: User
@@ -95,6 +96,21 @@ const Account = ({ user }: Props) => {
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-950/20">
+          {/* NOWA SEKCJA: WYGRANE W KASYNIE */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-600/10 border border-blue-500/20">
+                <Trophy className="h-4 w-4 text-blue-500" />
+              </div>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest italic">
+                Wygrane w Kasynie
+              </h3>
+            </div>
+            <MyCasinoWins user={user} />
+          </section>
+
+          <Separator className="bg-slate-800/50" />
+
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-600/10 border border-blue-500/20">
@@ -109,6 +125,7 @@ const Account = ({ user }: Props) => {
             </div>
           </section>
 
+          {/* ... reszta komponentu pozostaje bez zmian ... */}
           <Separator className="bg-slate-800/50" />
 
           <section className="space-y-4">
