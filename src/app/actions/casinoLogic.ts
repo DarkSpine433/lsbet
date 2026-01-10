@@ -60,8 +60,6 @@ export async function runCasinoGame(bet: number, gameSlug: string, multiplier: n
     })
   }
 
-  revalidatePath('/')
-
   return {
     win: isWin,
     winAmount: winAmount,

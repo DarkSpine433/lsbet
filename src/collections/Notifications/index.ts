@@ -1,6 +1,5 @@
 import { CollectionConfig } from 'payload'
 import { isAdmin } from '@/access/isAdmin'
-import { isAdminOrItself } from '@/access/isAdminOrItself'
 
 export const Notifications: CollectionConfig = {
   slug: 'notifications',
@@ -10,7 +9,27 @@ export const Notifications: CollectionConfig = {
   },
   access: {
     create: isAdmin,
-    read: isAdminOrItself,
+    update: isAdmin,
+    delete: isAdmin,
+    // Użytkownik widzi tylko powiadomienia, gdzie jest odbiorcą LUB broadcast jest włączony
+    read: ({ req: { user } }) => {
+      if (!user) return false
+
+      return {
+        or: [
+          {
+            recipient: {
+              equals: user.id,
+            },
+          },
+          {
+            broadcast: {
+              equals: true,
+            },
+          },
+        ],
+      }
+    },
   },
   fields: [
     { name: 'title', type: 'text', required: true },
@@ -30,7 +49,6 @@ export const Notifications: CollectionConfig = {
       name: 'recipient',
       type: 'relationship',
       relationTo: 'users',
-
       admin: { condition: (data) => !data.broadcast },
     },
     { name: 'broadcast', label: 'Wyślij do wszystkich', type: 'checkbox', defaultValue: false },

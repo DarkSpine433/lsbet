@@ -13,6 +13,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { NavTabs } from '@/components/MainPage/NavTabs'
 import Heartbeat from '@/components/NavBar/Heartbeat'
 import Status from '@/components/NavBar/Status'
+import OfflineBarStatus from '@/components/MainPage/OfflineBarStatus'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const payload = await getPayload({ config })
@@ -88,6 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Nawigacja kliencka z Loaderem */}
         <NavTabs />
       </main>
+      <OfflineBarStatus />
     </div>
   )
 }
