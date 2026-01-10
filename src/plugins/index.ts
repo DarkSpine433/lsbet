@@ -8,7 +8,6 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
-import { websocketServerPlugin } from './websocketServer'
 
 const generateTitle: GenerateTitle<Post | Page> = ({ doc }) => {
   return doc?.title ? `${doc.title} | Payload Website Template` : 'Payload Website Template'
@@ -21,9 +20,6 @@ const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
 }
 
 export const plugins: Plugin[] = [
-  websocketServerPlugin({
-    collections: ['bets', 'placed-bets', 'users'],
-  }),
   uploadthingStorage({
     collections: {
       media: true,

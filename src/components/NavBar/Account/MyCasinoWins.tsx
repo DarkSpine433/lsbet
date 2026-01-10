@@ -56,7 +56,7 @@ export default function MyCasinoWins({ user }: { user: any }) {
           </div>
           <span className="text-xl font-black italic text-green-500 tracking-tighter">
             {totalWon.toLocaleString('pl-PL', { minimumFractionDigits: 2 })}{' '}
-            <span className="text-[10px] not-italic ml-1 opacity-50">PLN</span>
+            <span className="text-[10px] not-italic ml-1 opacity-50">$</span>
           </span>
         </div>
 

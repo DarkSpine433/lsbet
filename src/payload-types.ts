@@ -74,7 +74,7 @@ export interface Config {
     users: User;
     bets: Bet;
     'placed-bets': PlacedBet;
-    'cupon-codes': CuponCode;
+    coupons: Coupon;
     'casino-games': CasinoGame;
     'casino-categories': CasinoCategory;
     'casino-wins': CasinoWin;
@@ -99,7 +99,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     bets: BetsSelect<false> | BetsSelect<true>;
     'placed-bets': PlacedBetsSelect<false> | PlacedBetsSelect<true>;
-    'cupon-codes': CuponCodesSelect<false> | CuponCodesSelect<true>;
+    coupons: CouponsSelect<false> | CouponsSelect<true>;
     'casino-games': CasinoGamesSelect<false> | CasinoGamesSelect<true>;
     'casino-categories': CasinoCategoriesSelect<false> | CasinoCategoriesSelect<true>;
     'casino-wins': CasinoWinsSelect<false> | CasinoWinsSelect<true>;
@@ -656,13 +656,24 @@ export interface PlacedBet {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "cupon-codes".
+ * via the `definition` "coupons".
  */
-export interface CuponCode {
+export interface Coupon {
   id: string;
+  /**
+   * Kod będzie automatycznie zamieniony na WIELKIE LITERY
+   */
   code: string;
-  'amount-of-money': number;
-  'who-used'?: (string | User)[] | null;
+  /**
+   * Kwota dodawana do balansu $
+   */
+  value: number;
+  isInfinite?: boolean | null;
+  neverExpires?: boolean | null;
+  expiresAt?: string | null;
+  maxUses?: number | null;
+  usedCount?: number | null;
+  usedBy?: (string | User)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -872,8 +883,8 @@ export interface PayloadLockedDocument {
         value: string | PlacedBet;
       } | null)
     | ({
-        relationTo: 'cupon-codes';
-        value: string | CuponCode;
+        relationTo: 'coupons';
+        value: string | Coupon;
       } | null)
     | ({
         relationTo: 'casino-games';
@@ -1293,12 +1304,17 @@ export interface PlacedBetsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "cupon-codes_select".
+ * via the `definition` "coupons_select".
  */
-export interface CuponCodesSelect<T extends boolean = true> {
+export interface CouponsSelect<T extends boolean = true> {
   code?: T;
-  'amount-of-money'?: T;
-  'who-used'?: T;
+  value?: T;
+  isInfinite?: T;
+  neverExpires?: T;
+  expiresAt?: T;
+  maxUses?: T;
+  usedCount?: T;
+  usedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

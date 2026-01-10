@@ -26,10 +26,10 @@ import {
 import { Separator } from '../../ui/separator'
 import { Badge } from '@/components/ui/badge'
 import ChangePwd from './ChangePwd'
-import CodeCupons from './CodeCupons'
 import MyBets from './MyBets/MyBets'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import MyCasinoWins from './MyCasinoWins'
+import CouponSection from './CodeCupons'
 
 type Props = {
   user: User
@@ -50,7 +50,10 @@ const Account = ({ user }: Props) => {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md w-full max-h-[90dvh] flex flex-col p-0 bg-[#020617] border-slate-800 text-slate-100 overflow-hidden shadow-2xl">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="max-w-md  w-full max-h-[90dvh] flex flex-col p-0 bg-[#020617] border-slate-800 text-slate-100 overflow-hidden shadow-2xl"
+      >
         <DialogHeader className="p-8 pb-6 border-b border-slate-800/50 bg-gradient-to-b from-blue-600/10 to-transparent relative">
           <div className="absolute top-6 right-6">
             <Badge className="bg-blue-600 text-white border-none font-black text-[10px] tracking-widest uppercase px-3 py-1">
@@ -72,31 +75,34 @@ const Account = ({ user }: Props) => {
               </DialogDescription>
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 mt-6">
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3">
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">
-                Dołączył
-              </p>
-              <div className="flex items-center gap-2 text-slate-200">
-                <CalendarDays className="h-3 w-3 text-blue-500" />
-                <span className="text-xs font-bold">{formatDateTime(user.createdAt)}</span>
-              </div>
-            </div>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3">
-              <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">
-                Status
-              </p>
-              <div className="flex items-center gap-2 text-slate-200">
-                <Activity className="h-3 w-3 text-green-500" />
-                <span className="text-xs font-bold">Aktywny</span>
-              </div>
-            </div>
-          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-slate-950/20">
+        <div className="flex-1 overflow-y-auto py-1 px-6 space-y-8 bg-slate-950/20">
           {/* NOWA SEKCJA: WYGRANE W KASYNIE */}
+          <section className="space-y-4">
+            <div className="grid grid-cols-2 gap-2 mt-6">
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3">
+                <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">
+                  Dołączył
+                </p>
+                <div className="flex items-center gap-2 text-slate-200">
+                  <CalendarDays className="h-3 w-3 text-blue-500" />
+                  <span className="text-xs font-bold">{formatDateTime(user.createdAt)}</span>
+                </div>
+              </div>
+              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-3">
+                <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">
+                  Status
+                </p>
+                <div className="flex items-center gap-2 text-slate-200">
+                  <Activity className="h-3 w-3 text-green-500" />
+                  <span className="text-xs font-bold">Aktywny</span>
+                </div>
+              </div>
+            </div>
+          </section>
+          <Separator className="bg-slate-800/50" />
+
           <section className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-600/10 border border-blue-500/20">
@@ -138,7 +144,7 @@ const Account = ({ user }: Props) => {
               </h3>
             </div>
             <div className="bg-slate-900/30 rounded-2xl border border-slate-800 p-4">
-              <CodeCupons />
+              <CouponSection onBalanceUpdate={(val) => {}} />
             </div>
           </section>
 
@@ -161,9 +167,6 @@ const Account = ({ user }: Props) => {
 
         <div className="p-6 border-t border-slate-800 bg-[#020617] mt-auto">
           <div className="flex flex-col gap-3">
-            <p className="text-[10px] text-center text-slate-500 font-medium px-4">
-              Zalogowano jako {user.email}
-            </p>
             <LogoutButton />
           </div>
         </div>

@@ -74,7 +74,7 @@ export default function WinsDetailDialog({
                     Łącznie w tej grze:
                   </span>
                   <span className="text-lg font-black text-green-500">
-                    {gameTotal.toFixed(2)} PLN
+                    {gameTotal.toFixed(2)} $
                   </span>
                 </div>
 
@@ -95,7 +95,7 @@ export default function WinsDetailDialog({
                       <div className="text-right">
                         <p className="text-[9px] text-slate-500 font-bold uppercase">Wygrana</p>
                         <p className="text-sm font-black text-white">
-                          +{Number(win.winAmount).toFixed(2)} PLN
+                          +{Number(win.winAmount).toFixed(2)} $
                         </p>
                       </div>
                     </div>

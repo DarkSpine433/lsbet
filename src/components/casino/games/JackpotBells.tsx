@@ -46,7 +46,7 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
         setIsSpinning(false)
 
         if (result.isWin) {
-          toast.success(`WYGRANA: +${result.winAmount.toFixed(2)} PLN`, {
+          toast.success(`WYGRANA: +${result.winAmount.toFixed(2)} $`, {
             icon: '🔔',
             style: { background: '#fbbf24', color: '#000', fontWeight: '900' },
           })
@@ -121,7 +121,7 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2">
-              <Zap className="h-3 w-3 text-yellow-500" /> Stawka (PLN)
+              <Zap className="h-3 w-3 text-yellow-500" /> Stawka ($)
             </label>
             <div className="flex items-center bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden transition-focus-within focus-within:border-blue-600">
               <button

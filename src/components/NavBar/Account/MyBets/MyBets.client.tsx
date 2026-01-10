@@ -126,7 +126,7 @@ const BetCard: FC<{ bet: PlacedBet; resultsMap: Map<string, Bet> }> = ({ bet, re
             Stawka
           </p>
           <p className="font-black text-white text-sm">
-            {bet.stake?.toFixed(2)} <span className="text-blue-500 text-[10px]">PLN</span>
+            {bet.stake?.toFixed(2)} <span className="text-blue-500 text-[10px]">$</span>
           </p>
         </div>
 
@@ -147,7 +147,7 @@ const BetCard: FC<{ bet: PlacedBet; resultsMap: Map<string, Bet> }> = ({ bet, re
             className={`font-black text-lg italic tracking-tighter leading-none ${isWon ? 'text-green-400' : isLost ? 'text-slate-600 line-through' : 'text-blue-500'}`}
           >
             {isWon ? `+${bet.potentialWin?.toFixed(2)}` : bet.potentialWin?.toFixed(2)}{' '}
-            <span className="text-[10px]">PLN</span>
+            <span className="text-[10px]">$</span>
           </p>
         </div>
       </CardFooter>

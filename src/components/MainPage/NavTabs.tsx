@@ -84,8 +84,8 @@ export function NavTabs() {
                 </div>
 
                 {/* Obrotowy pierścień wokół logo */}
-                <div className="absolute -inset-4 border-t-2 border-blue-500/40 border-r-2 border-transparent rounded-full animate-spin duration-[1.5s]" />
-                <div className="absolute -inset-4 border-b-2 border-blue-900/40 border-l-2 border-transparent rounded-full animate-spin duration-[2s] direction-reverse" />
+                <div className="absolute -inset-4 border-t-2 border-blue-500/40 border-r-2  rounded-full animate-spin duration-[1.5s]" />
+                <div className="absolute -inset-4 border-b-2 border-blue-900/40 border-l-2  rounded-full animate-spin duration-[2s] direction-reverse" />
               </div>
             </div>
 

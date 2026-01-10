@@ -66,7 +66,7 @@ export default function SimplyNumbers({ balance, onBalanceUpdate, gameSlug, game
           <Banknote className="h-5 w-5 text-green-500" />
           <span className="text-[10px] font-black uppercase tracking-widest">Możliwy Zysk</span>
         </div>
-        <span className="text-xl font-black italic text-green-400">{possibleWin} PLN</span>
+        <span className="text-xl font-black italic text-green-400">{possibleWin} $</span>
       </div>
 
       {/* EKRAN WYNIKU */}
