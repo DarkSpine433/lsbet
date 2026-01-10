@@ -5,7 +5,6 @@ import { getPayload, type RequiredDataFromCollectionSlug } from 'payload'
 import configPromise from '@payload-config'
 import dynamic from 'next/dynamic'
 import CircularProgress from '@mui/material/CircularProgress'
-import MaintenancePage from '@/components/MainPage/MeintenancePage'
 
 const PageClient = dynamic(() => import('./page.client'), {
   loading: () => <CircularProgress className="mx-auto [&>*]:text-blue-500" />,
@@ -28,13 +27,12 @@ const page = async (props: Props) => {
 
   return (
     <>
-      {/* <PageClient
+      <PageClient
         nickname={user.email.split('@')[0]}
         categories={getCategories}
         bets={getBets}
         money={user.money || 0}
-      /> */}
-      <MaintenancePage />
+      />
     </>
   )
 }
