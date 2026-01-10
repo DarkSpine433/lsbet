@@ -1,68 +1,54 @@
+// app/actions/casino/activate-coupon.ts
 'use server'
 
-import { CuponCode, User } from '@/payload-types'
 import { getPayload } from 'payload'
+import config from '@payload-config'
+import { headers as nextHeaders } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { cookies } from 'next/headers'
-import config from '../../payload.config'
 
-export const activateCouponAction = async (
-  formData: FormData,
-): Promise<{ success: boolean; message: string; newBalance?: number }> => {
-  const code = formData.get('couponCode') as string
-  if (!code) {
-    return { success: false, message: 'Proszę wprowadzić kod.' }
-  }
-
+export async function activateCoupon(code: string) {
   const payload = await getPayload({ config })
-  const cookieStore = await cookies()
-  const token = cookieStore.get('payload-token')?.value
+  const headers = await nextHeaders()
+  const { user } = await payload.auth({ headers })
 
-  const { user } = await payload.auth({
-    headers: new Headers({
-      Authorization: `JWT ${token}`,
-    }),
+  if (!user) throw new Error('Musisz być zalogowany')
+
+  // 1. Znajdź kupon
+  const couponRes = await payload.find({
+    collection: 'coupons',
+    where: {
+      code: { equals: code.toUpperCase() },
+    },
   })
 
-  if (!user) {
-    return { success: false, message: 'Musisz być zalogowany, aby aktywować kod.' }
+  const coupon = couponRes.docs[0]
+
+  // 2. Walidacja istnienia i daty
+  if (!coupon) return { error: 'Kod nie istnieje' }
+
+  const now = new Date()
+  // Fragment logiki w Server Action:
+  if (!coupon.neverExpires && new Date(coupon.expiresAt ?? 0) < now) {
+    return { error: 'Kod wygasł' }
+  }
+
+  if (!coupon.isInfinite && (coupon.usedCount ?? 0) >= (coupon.maxUses ?? 0)) {
+    return { error: 'Limit użyć wyczerpany' }
+  }
+
+  // 4. Sprawdzenie czy ten konkretny użytkownik już go użył
+  const alreadyUsed = coupon.usedBy?.some(
+    (u: any) => (typeof u === 'string' ? u : u.id) === user.id,
+  )
+  if (alreadyUsed) {
+    return { error: 'Już aktywowałeś ten kod' }
   }
 
   try {
-    // Find the coupon code
-    const couponResult = await payload.find({
-      collection: 'cupon-codes',
-      where: {
-        code: {
-          equals: code.toUpperCase(), // Codes are case-insensitive
-        },
-      },
-      limit: 1,
-    })
+    // 5. Aktualizacja balansu użytkownika
+    const currentMoney = user.money || 0
+    const newBalance = currentMoney + coupon.value
 
-    const coupon = couponResult.docs[0] as CuponCode | undefined
-
-    if (!coupon) {
-      return { success: false, message: 'Nieprawidłowy kod kuponu.' }
-    }
-
-    // Check if the user has already used this coupon
-    const usersWhoUsed = (coupon['who-used'] as User[] | undefined)?.map((u) => u.id) || []
-    if (usersWhoUsed.includes(user.id)) {
-      return { success: false, message: 'Już wykorzystałeś/aś ten kod.' }
-    }
-
-    // Fetch the full user document to get their current balance
-    const fullUser = (await payload.findByID({
-      collection: 'users',
-      id: user.id,
-    })) as User
-
-    const currentMoney = fullUser.money || 0
-    const couponAmount = coupon['amount-of-money'] || 0
-    const newBalance = parseFloat((currentMoney + couponAmount).toFixed(2))
-
-    // Update the user's balance
     await payload.update({
       collection: 'users',
       id: user.id,
@@ -71,25 +57,35 @@ export const activateCouponAction = async (
       },
     })
 
-    // Add the user to the list of users who have used this code
+    // 6. Aktualizacja statystyk kuponu
     await payload.update({
-      collection: 'cupon-codes',
+      collection: 'coupons',
       id: coupon.id,
       data: {
-        'who-used': [...usersWhoUsed, user.id],
+        usedCount: (coupon.usedCount ?? 0) + 1,
+        usedBy: [
+          ...(coupon.usedBy || []).map((u: any) => (typeof u === 'string' ? u : u.id)),
+          user.id,
+        ],
       },
     })
 
-    revalidatePath('/home')
-    revalidatePath('/my-bets')
-
-    return {
-      success: true,
-      message: `Dodano ${couponAmount.toFixed(2)} PLN do Twojego konta!`,
-      newBalance,
-    }
-  } catch (error) {
-    console.error('Błąd aktywacji kuponu:', error)
-    return { success: false, message: 'Wystąpił błąd serwera.' }
+    // 7. Stworzenie powiadomienia o wygranej/bonusie
+    await payload.create({
+      collection: 'notifications',
+      data: {
+        title: 'Kod aktywowany!',
+        message: `Otrzymałeś ${coupon.value} $ z kodu bonusowego: ${coupon.code}`,
+        type: 'bonus',
+        recipient: user.id,
+        broadcast: false,
+        isRead: false,
+      },
+    })
+    revalidatePath('/')
+    return { success: true, amount: coupon.value, newBalance }
+  } catch (err) {
+    console.error(err)
+    return { error: 'Wystąpił błąd podczas aktywacji' }
   }
 }

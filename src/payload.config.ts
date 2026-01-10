@@ -5,7 +5,7 @@ import sharp from 'sharp' // sharp-import
 import path from 'path'
 import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
-
+import { Coupons } from './collections/CuponCodes'
 import { Categories } from './collections/Categories'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
@@ -19,7 +19,6 @@ import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 import { pl } from '@payloadcms/translations/languages/pl'
 import { PlacedBets } from './collections/PlaceBets'
-import { CuponCodes } from './collections/CuponCodes'
 import { CasinoGames } from './collections/CasinoGames'
 import { CasinoCategories } from './collections/CasinoCategories'
 import { CasinoWins } from './collections/CasinoWins'
@@ -173,7 +172,7 @@ export default buildConfig({
     Users,
     Bets,
     PlacedBets,
-    CuponCodes,
+    Coupons,
     CasinoGames,
     CasinoCategories,
     CasinoWins,

@@ -45,7 +45,7 @@ export async function runCasinoGame(bet: number, gameSlug: string, multiplier: n
     data: { money: freshUser.money + netChange },
   })
   console.log(
-    `[lsCasino] Użytkownik ${user.email} ${isWin ? 'WYGRAŁ' : 'PRZEGRAŁ'} ${isWin ? winAmount : bet} PLN`,
+    `[lsCasino] Użytkownik ${user.email} ${isWin ? 'WYGRAŁ' : 'PRZEGRAŁ'} ${isWin ? winAmount : bet} $`,
   )
   if (isWin) {
     await payload.create({

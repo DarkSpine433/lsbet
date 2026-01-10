@@ -121,7 +121,7 @@ export default function CasinoClient({ nickname, money }: any) {
                   wygrał w {win?.gameTitle || 'Kasyno'}
                 </span>
                 <span className="text-green-500 font-black italic text-[11px]">
-                  {Number(win?.winAmount).toFixed(2)} PLN
+                  {Number(win?.winAmount).toFixed(2)} $
                 </span>
               </div>
             ))

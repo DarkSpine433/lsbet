@@ -69,7 +69,7 @@ export const CasinoGameWrapper = ({
                     </span>
                     <span className="text-sm font-black italic text-white tracking-tighter">
                       {typeof balance === 'number' ? balance.toFixed(2) : '0.00'}{' '}
-                      <span className="text-blue-500">PLN</span>
+                      <span className="text-blue-500">$</span>
                     </span>
                   </div>
                 </div>

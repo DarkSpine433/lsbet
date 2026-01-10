@@ -1,47 +1,102 @@
-import type { CollectionConfig } from 'payload'
-
-import { authenticated } from '../../access/authenticated'
-import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
-
-import { populatePublishedAt } from '../../hooks/populatePublishedAt'
+// collections/Coupons.ts
+import { CollectionConfig } from 'payload'
 import { isAdmin } from '@/access/isAdmin'
-import { generateId } from '@/hooks/generateId'
-import { afterChangeHook } from './hooks/afterChangeHook'
 
-export const CuponCodes: CollectionConfig<'cupon-codes'> = {
-  slug: 'cupon-codes',
-
+export const Coupons: CollectionConfig = {
+  slug: 'coupons',
+  admin: {
+    useAsTitle: 'code',
+    group: 'System',
+  },
   access: {
     create: isAdmin,
-    delete: isAdmin,
-    read: authenticatedOrPublished,
+    read: ({ req: { user } }) => !!user,
     update: isAdmin,
+    delete: isAdmin,
   },
-
-  defaultPopulate: {
-    code: true,
-  },
-  admin: {
-    defaultColumns: ['id', 'code', 'slug'],
+  hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (data?.code) {
+          return {
+            ...data,
+            code: data.code.toUpperCase(), // Wymuszanie wielkich liter
+          }
+        }
+        return data
+      },
+    ],
   },
   fields: [
     {
       name: 'code',
       type: 'text',
       required: true,
-      label: 'Code (to proper working code type in UPPERCASE letters)',
+      unique: true,
+      admin: {
+        description: 'Kod będzie automatycznie zamieniony na WIELKIE LITERY',
+      },
     },
     {
-      name: 'amount-of-money',
+      name: 'value',
       type: 'number',
       required: true,
+      admin: {
+        description: 'Kwota dodawana do balansu $',
+      },
     },
     {
-      name: 'who-used',
+      type: 'row',
+      fields: [
+        {
+          name: 'isInfinite',
+          type: 'checkbox',
+          label: 'Nieskończona liczba użyć',
+          defaultValue: false,
+        },
+        {
+          name: 'neverExpires',
+          type: 'checkbox',
+          label: 'Nigdy nie wygasa',
+          defaultValue: false,
+        },
+      ],
+    },
+    {
+      name: 'expiresAt',
+      type: 'date',
+      required: true,
+      admin: {
+        condition: (data) => !data.neverExpires, // Ukryj jeśli zaznaczono "Nigdy nie wygasa"
+      },
+    },
+    {
+      name: 'maxUses',
+      type: 'number',
+      defaultValue: 1,
+      required: true,
+      admin: {
+        condition: (data) => !data.isInfinite, // Ukryj jeśli zaznaczono "Nieskończona"
+      },
+    },
+    {
+      name: 'usedCount',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'usedBy',
       type: 'relationship',
       relationTo: 'users',
       hasMany: true,
-      unique: true,
+      admin: {
+        readOnly: true,
+        position: 'sidebar',
+      },
     },
   ],
 }

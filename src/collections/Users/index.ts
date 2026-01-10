@@ -44,8 +44,8 @@ export const Users: CollectionConfig = {
                 title: adjustment > 0 ? '💰 Doładowanie konta' : '💸 Korekta salda',
                 message:
                   adjustment > 0
-                    ? `Twoje konto zostało doładowane o kwotę ${adjustment.toFixed(2)} PLN przez administratora.`
-                    : `Z Twojego konta pobrano kwotę ${Math.abs(adjustment).toFixed(2)} PLN (korekta administratora).`,
+                    ? `Twoje konto zostało doładowane o kwotę ${adjustment.toFixed(2)} $ przez administratora.`
+                    : `Z Twojego konta pobrano kwotę ${Math.abs(adjustment).toFixed(2)} $ (korekta administratora).`,
                 type: adjustment > 0 ? 'win' : 'alert',
                 recipient: originalDoc.id,
                 broadcast: false,
