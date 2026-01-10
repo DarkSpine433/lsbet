@@ -539,7 +539,7 @@ export default function PageClient(props: PageClientProps) {
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false)
   const [bets, setBets] = useState<Bet[]>(props.bets)
   const moneySign = 'PLN'
-  const [isOnline, setIsOnline] = useState(true)
+
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
   const [nextSyncIn, setNextSyncIn] = useState(60)
 
@@ -578,18 +578,6 @@ export default function PageClient(props: PageClientProps) {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [])
-  // Online/Offline detection
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-    setIsOnline(navigator.onLine)
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
   }, [])
 
   useEffect(() => {
@@ -871,13 +859,6 @@ export default function PageClient(props: PageClientProps) {
           </Dialog>
         </div>
       </div>{' '}
-      <div
-        className={`${isOnline ? 'opacity-0 translate-y-6' : ' opacity-100'} 
-            transition-all duration-300 ease-in-out fixed bottom-0 transform left-0 text-center
-            bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-b-md pointer-events-none w-full z-40 h-fit`}
-      >
-        OFFLINE
-      </div>
     </div>
   )
 }
