@@ -78,6 +78,7 @@ export interface Config {
     'casino-games': CasinoGame;
     'casino-categories': CasinoCategory;
     'casino-wins': CasinoWin;
+    notifications: Notification;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
@@ -102,6 +103,7 @@ export interface Config {
     'casino-games': CasinoGamesSelect<false> | CasinoGamesSelect<true>;
     'casino-categories': CasinoCategoriesSelect<false> | CasinoCategoriesSelect<true>;
     'casino-wins': CasinoWinsSelect<false> | CasinoWinsSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -421,10 +423,19 @@ export interface Category {
  */
 export interface User {
   id: string;
+  role?: ('admin' | 'user') | null;
+  /**
+   * Wpisz np. 100 aby dodać lub -100 aby zabrać pieniądze. Pole wyzeruje się po zapisie.
+   */
+  adjustBalance?: number | null;
+  /**
+   * Aktualny stan konta użytkownika (tylko do odczytu lub korekty bezpośredniej)
+   */
+  money?: number | null;
+  lastActive?: string | null;
+  totalWinsAmount?: number | null;
   verified?: boolean | null;
   banned?: boolean | null;
-  role: 'admin' | 'user';
-  money?: number | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -667,6 +678,7 @@ export interface CasinoGame {
   category: string | CasinoCategory;
   gamelogo: string | Media;
   publishedAt?: string | null;
+  isActive?: boolean | null;
   slug?: string | null;
   slugLock?: boolean | null;
   updatedAt: string;
@@ -696,6 +708,22 @@ export interface CasinoWin {
   betAmount: number;
   winAmount: number;
   multiplier: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type?: ('info' | 'win' | 'bonus' | 'alert') | null;
+  recipient?: (string | null) | User;
+  broadcast?: boolean | null;
+  isReadBy?: (string | User)[] | null;
+  isRead?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -858,6 +886,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'casino-wins';
         value: string | CasinoWin;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: string | Notification;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -1186,10 +1218,13 @@ export interface CategoriesSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
+  adjustBalance?: T;
+  money?: T;
+  lastActive?: T;
+  totalWinsAmount?: T;
   verified?: T;
   banned?: T;
-  role?: T;
-  money?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1278,6 +1313,7 @@ export interface CasinoGamesSelect<T extends boolean = true> {
   category?: T;
   gamelogo?: T;
   publishedAt?: T;
+  isActive?: T;
   slug?: T;
   slugLock?: T;
   updatedAt?: T;
@@ -1305,6 +1341,21 @@ export interface CasinoWinsSelect<T extends boolean = true> {
   betAmount?: T;
   winAmount?: T;
   multiplier?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  title?: T;
+  message?: T;
+  type?: T;
+  recipient?: T;
+  broadcast?: T;
+  isReadBy?: T;
+  isRead?: T;
   updatedAt?: T;
   createdAt?: T;
 }
