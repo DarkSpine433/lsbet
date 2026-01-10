@@ -1,5 +1,5 @@
-import type { AccessArgs } from 'payload'
 import type { User } from '@/payload-types'
+import { AccessArgs } from 'payload'
 
 type isAdmin = (args: AccessArgs<User>) => boolean
 export const isAdmin: isAdmin = ({ req: { user } }) => {
