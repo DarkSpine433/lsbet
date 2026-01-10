@@ -1,6 +1,8 @@
-import type { Access } from 'payload'
+import type { User } from '@/payload-types'
+import { FieldAccessArgs } from 'node_modules/payload/dist/fields/config/types'
 
-export const isAdminOrItself: Access = ({ req: { user } }) => {
+type isAdminOrItself = (args: FieldAccessArgs<User>) => boolean | { id: { equals: string } }
+export const isAdminOrItself: isAdminOrItself = ({ req: { user } }) => {
   if (user) {
     if (user.role?.includes('admin')) {
       return true

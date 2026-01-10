@@ -1,70 +1,150 @@
 import type { CollectionConfig } from 'payload'
-
-import { authenticated } from '../../access/authenticated'
+import { isAdmin } from '@/access/fieldAccess/isAdmin'
 import { isAdminOrItself } from '@/access/isAdminOrItself'
 import { anyone } from '@/access/anyone'
-import { isAdmin } from '@/access/fieldAccess/isAdmin'
 
 export const Users: CollectionConfig = {
   slug: 'users',
-
-  auth: {
-    tokenExpiration: 60 * 60 * 24 * 30, // How many seconds to keep the user logged in
-    maxLoginAttempts: 20, // Automatically lock a user out after X amount of failed logins
-    lockTime: 60 * 60, // Time period to allow the max login attempts
-  },
+  auth: true,
   access: {
-    create: anyone,
-    delete: isAdminOrItself,
-    admin: isAdmin,
-    update: isAdminOrItself,
     read: isAdminOrItself,
+    create: anyone,
+    update: isAdminOrItself,
+    delete: isAdmin,
   },
   admin: {
-    defaultColumns: ['role', 'email'],
     useAsTitle: 'email',
+    defaultColumns: [
+      'email',
+      'role',
+      'money',
+      'lastActive',
+      'totalWinsAmount',
+      'verified',
+      'banned',
+    ],
   },
+  hooks: {
+    // Logika obsługująca dodawanie/odejmowanie pieniędzy przez Admina
+    beforeChange: [
+      async ({ data, req, originalDoc }) => {
+        // Sprawdzamy czy admin przesłał wartość w polu adjustBalance
+        if (data.adjustBalance && data.adjustBalance !== 0) {
+          const currentMoney = originalDoc?.money || 0
+          const adjustment = data.adjustBalance
 
+          // Aktualizujemy główne saldo
+          data.money = currentMoney + adjustment
+
+          // Wysyłamy powiadomienie
+          try {
+            await req.payload.create({
+              collection: 'notifications',
+              data: {
+                title: adjustment > 0 ? '💰 Doładowanie konta' : '💸 Korekta salda',
+                message:
+                  adjustment > 0
+                    ? `Twoje konto zostało doładowane o kwotę ${adjustment.toFixed(2)} PLN przez administratora.`
+                    : `Z Twojego konta pobrano kwotę ${Math.abs(adjustment).toFixed(2)} PLN (korekta administratora).`,
+                type: adjustment > 0 ? 'win' : 'alert',
+                recipient: originalDoc.id,
+                broadcast: false,
+              },
+            })
+          } catch (err) {
+            console.error('Błąd wysyłania powiadomienia o zmianie salda:', err)
+          }
+
+          // Zerujemy pole korekty, żeby przy następnym zapisie nie dodało/odjęło ponownie
+          data.adjustBalance = 0
+        }
+        return data
+      },
+    ],
+  },
+  endpoints: [
+    {
+      path: '/heartbeat',
+      method: 'post',
+      handler: async (req) => {
+        if (!req.user) {
+          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+        }
+
+        try {
+          await req.payload.update({
+            collection: 'users',
+            id: req.user.id,
+            data: {
+              lastActive: new Date().toISOString(),
+            },
+          })
+
+          return new Response(JSON.stringify({ status: 'ok' }), { status: 200 })
+        } catch (err) {
+          return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 })
+        }
+      },
+    },
+  ],
   fields: [
     {
-      access: {
-        create: isAdmin,
-        update: isAdmin,
-        read: () => true,
-      },
-      name: 'verified',
-      label: 'Verified',
-      type: 'checkbox',
-    },
-    {
-      access: {
-        create: isAdmin,
-        update: isAdmin,
-        read: () => true,
-      },
-      name: 'banned',
-      label: 'Banned',
-      type: 'checkbox',
-    },
-    {
-      access: {
-        create: isAdmin,
-        update: isAdmin,
-        read: () => true,
-      },
       name: 'role',
       type: 'select',
-      options: ['admin', 'user'],
-      required: true,
+      options: [
+        { label: 'Admin', value: 'admin' },
+        { label: 'User', value: 'user' },
+      ],
+      defaultValue: 'user',
+      access: { update: isAdmin },
+    },
+    {
+      name: 'adjustBalance',
+      type: 'number',
+      admin: {
+        description:
+          'Wpisz np. 100 aby dodać lub -100 aby zabrać pieniądze. Pole wyzeruje się po zapisie.',
+      },
+      access: {
+        update: isAdmin,
+        create: isAdmin,
+        read: isAdmin,
+      },
     },
     {
       name: 'money',
-      label: 'Money In Wallet',
       type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Aktualny stan konta użytkownika (tylko do odczytu lub korekty bezpośredniej)',
+      },
+      access: {
+        update: isAdmin,
+        create: isAdmin,
+      },
+    },
+    {
+      name: 'lastActive',
+      type: 'date',
       admin: {
         position: 'sidebar',
       },
     },
+    {
+      name: 'totalWinsAmount',
+      type: 'number',
+      defaultValue: 0,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'verified',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'banned',
+      type: 'checkbox',
+      defaultValue: false,
+    },
   ],
-  timestamps: true,
 }

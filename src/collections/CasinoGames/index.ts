@@ -61,6 +61,15 @@ export const CasinoGames: CollectionConfig<'casino-games'> = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'isActive',
+      label: 'Gra Aktywna',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        position: 'sidebar',
+      },
+    },
     ...slugField(),
   ],
   versions: {
