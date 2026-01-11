@@ -98,9 +98,7 @@ export default function LogoutPage() {
           {!isLoading && response?.isSuccess && (
             <div className="p-4 rounded-xl bg-slate-950/50 border border-slate-800 text-center">
               <p className="text-[11px] text-slate-400 font-medium italic">
-                <p className="text-[11px] text-slate-400 font-medium italic">
-                  &quot;Pamiętaj o bezpiecznym przechowywaniu hasła do swojego konta OOC.&quot;
-                </p>
+                &quot;Pamiętaj o bezpiecznym przechowywaniu hasła do swojego konta OOC.&quot;
               </p>
             </div>
           )}

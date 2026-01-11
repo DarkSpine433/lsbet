@@ -23,6 +23,9 @@ export const Media: CollectionConfig = {
     read: anyone,
     update: isAdmin,
   },
+  admin: {
+    group: 'System',
+  },
   folders: true,
   fields: [
     {
