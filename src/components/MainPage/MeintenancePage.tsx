@@ -5,7 +5,15 @@ import { motion } from 'motion/react'
 import { Hammer, Cog, Bell, ArrowLeft, Construction, Sparkles, ArrowUp } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-export default function MaintenancePage() {
+export default function MaintenancePage({
+  redirectTo,
+  buttonText,
+  maintenancePagesDescription,
+}: {
+  redirectTo: string
+  buttonText: string
+  maintenancePagesDescription: string
+}) {
   const router = useRouter()
 
   return (
@@ -56,8 +64,7 @@ export default function MaintenancePage() {
           </h1>
 
           <p className="text-slate-500 font-bold text-sm md:text-base max-w-md mx-auto uppercase tracking-wide leading-relaxed">
-            Obecnie wprowadzamy nowe systemy i zabezpieczenia, aby Twoja gra była jeszcze bardziej
-            płynna.
+            {maintenancePagesDescription}
           </p>
         </motion.div>
 
@@ -83,11 +90,11 @@ export default function MaintenancePage() {
           className="flex flex-col md:flex-row items-center justify-center gap-4"
         >
           <button
-            onClick={() => router.push('/casino')}
+            onClick={() => router.push(redirectTo)}
             className="flex items-center gap-3 px-8 py-4 bg-blue-600 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-[0_0_30px_rgba(37,99,235,0.3)] group"
           >
             <ArrowUp className="h-4 w-4 animate-bounce" />
-            Przejdź do Kasyna
+            {buttonText}
           </button>
         </motion.div>
 

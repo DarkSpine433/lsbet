@@ -22,10 +22,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   const moneySign = '$'
 
-  // Parsowanie ścieżek z ENV (np. "/casino,/slots")
-  const maintenancePaths = process.env.MAINTENANCE_PAGES
-    ? process.env.MAINTENANCE_PAGES.split(',')
-    : []
+  // Parsowanie obiektu z ENV
+  let maintenanceConfig = {
+    maintenancePages: [],
+    redirectTo: '/logout',
+    redirectButtonText: 'Wyloguj się',
+    maintenancePagesDescription:
+      'Obecnie wprowadzamy nowe systemy i zabezpieczenia, aby Twoja gra była jeszcze bardziej płynna.',
+  }
+
+  if (process.env.MAINTENANCE_PAGES) {
+    try {
+      const parsed = JSON.parse(process.env.MAINTENANCE_PAGES)
+      maintenanceConfig = {
+        maintenancePages: parsed.maintenancePages || [],
+        redirectTo: parsed.redirectTo || '/logout',
+        redirectButtonText: parsed.redirectButtonText || 'Wyloguj się',
+        maintenancePagesDescription: parsed.maintenancePagesDescription || '',
+      }
+    } catch (e) {
+      console.error('Błąd parsowania MAINTENANCE_PAGES:', e)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100">
@@ -75,8 +93,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </header>
 
       <main className="relative">
-        {/* Kontroler sprawdza ścieżkę po stronie klienta */}
-        <MaintenanceController maintenancePaths={maintenancePaths}>
+        {/* Przekazujemy rozszerzoną konfigurację do kontrolera */}
+        <MaintenanceController
+          maintenancePaths={maintenanceConfig.maintenancePages}
+          redirectTo={maintenanceConfig.redirectTo}
+          redirectButtonText={maintenanceConfig.redirectButtonText}
+          maintenancePagesDescription={maintenanceConfig.maintenancePagesDescription}
+        >
           {children}
         </MaintenanceController>
 

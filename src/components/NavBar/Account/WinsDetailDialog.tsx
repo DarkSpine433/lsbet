@@ -28,7 +28,7 @@ export default function WinsDetailDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl bg-[#020617] border-slate-800 text-slate-100 max-h-[80dvh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl bg-[#020617] border-slate-800 text-slate-100 max-h-[90dvh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-4 border-b border-slate-800">
           <DialogTitle className="text-xl font-black italic uppercase tracking-tight">
             Szczegółowa Historia Wygranych
