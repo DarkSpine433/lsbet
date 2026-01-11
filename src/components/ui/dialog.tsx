@@ -3,15 +3,40 @@
 import * as React from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
+import detectBackButton from 'detect-browser-back-navigation'
 
 import { cn } from '@/utilities/ui'
 
-const Dialog = DialogPrimitive.Root
+const DialogContext = React.createContext({ open: false, setOpen: (open: boolean) => {} })
+
+const Dialog = ({ children, ...props }: DialogPrimitive.DialogProps) => {
+  const [internalOpen, setInternalOpen] = React.useState(props.open || false)
+
+  // Synchronizacja z zewnętrznym stanem, jeśli jest podany
+  const open = props.open !== undefined ? props.open : internalOpen
+  const onOpenChange = props.onOpenChange || setInternalOpen
+
+  React.useEffect(() => {
+    if (open) {
+      // Rejestrujemy wykrywanie przycisku wstecz tylko gdy Dialog jest OTWARTY
+      const unsub = detectBackButton(() => {
+        onOpenChange(false)
+      })
+      return () => {
+        if (unsub) unsub()
+      }
+    }
+  }, [open, onOpenChange])
+
+  return (
+    <DialogPrimitive.Root {...props} open={open} onOpenChange={onOpenChange}>
+      {children}
+    </DialogPrimitive.Root>
+  )
+}
 
 const DialogTrigger = DialogPrimitive.Trigger
-
 const DialogPortal = DialogPrimitive.Portal
-
 const DialogClose = DialogPrimitive.Close
 
 const DialogOverlay = React.forwardRef<
@@ -38,13 +63,13 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-[50%] top-[50%]  grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-slate-50 p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg z-[60]',
+        'fixed left-[50%] top-[50%] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-slate-50 p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg z-[60]',
         className,
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-2 top-2  rounded-sm opacity-70 text-slate-300 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground font-extrabold">
+      <DialogPrimitive.Close className="absolute right-2 top-2 rounded-sm opacity-70 text-slate-300 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground font-extrabold">
         <X className="h-5 w-5 font-extrabold" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -52,6 +77,8 @@ const DialogContent = React.forwardRef<
   </DialogPortal>
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
+
+// ... (reszta komponentów DialogHeader, DialogFooter, DialogTitle, DialogDescription pozostaje bez zmian)
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props} />

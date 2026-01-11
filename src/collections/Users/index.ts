@@ -13,6 +13,7 @@ export const Users: CollectionConfig = {
     delete: isAdmin,
   },
   admin: {
+    group: 'System',
     useAsTitle: 'email',
     defaultColumns: [
       'email',
