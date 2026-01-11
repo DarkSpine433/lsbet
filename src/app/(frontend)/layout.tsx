@@ -10,6 +10,7 @@ import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { Toaster } from '@/components/ui/sonner'
+//@ts-ignore
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 

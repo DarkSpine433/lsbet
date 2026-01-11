@@ -3,55 +3,45 @@ import React, { useEffect, useState } from 'react'
 import { WifiOff } from 'lucide-react' // Opcjonalnie do ikony braku sieci
 
 type Props = {
-  lastActive?: string | Date | null
   className?: string
 }
 
-const Status = ({ lastActive, className }: Props) => {
-  const [isOnline, setIsOnline] = useState(false)
-  const [isBrowserOnline, setIsBrowserOnline] = useState(true)
+const Status = ({ className }: Props) => {
+  const [isOnline, setIsOnline] = useState(true)
+  const [wasOffline, setWasOffline] = useState(false)
+  const showStatus = true
 
   useEffect(() => {
-    // 1. Sprawdzanie tętna (Heartbeat/Activity)
-    const checkActivityStatus = () => {
-      if (!lastActive) {
-        setIsOnline(false)
-        return
-      }
-      const lastActiveDate = new Date(lastActive).getTime()
-      const now = new Date().getTime()
-      // Online jeśli aktywność była w ciągu ostatnich 2 minut
-      setIsOnline(now - lastActiveDate < 120000)
+    const handleOnline = () => {
+      setIsOnline(true)
+      setWasOffline(true)
+      // Ukryj pasek całkowicie po 3 sekundach od odzyskania neta
+      setTimeout(() => {
+        setWasOffline(false)
+      }, 3000)
     }
 
-    // 2. Sprawdzanie połączenia internetowego (Browser Connection)
-    const handleOnline = () => setIsBrowserOnline(true)
-    const handleOffline = () => setIsBrowserOnline(false)
+    const handleOffline = () => {
+      setIsOnline(false)
+    }
 
-    // Ustawienie początkowego stanu internetu
-    setIsBrowserOnline(navigator.onLine)
-
-    // Event listenery dla internetu
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
 
-    // Interwał dla tętna
-    checkActivityStatus()
-    const interval = setInterval(checkActivityStatus, 10000)
+    // Inicjalizacja stanu
+    const online = navigator.onLine
+    setIsOnline(online)
 
     return () => {
-      clearInterval(interval)
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [lastActive])
+  }, [])
 
-  // Logika kolorów:
-  // - Czerwony (lub ikona): Brak internetu u użytkownika
-  // - Zielony: Internet jest OK + tętno świeże (Użytkownik aktywny)
-  // - Szary: Internet jest OK + tętno stare (Użytkownik nieaktywny)
+  // Jeśli jest online i nie był wcześniej offline, nie renderuj nic (początkowy stan)
+  if (isOnline && !wasOffline && !showStatus) return null
 
-  if (!isBrowserOnline) {
+  if (!isOnline && showStatus) {
     return (
       <div className={` flex items-center justify-center ${className}`}>
         <span className="h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-transparent animate-pulse">

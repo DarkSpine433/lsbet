@@ -17,6 +17,8 @@ import {
   Ticket,
   ListFilter,
   Zap,
+  ImageIcon,
+  ZapOff,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Bet, Category, Media as MediaType } from '@/payload-types'
@@ -45,6 +47,7 @@ import {
 } from '@/components/ui/dialog'
 import { placeBetAction } from '@/app/actions/placeBet'
 import { Separator } from '@/components/ui/separator'
+import { ImagePlaceholder, isValidMedia } from '@/components/ImagePlaceholder'
 
 // --- TYPES ---
 type SelectedBet = {
@@ -208,11 +211,16 @@ const EventCard: FC<{
               <div className="text-center space-y-4">
                 <div className="relative w-20 h-20 mx-auto rounded-full p-1 bg-gradient-to-tr from-slate-800 to-slate-700 shadow-inner">
                   <div className="w-full h-full rounded-full overflow-hidden bg-slate-900">
-                    <Media
-                      resource={team.logo}
-                      fill={true}
-                      className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
-                    />
+                    {/* ZMIANA: Rygorystyczne sprawdzanie poprawności URL */}
+                    {isValidMedia(team.logo) ? (
+                      <Media
+                        resource={team.logo}
+                        fill={true}
+                        className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-500"
+                      />
+                    ) : (
+                      <ImagePlaceholder title={team.name} className="w-full h-full rounded-full" />
+                    )}
                   </div>
                 </div>
                 <h3 className="text-base font-bold text-slate-200 group-hover:text-white transition-colors">
@@ -354,7 +362,16 @@ const BettingSlip: FC<BettingSlipProps> = ({
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-3 flex-1">
                   <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-slate-900 border border-slate-700 shrink-0">
-                    <Media resource={bet.logo} fill={true} className="w-full h-full object-cover" />
+                    {/* ZMIANA: Rygorystyczne sprawdzanie poprawności URL w kuponie */}
+                    {isValidMedia(bet.logo) ? (
+                      <Media
+                        resource={bet.logo}
+                        fill={true}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImagePlaceholder title={bet.name} className="w-full h-full" />
+                    )}
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-sm text-white leading-tight">{bet.name}</p>

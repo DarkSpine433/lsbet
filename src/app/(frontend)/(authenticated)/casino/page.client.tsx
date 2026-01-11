@@ -17,6 +17,8 @@ import { motion, AnimatePresence } from 'motion/react'
 import { Input } from '@/components/ui/input'
 import JackpotBells from '@/components/casino/games/JackpotBells'
 import { useRouter } from 'next/navigation'
+// Import komponentów pomocniczych do obsługi obrazów
+import { ImagePlaceholder, isValidMedia } from '@/components/ImagePlaceholder'
 
 const GAME_COMPONENTS: any = {
   'simply-numbers': SimplyNumbers,
@@ -227,15 +229,27 @@ export default function CasinoClient({ nickname, money }: any) {
                 )}
 
                 <div className="bg-slate-900 rounded-[2rem] overflow-hidden border border-slate-800 transition-all duration-500 group-hover:border-blue-600 group-hover:shadow-[0_0_50px_rgba(37,99,235,0.25)]">
-                  <div className="aspect-[4/5] relative">
-                    <Media
-                      resource={game.gamelogo}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                  <div className="aspect-[4/5] relative overflow-hidden">
+                    {isValidMedia(game.gamelogo) ? (
+                      <Media
+                        resource={game.gamelogo}
+                        fill
+                        className="object-cover transition-all duration-500  group-hover:opacity-40 "
+                        imgClassName="group-hover:scale-110 transition-all duration-300 group-hover:blur-sm "
+                      />
+                    ) : (
+                      <div className="w-full h-full group-hover:opacity-40 group-hover:scale-110 transition-all duration-300 group-hover:blur-sm">
+                        <ImagePlaceholder title={game.title} className="w-full h-full " />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent opacity-80" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-blue-600/10 backdrop-blur-[2px]">
-                      <PlayCircle className="h-14 w-14 text-white fill-blue-600 shadow-2xl scale-75 group-hover:scale-100 transition-transform duration-500" />
+
+                    {/* Nakładka z ikoną Play - teraz nie zasłania tła całkowicie */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                      <div className="relative flex items-center justify-center">
+                        <div className="absolute inset-0 bg-blue-600/20 blur-2xl rounded-full scale-150 animate-pulse" />
+                        <PlayCircle className="h-16 w-16 text-white fill-blue-600 shadow-2xl relative z-10 scale-90 group-hover:scale-110 transition-transform duration-500" />
+                      </div>
                     </div>
                   </div>
                   <div className="p-4 text-center bg-slate-950/90 border-t border-slate-800/50">

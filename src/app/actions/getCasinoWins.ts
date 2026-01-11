@@ -17,7 +17,6 @@ export async function getUserCasinoWins(email: string) {
       limit: 100,
       sort: '-createdAt',
     })
-    console.log(JSON.parse(JSON.stringify(wins.docs)))
     return {
       success: true,
       docs: JSON.parse(JSON.stringify(wins.docs)), // Bezpieczna serializacja dla Next.js

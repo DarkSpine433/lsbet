@@ -1,4 +1,3 @@
-import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { headers as nextHeaders } from 'next/headers'
@@ -8,8 +7,6 @@ import { Wallet, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import Account from '@/components/NavBar/Account/Account'
 import Notification from '@/components/NavBar/Notification'
-import { getServerSideURL } from '@/utilities/getURL'
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { NavTabs } from '@/components/MainPage/NavTabs'
 import Heartbeat from '@/components/NavBar/Heartbeat'
 import Status from '@/components/NavBar/Status'
@@ -67,14 +64,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <Notification />
               <div className="h-8 w-px bg-slate-800 mx-1 hidden sm:block" />
               <div className="relative group">
-                <Heartbeat />
                 <div className="relative">
-                  <Status
-                    lastActive={
-                      user.lastActive ? new Date(user.lastActive).toISOString() : undefined
-                    }
-                    className="absolute -top-0.5 -right-0.5 border-[1px] border-transparent "
-                  />
+                  <Status className="absolute -top-0.5 -right-0.5 border-[1px] border-transparent " />
                   <Account user={user} />
                 </div>
               </div>

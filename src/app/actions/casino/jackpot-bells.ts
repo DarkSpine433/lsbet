@@ -16,6 +16,9 @@ const PAYOUTS: Record<string, number> = {
 export async function playJackpotBells(stake: number) {
   const payload = await getPayload({ config: configPromise })
   const { user } = await getMeUser()
+  if (!user || typeof user.money !== 'number') {
+    throw new Error('Brak zalogowania lub błąd konta (brak pola money)')
+  }
 
   if (!user || user.money < stake) {
     throw new Error('Niewystarczające środki lub brak zalogowania')
