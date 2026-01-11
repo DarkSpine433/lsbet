@@ -5,8 +5,10 @@ import { Trophy, ListFilter } from 'lucide-react'
 import { getUserCasinoWins } from '@/app/actions/getCasinoWins'
 import { Button } from '../../ui/button'
 import WinsDetailDialog from './WinsDetailDialog'
+import { useRouter } from 'next/navigation'
 
 export default function MyCasinoWins({ user }: { user: any }) {
+  const router = useRouter()
   const [wins, setWins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -21,6 +23,7 @@ export default function MyCasinoWins({ user }: { user: any }) {
         const result = await getUserCasinoWins(user.email)
         if (result.success) {
           setWins(result.docs || [])
+          router.refresh()
         } else {
           setError('Nie udało się pobrać danych')
         }

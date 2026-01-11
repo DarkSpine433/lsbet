@@ -1,10 +1,12 @@
 'use client'
+
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { toast } from 'sonner'
 import { CasinoGameWrapper } from '../CasinoGameWrapper'
 import { Zap, Trophy, Plus, Minus, RotateCw, Octagon } from 'lucide-react'
 import { playSimple20Action } from '@/app/actions/casino/simple20'
+import { useCasinoSounds } from '@/hooks/useCasinoSound'
 
 const SYMBOLS = ['🔔', '🍒', '🍋', '🍇', '🍉', '7️⃣']
 
@@ -12,9 +14,12 @@ export default function Simple20({ balance, onBalanceUpdate, gameData }: any) {
   const [reels, setReels] = useState(['7️⃣', '🔔', '7️⃣'])
   const [isSpinning, setIsSpinning] = useState(false)
   const [isAutoSpin, setIsAutoSpin] = useState(false)
-  const [isWinningHit, setIsWinningHit] = useState(false) // Stan podświetlenia wygranej
+  const [isWinningHit, setIsWinningHit] = useState(false)
   const [stake, setStake] = useState(10)
   const [visualReels, setVisualReels] = useState(['7️⃣', '🔔', '7️⃣'])
+
+  // Inicjalizacja dźwięków
+  const { playSpin, stopSpin, playWin, playLose } = useCasinoSounds()
 
   useEffect(() => {
     let interval: any
@@ -44,33 +49,45 @@ export default function Simple20({ balance, onBalanceUpdate, gameData }: any) {
     if (isSpinning) return
 
     setIsSpinning(true)
-    setIsWinningHit(false) // Reset podświetlenia przy nowym spinie
+    setIsWinningHit(false)
+
+    // START: Dźwięk kręcenia
+    playSpin()
 
     try {
       const result = await playSimple20Action(stake)
 
+      // Czekamy 2 sekundy (zgodnie z czasem animacji slotów)
       setTimeout(() => {
-        setReels(result.reels)
-        onBalanceUpdate(result.newBalance)
-        setIsSpinning(false)
+        // STOP: Wyłączamy dźwięk kręcenia przy pokazaniu wyniku
+        stopSpin()
 
-        if (result.isWin) {
-          setIsWinningHit(true) // Aktywuj podświetlenie
-          toast.success(`WYGRANA: +${result.winAmount.toFixed(2)} $`, {
-            icon: '🔔',
-          })
-          // Wyłącz podświetlenie po 4 sekundach (razem z wznowieniem auto-spinu)
-          setTimeout(() => setIsWinningHit(false), 4000)
+        if (result) {
+          setReels(result.reels)
+          onBalanceUpdate(result.newBalance)
+          setIsSpinning(false)
+
+          if (result.isWin) {
+            setIsWinningHit(true)
+            playWin() // Dźwięk wygranej
+            toast.success(`WYGRANA: +${result.winAmount.toFixed(2)} $`, {
+              icon: '🔔',
+            })
+            setTimeout(() => setIsWinningHit(false), 4000)
+          } else {
+            playLose() // Dźwięk przegranej
+          }
         }
       }, 2000)
     } catch (err: any) {
+      stopSpin() // Wyłącz dźwięk w razie błędu serwera
       toast.error('Błąd serwera')
       setIsSpinning(false)
       setIsAutoSpin(false)
     }
-  }, [stake, balance, isSpinning, onBalanceUpdate])
+  }, [stake, balance, isSpinning, onBalanceUpdate, playSpin, stopSpin, playWin, playLose])
 
-  // Logika Auto Spinu z opóźnieniem po wygranej
+  // Logika Auto Spinu
   useEffect(() => {
     let timeout: any
     if (isAutoSpin && !isSpinning) {
@@ -138,7 +155,6 @@ export default function Simple20({ balance, onBalanceUpdate, gameData }: any) {
                   </motion.div>
                 </AnimatePresence>
 
-                {/* Złoty blask wewnątrz slotu przy wygranej */}
                 {isWinningHit && (
                   <motion.div
                     initial={{ opacity: 0 }}

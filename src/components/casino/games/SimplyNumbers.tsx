@@ -6,6 +6,7 @@ import { Banknote, Coins, Zap, Minus, Plus, Hash, RotateCw, Octagon } from 'luci
 import { CasinoGameWrapper } from '../CasinoGameWrapper'
 import { playSimplyNumbersAction } from '@/app/actions/casino/simplyNumbers'
 import { motion, AnimatePresence } from 'motion/react'
+import { useCasinoSounds } from '@/hooks/useCasinoSound'
 
 export default function SimplyNumbers({ balance, onBalanceUpdate, gameSlug, gameData }: any) {
   const [bet, setBet] = useState<number>(10)
@@ -14,6 +15,9 @@ export default function SimplyNumbers({ balance, onBalanceUpdate, gameSlug, game
   const [lastResult, setLastResult] = useState<any>(null)
   const [isAutoSpin, setIsAutoSpin] = useState(false)
   const [rollingNumber, setRollingNumber] = useState<number>(0)
+
+  // Pobierz uniwersalne funkcje dźwiękowe
+  const { playSpin, stopSpin, playWin, playLose } = useCasinoSounds()
 
   const possibleWin = (bet * multiplier).toFixed(2)
 
@@ -27,10 +31,6 @@ export default function SimplyNumbers({ balance, onBalanceUpdate, gameSlug, game
     }
     return () => clearInterval(interval)
   }, [loading])
-
-  const resetResult = () => {
-    if (lastResult) setLastResult(null)
-  }
 
   const handlePlay = useCallback(async () => {
     if (bet <= 0) {
@@ -46,14 +46,26 @@ export default function SimplyNumbers({ balance, onBalanceUpdate, gameSlug, game
     setLoading(true)
     setLastResult(null)
 
+    // 1. Uruchom zapętlony dźwięk losowania
+    playSpin()
+
     try {
       const result = await playSimplyNumbersAction(bet, gameSlug, multiplier)
 
-      // Symulacja czasu losowania dla lepszego UX
       setTimeout(() => {
+        // 2. Natychmiastowe wyłączenie dźwięku losowania przy wyniku
+        stopSpin()
+
         if (result && !result.error) {
           setLastResult(result)
           onBalanceUpdate(result.newBalance)
+
+          // 3. Odtworzenie dźwięku wyniku
+          if (result.win) {
+            playWin()
+          } else {
+            playLose()
+          }
         } else if (result?.error) {
           toast.error(result.error)
           setIsAutoSpin(false)
@@ -61,11 +73,23 @@ export default function SimplyNumbers({ balance, onBalanceUpdate, gameSlug, game
         setLoading(false)
       }, 800)
     } catch (e) {
+      stopSpin() // Wyłącz dźwięk w razie błędu sieci
       toast.error('Błąd połączenia')
       setLoading(false)
       setIsAutoSpin(false)
     }
-  }, [bet, balance, loading, gameSlug, multiplier, onBalanceUpdate])
+  }, [
+    bet,
+    balance,
+    loading,
+    gameSlug,
+    multiplier,
+    onBalanceUpdate,
+    playSpin,
+    stopSpin,
+    playWin,
+    playLose,
+  ])
 
   useEffect(() => {
     let timeout: any

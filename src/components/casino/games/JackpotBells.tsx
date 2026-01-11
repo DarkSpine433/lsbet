@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { RefreshCw, Zap, Plus, Minus, Octagon, RotateCw } from 'lucide-react'
 import { playJackpotBellsAction } from '@/app/actions/casino/jackpot-bells'
 import { CasinoGameWrapper } from '../CasinoGameWrapper'
+import { useCasinoSounds } from '@/hooks/useCasinoSound'
 
 const SYMBOLS = ['🍒', '🍋', '🍊', '🍇', '🍉', '7️⃣', '🔔']
 const ANIM_COUNT = 40
@@ -15,6 +16,9 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
   const [stake, setStake] = useState(5)
   const [lastWin, setLastWin] = useState(0)
   const [winningCells, setWinningCells] = useState<number[]>([])
+
+  // Inicjalizacja dźwięków
+  const { playSpin, stopSpin, playWin, playLose } = useCasinoSounds()
 
   const [displayGrid, setDisplayGrid] = useState([
     ['🍒', '7️⃣', '🍒'],
@@ -36,6 +40,9 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
     setWinningCells([])
     setLastWin(0)
     setSpinning(true)
+
+    // START: Dźwięk kręcenia
+    playSpin()
 
     // Przygotowanie "rozpędzonych" bębnów
     const initialStrips = displayGrid.map((col) => {
@@ -86,25 +93,46 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
         })
       }
 
+      // Po zatrzymaniu ostatniej kolumny
       setTimeout(() => {
+        // STOP: Wyłączamy dźwięk kręcenia
+        stopSpin()
+
         setLastWin(result.winAmount)
         setWinningCells(result.winningIndices)
         onBalanceUpdate(result.newBalance)
         setSpinning(false)
+
+        // Dźwięk wyniku
+        if (result.winAmount > 0) {
+          playWin()
+        } else {
+          playLose()
+        }
       }, 700)
     } catch (err) {
       console.error(err)
+      stopSpin() // Wyłącz dźwięk w razie błędu
       setSpinning(false)
       setAutoSpin(false)
       setColumnSpinning([false, false, false, false, false])
     }
-  }, [spinning, balance, stake, displayGrid, onBalanceUpdate])
+  }, [
+    spinning,
+    balance,
+    stake,
+    displayGrid,
+    onBalanceUpdate,
+    playSpin,
+    stopSpin,
+    playWin,
+    playLose,
+  ])
 
-  // System Auto Spin z 2s opóźnieniem po wygranej
+  // System Auto Spin
   useEffect(() => {
     let timer: any
     if (autoSpin && !spinning) {
-      // Jeśli była wygrana (lastWin > 0), czekaj 2 sekundy, w przeciwnym razie 1.2s
       const delay = lastWin > 0 ? 2000 : 1200
       timer = setTimeout(spin, delay)
     }
@@ -158,8 +186,8 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
         </div>
 
         {/* PANEL STEROWANIA */}
-        <div className="w-full bg-slate-900/90 p-6 rounded-[2.5rem] border border-slate-700 backdrop-blur-md flex flex-wrap items-center justify-between gap-6 shadow-xl">
-          <div className="flex flex-col gap-2">
+        <div className="w-full bg-slate-900/90 p-6 rounded-[2.5rem] border border-slate-700 backdrop-blur-md flex flex-wrap flex-col-reverse sm:flex-row items-center justify-between gap-6 shadow-xl">
+          <div className="flex flex-col-reverse sm:flex-col gap-2">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter text-center">
               Zakład (5 linii)
             </span>
@@ -193,11 +221,11 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row  sms:items-center gap-4">
             {/* PRZYCISK AUTO SPIN */}
             <button
               onClick={() => setAutoSpin(!autoSpin)}
-              className={`flex items-center gap-2 px-6 py-5 rounded-2xl font-black uppercase transition-all border-2 ${
+              className={`flex md:items-center gap-2 px-6 py-5 rounded-2xl font-black uppercase transition-all border-2 ${
                 autoSpin
                   ? 'bg-red-500/10 border-red-500 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
                   : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
