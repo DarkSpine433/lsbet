@@ -27,7 +27,7 @@ export function GameCard({ game, isAdmin, onSelect }: any) {
 
       {/* Admin Tag */}
       {showAdminUnlock && (
-        <div className="absolute top-4 left-4 z-30 bg-blue-600 text-white text-[8px] font-black px-2 py-1 rounded-md shadow-xl border border-blue-400/50">
+        <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 z-30 bg-blue-600 text-white text-[8px] font-black px-2 py-1 rounded-md shadow-xl border border-blue-400/50">
           ADMIN UNLOCK
         </div>
       )}

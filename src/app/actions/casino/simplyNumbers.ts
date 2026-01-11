@@ -73,5 +73,6 @@ export async function playSimplyNumbersAction(bet: number, gameSlug: string, mul
     winAmount,
     newBalance: updatedUser.money,
     error: null,
+    success: true,
   }
 }
