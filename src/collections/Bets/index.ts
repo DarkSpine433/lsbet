@@ -80,6 +80,7 @@ export const Bets: CollectionConfig<'bets'> = {
           name: 'odds',
           type: 'number',
           label: 'Odds',
+          required: true,
         },
         {
           name: 'score',
@@ -109,6 +110,7 @@ export const Bets: CollectionConfig<'bets'> = {
       name: 'starteventdate',
       type: 'date',
       timezone: true,
+      required: true,
       admin: {
         position: 'sidebar',
         date: {
@@ -122,6 +124,7 @@ export const Bets: CollectionConfig<'bets'> = {
       name: 'category',
       type: 'relationship',
       relationTo: 'categories',
+      required: true,
       admin: {
         position: 'sidebar',
       },

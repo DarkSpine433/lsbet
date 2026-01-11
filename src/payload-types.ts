@@ -432,7 +432,6 @@ export interface User {
    * Aktualny stan konta użytkownika (tylko do odczytu lub korekty bezpośredniej)
    */
   money?: number | null;
-  lastActive?: string | null;
   totalWinsAmount?: number | null;
   verified?: boolean | null;
   banned?: boolean | null;
@@ -620,15 +619,15 @@ export interface Bet {
     | {
         id: string;
         name: string;
-        odds?: number | null;
+        odds: number;
         score?: number | null;
         'win-lose'?: boolean | null;
         logo?: (string | null) | Media;
       }[]
     | null;
-  starteventdate?: string | null;
-  starteventdate_tz?: SupportedTimezones;
-  category?: (string | null) | Category;
+  starteventdate: string;
+  starteventdate_tz: SupportedTimezones;
+  category: string | Category;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -687,7 +686,7 @@ export interface CasinoGame {
   description: string;
   rules: string;
   category: string | CasinoCategory;
-  gamelogo: string | Media;
+  gamelogo?: (string | null) | Media;
   publishedAt?: string | null;
   isActive?: boolean | null;
   slug?: string | null;
@@ -1232,7 +1231,6 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   adjustBalance?: T;
   money?: T;
-  lastActive?: T;
   totalWinsAmount?: T;
   verified?: T;
   banned?: T;

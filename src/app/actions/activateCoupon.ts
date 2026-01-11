@@ -82,7 +82,6 @@ export async function activateCoupon(code: string) {
         isRead: false,
       },
     })
-    revalidatePath('/')
     return { success: true, amount: coupon.value, newBalance }
   } catch (err) {
     console.error(err)

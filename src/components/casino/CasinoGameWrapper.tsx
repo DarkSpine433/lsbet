@@ -48,7 +48,7 @@ export const CasinoGameWrapper = ({
         <div className="relative">
           <AnimatePresence mode="wait">
             {/* GRA */}
-            <TabsContent value="play" className="mt-0 outline-none border-none">
+            <TabsContent value="play" key="play-content" className="mt-0 outline-none border-none">
               <motion.div
                 initial={{ opacity: 0, scale: 0.98, y: 5 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -77,7 +77,7 @@ export const CasinoGameWrapper = ({
             </TabsContent>
 
             {/* OPIS */}
-            <TabsContent value="description" className="mt-0 outline-none">
+            <TabsContent value="description" key="desc-content" className="mt-0 outline-none">
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -99,7 +99,7 @@ export const CasinoGameWrapper = ({
             </TabsContent>
 
             {/* ZASADY */}
-            <TabsContent value="rules" className="mt-0 outline-none">
+            <TabsContent value="rules" key="rules-content" className="mt-0 outline-none">
               <motion.div
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}

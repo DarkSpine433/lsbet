@@ -51,7 +51,6 @@ export const CasinoGames: CollectionConfig<'casino-games'> = {
       label: 'Game Logo',
       type: 'upload',
       relationTo: 'media',
-      required: true,
     },
 
     {

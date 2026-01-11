@@ -62,31 +62,7 @@ export const Users: CollectionConfig = {
       },
     ],
   },
-  endpoints: [
-    {
-      path: '/heartbeat',
-      method: 'post',
-      handler: async (req) => {
-        if (!req.user) {
-          return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-        }
 
-        try {
-          await req.payload.update({
-            collection: 'users',
-            id: req.user.id,
-            data: {
-              lastActive: new Date().toISOString(),
-            },
-          })
-
-          return new Response(JSON.stringify({ status: 'ok' }), { status: 200 })
-        } catch (err) {
-          return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 })
-        }
-      },
-    },
-  ],
   fields: [
     {
       name: 'role',
@@ -123,13 +99,7 @@ export const Users: CollectionConfig = {
         create: isAdmin,
       },
     },
-    {
-      name: 'lastActive',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-      },
-    },
+
     {
       name: 'totalWinsAmount',
       type: 'number',

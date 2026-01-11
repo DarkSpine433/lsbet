@@ -28,11 +28,6 @@ export async function runCasinoGame(bet: number, gameSlug: string, multiplier: n
   const actualEdge = 0.85
   const chance = (1 / multiplier) * (1 - actualEdge)
 
-  // Logowanie szansy tylko dla Ciebie w konsoli serwera
-  console.log(
-    `[lsCasino] Gra: ${gameSlug} | Stawka: ${bet} | Multi: ${multiplier}x | SZANSA: ${(chance * 100).toFixed(4)}%`,
-  )
-
   const roll = Math.random()
   const isWin = roll < chance
 
@@ -44,9 +39,7 @@ export async function runCasinoGame(bet: number, gameSlug: string, multiplier: n
     id: user.id,
     data: { money: freshUser.money + netChange },
   })
-  console.log(
-    `[lsCasino] Użytkownik ${user.email} ${isWin ? 'WYGRAŁ' : 'PRZEGRAŁ'} ${isWin ? winAmount : bet} $`,
-  )
+
   if (isWin) {
     await payload.create({
       collection: 'casino-wins',
