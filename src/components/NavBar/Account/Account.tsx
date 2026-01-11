@@ -11,7 +11,8 @@ import {
   CircleUser,
   Activity,
   CalendarDays,
-  Trophy, // Dodano ikonę
+  Trophy,
+  User as UserIcon2, // Dodano ikonę
 } from 'lucide-react'
 import LogoutButton from '../../ui/logout-button'
 import type { User } from '@/payload-types'
@@ -55,12 +56,6 @@ const Account = ({ user }: Props) => {
         className="max-w-md  w-full max-h-[90dvh] flex flex-col p-0 bg-[#020617] border-slate-800 text-slate-100 overflow-hidden shadow-2xl"
       >
         <DialogHeader className="p-8 pb-6 border-b border-slate-800/50 bg-gradient-to-b from-blue-600/10 to-transparent relative">
-          <div className="absolute top-6 right-6">
-            <Badge className="bg-blue-600 text-white border-none font-black text-[10px] tracking-widest uppercase px-3 py-1">
-              PRO MEMBER
-            </Badge>
-          </div>
-
           <div className="flex items-center gap-4">
             <div className="h-16 w-16 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center shadow-inner">
               <CircleUser className="h-10 w-10 text-blue-500" />
@@ -69,10 +64,10 @@ const Account = ({ user }: Props) => {
               <DialogTitle className="text-2xl font-black italic tracking-tight text-white uppercase">
                 {userNick}
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500 font-bold flex items-center gap-2 uppercase tracking-widest">
-                <ShieldCheck className="h-3 w-3 text-green-500" />
-                Konto Zweryfikowane
-              </DialogDescription>
+              <Badge className="bg-blue-600 text-white border-none font-black text-[10px] tracking-widest uppercase px-3 py-1 text-xs  flex items-center gap-1 ">
+                <UserIcon2 className="h-3 w-3 mr-1 stroke-[3]" />
+                Użytkownik LSBet
+              </Badge>
             </div>
           </div>
         </DialogHeader>
@@ -95,8 +90,8 @@ const Account = ({ user }: Props) => {
                   Status
                 </p>
                 <div className="flex items-center gap-2 text-slate-200">
-                  <Activity className="h-3 w-3 text-green-500" />
-                  <span className="text-xs font-bold">Aktywny</span>
+                  <ShieldCheck className="h-3 w-3 text-green-500" />
+                  <span className="text-xs font-bold"> Konto Zweryfikowane</span>
                 </div>
               </div>
             </div>
