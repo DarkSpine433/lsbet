@@ -1,7 +1,7 @@
 'use client'
 
 import { playCoinFlip } from '@/app/actions/casino/coin-flip'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { RefreshCcw, Loader2, Minus, Plus, Info, Trophy, XCircle, Coins } from 'lucide-react'
 import { CasinoGameWrapper } from '../CasinoGameWrapper'
@@ -36,25 +36,34 @@ export default function CoinFlipGame({
 
   const { playWin, playLose } = useCasinoSounds()
 
-  // Funkcja pomocnicza sprawdzająca wyciszenie
-  const playEffect = (path: string) => {
+  // Pre-load dźwięków lokalnie, aby uniknąć opóźnień
+  const audioCache = useMemo(() => {
+    if (typeof window === 'undefined') return {}
+    return {
+      menuClick: new Audio('https://assets.mixkit.co/active_storage/sfx/1117/1117-preview.mp3'),
+      tileDeselect: new Audio('https://assets.mixkit.co/active_storage/sfx/1108/1108-preview.mp3'),
+      tileSelect: new Audio('https://assets.mixkit.co/active_storage/sfx/1109/1109-preview.mp3'),
+      reveal: new Audio('https://assets.mixkit.co/active_storage/sfx/211/211-preview.mp3'),
+    }
+  }, [])
+
+  const playCachedEffect = (audioKey: keyof typeof audioCache) => {
     const isMuted = localStorage.getItem('casino_muted') === 'true'
-    if (isMuted) return
+    if (isMuted || !audioCache[audioKey]) return
 
-    const audio = new Audio(path)
-    audio.volume = 0.3
-    audio.play().catch(() => {})
+    const sound = audioCache[audioKey] as HTMLAudioElement
+    sound.currentTime = 0 // Resetuje czas, aby dźwięki się nie nakładały (nie stakowały)
+    sound.volume = 0.3
+    sound.play().catch(() => {})
   }
 
-  const playMenuClick = () => {
-    playEffect('https://assets.mixkit.co/active_storage/sfx/1113/1113-preview.mp3')
-  }
+  const playMenuClick = () => playCachedEffect('menuClick')
 
   useEffect(() => {
     if (gameState === 'revealing') {
       selectedIndices.forEach((_, order) => {
         setTimeout(() => {
-          playEffect('https://assets.mixkit.co/active_storage/sfx/211/211-preview.mp3')
+          playCachedEffect('reveal')
         }, order * 450)
       })
     }
@@ -64,12 +73,26 @@ export default function CoinFlipGame({
     if (gameState !== 'picking') return
 
     if (selectedIndices.includes(index)) {
-      playEffect('https://assets.mixkit.co/active_storage/sfx/1108/1108-preview.mp3')
+      playCachedEffect('tileDeselect')
       setSelectedIndices((prev) => prev.filter((i) => i !== index))
     } else if (selectedIndices.length < MODES[difficulty].count) {
-      playEffect('https://assets.mixkit.co/active_storage/sfx/1109/1109-preview.mp3')
+      playCachedEffect('tileSelect')
       setSelectedIndices((prev) => [...prev, index])
     }
+  }
+
+  const handleStakeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Usuwamy wszystko co nie jest cyfrą
+    const rawValue = e.target.value.replace(/\D/g, '')
+
+    if (rawValue === '') {
+      setStake(0)
+      return
+    }
+
+    // Parsujemy na liczbę, co automatycznie usuwa zera z przodu (np. "020" -> 20)
+    const numValue = parseInt(rawValue, 10)
+    setStake(numValue)
   }
 
   const handlePlay = async () => {
@@ -116,7 +139,6 @@ export default function CoinFlipGame({
             {Array.from({ length: 20 }).map((_, index) => {
               const isSelected = selectedIndices.includes(index)
               const order = selectedIndices.indexOf(index)
-              // Karty odkrywają się jeśli są wybrane w fazie revealing LUB gdy gra jest w stanie result
               const isRevealed = (gameState === 'revealing' && isSelected) || gameState === 'result'
 
               return (
@@ -132,7 +154,6 @@ export default function CoinFlipGame({
                     }}
                     onClick={() => handleTileClick(index)}
                   >
-                    {/* FRONT */}
                     <div
                       className={`absolute inset-0 backface-hidden rounded-lg border-b-[3px] sm:border-b-4 flex items-center justify-center transition-all ${
                         isSelected ? 'bg-blue-600 border-blue-800' : 'bg-[#0f172a] border-[#1e293b]'
@@ -150,7 +171,6 @@ export default function CoinFlipGame({
                         )}
                       </div>
                     </div>
-                    {/* BACK */}
                     <div
                       className={`absolute inset-0 backface-hidden rounded-lg flex items-center justify-center text-xl sm:text-3xl bg-[#0b1121] border transition-all duration-500 shadow-inner ${
                         isSelected && gameState === 'result'
@@ -201,10 +221,8 @@ export default function CoinFlipGame({
           </AnimatePresence>
         </div>
 
-        {/* --- PANEL STEROWANIA --- */}
         <div className="w-full max-w-[480px] mt-4 flex flex-col gap-2">
           <div className="grid grid-cols-2 gap-2 h-12 sm:h-16">
-            {/* STAWKA + INPUT */}
             <div className="flex items-center justify-between bg-[#0f1523] border border-[#1e293b] p-1 rounded-xl h-full">
               <button
                 onClick={() => {
@@ -220,10 +238,11 @@ export default function CoinFlipGame({
                   Stawka
                 </p>
                 <input
-                  type="number"
-                  value={stake}
-                  onChange={(e) => setStake(Number(e.target.value))}
-                  className="bg-transparent text-center text-sm sm:text-lg font-black text-yellow-500 w-full outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  type="text"
+                  inputMode="numeric"
+                  value={stake === 0 ? '' : stake}
+                  onChange={handleStakeChange}
+                  className="bg-transparent text-center text-sm sm:text-lg font-black text-yellow-500 w-full outline-none"
                 />
               </div>
               <button
@@ -237,16 +256,17 @@ export default function CoinFlipGame({
               </button>
             </div>
 
-            {/* TRYBY */}
             <div className="flex bg-[#0f1523] border border-[#1e293b] p-1 rounded-xl h-full">
               {(Object.keys(MODES) as Difficulty[]).map((m) => (
                 <button
                   key={m}
                   disabled={gameState !== 'picking'}
                   onClick={() => {
-                    playMenuClick()
-                    setDifficulty(m)
-                    setSelectedIndices([])
+                    if (difficulty !== m) {
+                      playMenuClick()
+                      setDifficulty(m)
+                      setSelectedIndices([])
+                    }
                   }}
                   className={`flex-1 rounded-lg text-xs font-black uppercase transition-all flex flex-col items-center justify-center ${difficulty === m ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500'}`}
                 >

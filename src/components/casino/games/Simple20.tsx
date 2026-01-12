@@ -102,7 +102,7 @@ export default function Simple20({ balance, onBalanceUpdate, gameData }: any) {
   return (
     <CasinoGameWrapper balance={balance} gameData={gameData} title={gameData?.title || 'Simple 20'}>
       {/* TOP STATUS BAR */}
-      <div className="w-full flex justify-between items-center mb-8 px-6 py-3 bg-slate-900/50 rounded-2xl border border-slate-800/60">
+      <div className="w-full flex justify-between items-center  px-6 py-3 bg-slate-900/50 rounded-2xl border border-slate-800/60">
         <div className="flex items-center gap-2">
           <Trophy className="h-4 w-4 text-yellow-500" />
           <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">
@@ -170,7 +170,7 @@ export default function Simple20({ balance, onBalanceUpdate, gameData }: any) {
       </div>
 
       {/* PANEL STEROWANIA */}
-      <div className="mt-10 w-full max-w-md mx-auto space-y-6">
+      <div className="mt-3 w-full max-w-md mx-auto space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-4 flex items-center gap-2">
