@@ -72,7 +72,7 @@ export async function playCoinFlip(
       collection: 'casino-wins',
       data: {
         user: user.id,
-        gameTitle: 'Fruit Flip',
+        gameTitle: 'Coin Flip',
         betAmount: stake,
         winAmount: wonAmount,
         multiplier: mode.mult,
