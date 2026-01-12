@@ -28,11 +28,13 @@ import Simple20 from '@/components/casino/games/Simple20'
 import { GameCard } from './GameCard'
 import { User } from '@/payload-types'
 import { TopWinners } from '@/components/casino/TopWinners'
+import CoinFlip from '@/components/casino/games/CoinFlip'
 
 const GAME_COMPONENTS: Record<string, any> = {
   'simply-numbers': SimplyNumbers,
   'jackpot-bells': JackpotBells,
   'simple-20': Simple20,
+  'coin-flip': CoinFlip,
 }
 
 export default function CasinoClient({

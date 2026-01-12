@@ -43,59 +43,6 @@ export const CasinoGameWrapper = ({
   return (
     <div className="w-full bg-[#020617] text-white">
       <Tabs defaultValue="play" className="w-full">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4 bg-slate-900/40 p-4 rounded-[2rem] border border-slate-800/50 backdrop-blur-sm">
-          {/* PRZYCISKI ZAKŁADEK */}
-          <TabsList className="grid grid-cols-3 bg-black/40 rounded-xl border border-slate-800 w-full md:w-auto min-w-[300px]">
-            <TabsTrigger
-              value="play"
-              className="rounded-lg data-[state=active]:bg-blue-600 font-black uppercase text-[9px] py-2 transition-all outline-none"
-            >
-              <PlayCircle className="h-3.5 w-3.5 mr-1.5" /> Gra
-            </TabsTrigger>
-            <TabsTrigger
-              value="description"
-              className="rounded-lg data-[state=active]:bg-blue-600 font-black uppercase text-[9px] py-2 transition-all outline-none"
-            >
-              <BookOpen className="h-3.5 w-3.5 mr-1.5" /> Opis
-            </TabsTrigger>
-            <TabsTrigger
-              value="rules"
-              className="rounded-lg data-[state=active]:bg-blue-600 font-black uppercase text-[9px] py-2 transition-all outline-none"
-            >
-              <ScrollText className="h-3.5 w-3.5 mr-1.5" /> Zasady
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="flex items-centerd justify-between w-full gap-3 px-2">
-            {/* BALANS */}
-            <div className="flex items-center gap-3 bg-blue-600/10 px-6 py-2 rounded-xl border border-blue-500/20">
-              <div className="bg-blue-600 p-1.5 rounded-lg">
-                <Wallet className="h-3.5 w-3.5 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[7px] font-black uppercase text-blue-500/60 leading-none">
-                  Twój Balans
-                </span>
-                <span className="text-xs font-black italic text-white leading-tight mt-0.5">
-                  {Number(balance || 0).toFixed(2)} <span className="text-blue-500">$</span>
-                </span>
-              </div>
-            </div>
-            {/* GŁOŚNICZEK DO WYCISZANIA Z ZAPISEM W LOCALSTORAGE */}
-            <button
-              onClick={toggleMute}
-              className={`p-2.5 rounded-xl transition-all border border-white/5 ${
-                isMuted
-                  ? 'bg-red-500/20 text-red-500'
-                  : 'bg-slate-800 text-blue-500 hover:bg-slate-700'
-              }`}
-              title={isMuted ? 'Wyłącz wyciszenie' : 'Wycisz dźwięki'}
-            >
-              {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-            </button>
-          </div>
-        </div>
-
         <div className="relative">
           <AnimatePresence mode="wait">
             <TabsContent value="play" key="play-content" className="mt-0 outline-none border-none">
@@ -130,8 +77,59 @@ export const CasinoGameWrapper = ({
               </motion.div>
             </TabsContent>
           </AnimatePresence>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 my-2 bg-slate-900/40 p-4 rounded-[2rem] border border-slate-800/50 backdrop-blur-sm">
+            {/* PRZYCISKI ZAKŁADEK */}
+            <TabsList className="grid grid-cols-3 bg-black/40 rounded-xl border border-slate-800 w-full md:w-auto min-w-[300px]">
+              <TabsTrigger
+                value="play"
+                className="rounded-lg data-[state=active]:bg-blue-600 font-black uppercase text-[9px] py-2 transition-all outline-none"
+              >
+                <PlayCircle className="h-3.5 w-3.5 mr-1.5" /> Gra
+              </TabsTrigger>
+              <TabsTrigger
+                value="description"
+                className="rounded-lg data-[state=active]:bg-blue-600 font-black uppercase text-[9px] py-2 transition-all outline-none"
+              >
+                <BookOpen className="h-3.5 w-3.5 mr-1.5" /> Opis
+              </TabsTrigger>
+              <TabsTrigger
+                value="rules"
+                className="rounded-lg data-[state=active]:bg-blue-600 font-black uppercase text-[9px] py-2 transition-all outline-none"
+              >
+                <ScrollText className="h-3.5 w-3.5 mr-1.5" /> Zasady
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="text-[9px] text-slate-700 font-bold uppercase italic opacity-40 text-center mt-6">
+            <div className="flex items-centerd justify-between w-full gap-3 px-2">
+              {/* BALANS */}
+              <div className="flex items-center gap-3 bg-blue-600/10 px-6 py-2 rounded-xl border border-blue-500/20">
+                <div className="bg-blue-600 p-1.5 rounded-lg">
+                  <Wallet className="h-3.5 w-3.5 text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[7px] font-black uppercase text-blue-500/60 leading-none">
+                    Twój Balans
+                  </span>
+                  <span className="text-xs font-black italic text-white leading-tight mt-0.5">
+                    {Number(balance || 0).toFixed(2)} <span className="text-blue-500">$</span>
+                  </span>
+                </div>
+              </div>
+              {/* GŁOŚNICZEK DO WYCISZANIA Z ZAPISEM W LOCALSTORAGE */}
+              <button
+                onClick={toggleMute}
+                className={`p-2.5 rounded-xl transition-all border border-white/5 ${
+                  isMuted
+                    ? 'bg-red-500/20 text-red-500'
+                    : 'bg-slate-800 text-blue-500 hover:bg-slate-700'
+                }`}
+                title={isMuted ? 'Wyłącz wyciszenie' : 'Wycisz dźwięki'}
+              >
+                {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+              </button>
+            </div>
+          </div>
+          <div className="text-[9px] text-slate-700 font-bold uppercase italic opacity-40 text-center ">
             lsCasino © 2024 - {title}
           </div>
         </div>
