@@ -334,23 +334,23 @@ export default function CasinoClient({
       </div>
 
       <Dialog open={!!selectedGame} onOpenChange={handleDialogChange}>
-        <DialogContent className="max-w-2xl w-[95vw] max-h-[95dvh] bg-[#020617] border-slate-800 text-white p-0 rounded-3xl outline-none shadow-[0_0_120px_rgba(37,99,235,0.3)] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-screen-2xl w-dvw h-dvh  bg-[#020617] border-slate-800 text-white p-0 rounded-none sm:rounded-3xl outline-none shadow-[0_0_120px_rgba(37,99,235,0.3)] flex flex-col overflow-hidden">
           {selectedGame && (
             <>
-              <div className="flex-none p-6 bg-slate-900/50 border-b border-slate-800 px-8 md:px-10 flex items-center justify-between">
+              <div className="flex-none p-6 bg-slate-900/50 border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Gamepad2 className="h-6 w-6 text-blue-500" />
                   <DialogTitle className="text-xl font-black italic uppercase tracking-tighter">
                     {selectedGame.title}
                   </DialogTitle>
                 </div>
-                <div className="flex items-center gap-2 text-slate-500 text-[8px] font-black uppercase tracking-widest bg-slate-950 px-3 py-1.5 rounded-full border border-white/5">
+                <div className="flex items-center gap-2 text-slate-500 text-[6px] font-black uppercase tracking-widest bg-slate-950 px-3 py-1.5 rounded-full border border-white/5">
                   <Clock size={10} className="text-blue-500 animate-pulse" />
-                  Auto-Close: 180s Idle
+                  auto-close 180s
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto py-2 px-4 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto  custom-scrollbar">
                 <div className="w-full min-h-full flex items-center justify-center">
                   {ActiveGame ? (
                     <div className="w-full">

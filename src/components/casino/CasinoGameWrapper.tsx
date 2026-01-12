@@ -10,8 +10,6 @@ interface CasinoGameWrapperProps {
   gameData: any
   title: string
   balance: number
-  // Pozostawiamy propy dla kompatybilności z grami,
-  // ale nie używamy ich do dźwięków w tym komponencie
   isSpinning?: boolean
   isWin?: boolean
 }
@@ -22,10 +20,8 @@ export const CasinoGameWrapper = ({
   title,
   balance,
 }: CasinoGameWrapperProps) => {
-  // Inicjalizacja stanu z localStorage (domyślnie false, jeśli nie ustawiono)
   const [isMuted, setIsMuted] = useState<boolean>(false)
 
-  // Pobranie preferencji przy starcie
   useEffect(() => {
     const savedMute = localStorage.getItem('casino_muted')
     if (savedMute === 'true') {
@@ -33,7 +29,6 @@ export const CasinoGameWrapper = ({
     }
   }, [])
 
-  // Funkcja zmiany wyciszenia z zapisem do localStorage
   const toggleMute = () => {
     const newState = !isMuted
     setIsMuted(newState)
@@ -41,13 +36,14 @@ export const CasinoGameWrapper = ({
   }
 
   return (
-    <div className="w-full bg-[#020617] text-white">
-      <Tabs defaultValue="play" className="w-full">
-        <div className="relative">
+    <div className="w-full min-h-screen bg-[#020617] text-white flex flex-col">
+      <Tabs defaultValue="play" className="w-full flex-1 flex flex-col">
+        {/* Kontener treści gry */}
+        <div className="flex-1 w-full max-w-7xl mx-auto ">
           <AnimatePresence mode="wait">
             <TabsContent value="play" key="play-content" className="mt-0 outline-none border-none">
               <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
-                <div className="flex flex-col items-center bg-[#020617] rounded-[3rem] border border-slate-800 p-4 md:p-10 gap-4">
+                <div className="flex flex-col items-center bg-[#020617] rounded-[3rem] border border-slate-800 p-4 md:p-10 gap-4  w-fit mx-auto">
                   {children}
                 </div>
               </motion.div>
@@ -77,7 +73,11 @@ export const CasinoGameWrapper = ({
               </motion.div>
             </TabsContent>
           </AnimatePresence>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 my-2 bg-slate-900/40 p-4 rounded-[2rem] border border-slate-800/50 backdrop-blur-sm">
+        </div>
+
+        {/* PRZYKLEJONE MENU NA DOLE */}
+        <div className="sticky bottom-0 translate-y-2 left-0 right-0 z-50 w-full p-1 bg-[#020617]/80 backdrop-blur-md border-t border-slate-800/50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+          <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900/40 p-3 rounded-[2rem] border border-slate-800/50">
             {/* PRZYCISKI ZAKŁADEK */}
             <TabsList className="grid grid-cols-3 bg-black/40 rounded-xl border border-slate-800 w-full md:w-auto min-w-[300px]">
               <TabsTrigger
@@ -100,7 +100,7 @@ export const CasinoGameWrapper = ({
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex items-centerd justify-between w-full gap-3 px-2">
+            <div className="flex items-center justify-between w-full md:w-auto gap-3 px-2">
               {/* BALANS */}
               <div className="flex items-center gap-3 bg-blue-600/10 px-6 py-2 rounded-xl border border-blue-500/20">
                 <div className="bg-blue-600 p-1.5 rounded-lg">
@@ -115,7 +115,8 @@ export const CasinoGameWrapper = ({
                   </span>
                 </div>
               </div>
-              {/* GŁOŚNICZEK DO WYCISZANIA Z ZAPISEM W LOCALSTORAGE */}
+
+              {/* GŁOŚNICZEK */}
               <button
                 onClick={toggleMute}
                 className={`p-2.5 rounded-xl transition-all border border-white/5 ${
@@ -129,7 +130,8 @@ export const CasinoGameWrapper = ({
               </button>
             </div>
           </div>
-          <div className="text-[9px] text-slate-700 font-bold uppercase italic opacity-40 text-center ">
+
+          <div className="text-[8px] text-slate-700 font-bold uppercase italic opacity-40 text-center mt-2">
             lsCasino © 2024 - {title}
           </div>
         </div>

@@ -221,11 +221,11 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row  sms:items-center gap-4">
+          <div className="flex flex-row   sms:items-center gap-4">
             {/* PRZYCISK AUTO SPIN */}
             <button
               onClick={() => setAutoSpin(!autoSpin)}
-              className={`flex md:items-center gap-2 px-6 py-5 rounded-2xl font-black uppercase transition-all border-2 ${
+              className={`flex items-center flex-col justify-center gap-2 px-2 py-1 rounded-2xl font-black uppercase transition-all border-2 ${
                 autoSpin
                   ? 'bg-red-500/10 border-red-500 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
                   : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'
@@ -239,7 +239,7 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
             <button
               onClick={spin}
               disabled={spinning || balance < stake || autoSpin}
-              className={`px-12 py-5 rounded-2xl shadow-lg active:scale-95 transition-all ${
+              className={`px-6 py-2 rounded-2xl shadow-lg active:scale-95 transition-all ${
                 spinning || autoSpin
                   ? 'bg-blue-600/20 border-2 border-blue-500 text-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]'
                   : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-500 hover:to-blue-300 text-white'
