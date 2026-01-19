@@ -132,7 +132,7 @@ export const CasinoGameWrapper = ({
           </div>
 
           <div className="text-[8px] text-slate-700 font-bold uppercase italic opacity-40 text-center mt-2">
-            lsCasino © 2024 - {title}
+            lsCasino © {new Date().getFullYear()} - {title}
           </div>
         </div>
       </Tabs>

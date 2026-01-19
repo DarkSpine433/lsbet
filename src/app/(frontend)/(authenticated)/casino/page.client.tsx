@@ -189,11 +189,11 @@ export default function CasinoClient({
         <div className="flex whitespace-nowrap animate-marquee">
           {wins?.length > 0 ? (
             [...wins, ...wins].map((win, i) => {
-              const isJackpot = Number(win?.winAmount) >= 500
+              const isJackpot = Number(win?.winAmount) >= 2000
               return (
                 <div
                   key={i}
-                  className={`flex items-center gap-4 px-10 border-r border-slate-800/40 ${isJackpot ? 'bg-yellow-500/5' : ''}`}
+                  className={`flex items-center gap-4 px-10 border-r border-slate-800/40 `}
                 >
                   <Trophy
                     className={`h-3.5 w-3.5 ${isJackpot ? 'text-yellow-400 animate-bounce' : 'text-yellow-500'}`}

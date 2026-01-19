@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { RefreshCw, Zap, Plus, Minus, Octagon, RotateCw } from 'lucide-react'
 import { playJackpotBellsAction } from '@/app/actions/casino/jackpot-bells'
@@ -17,8 +17,43 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
   const [lastWin, setLastWin] = useState(0)
   const [winningCells, setWinningCells] = useState<number[]>([])
 
-  // Inicjalizacja dźwięków
   const { playSpin, stopSpin, playWin, playLose } = useCasinoSounds()
+
+  // Pre-load dźwięków lokalnie, aby uniknąć opóźnień
+  const audioCache = useMemo(() => {
+    if (typeof window === 'undefined') return {}
+    return {
+      menuClick: new Audio('https://assets.mixkit.co/active_storage/sfx/1117/1117-preview.mp3'),
+      tileDeselect: new Audio('https://assets.mixkit.co/active_storage/sfx/1108/1108-preview.mp3'),
+      tileSelect: new Audio('https://assets.mixkit.co/active_storage/sfx/1109/1109-preview.mp3'),
+      reveal: new Audio('https://assets.mixkit.co/active_storage/sfx/211/211-preview.mp3'),
+    }
+  }, [])
+
+  const playCachedEffect = (audioKey: keyof typeof audioCache) => {
+    const isMuted = localStorage.getItem('casino_muted') === 'true'
+    if (isMuted || !audioCache[audioKey]) return
+
+    const sound = audioCache[audioKey] as HTMLAudioElement
+    sound.currentTime = 0 // Resetuje czas, aby dźwięki się nie nakładały (nie stakowały)
+    sound.volume = 0.3
+    sound.play().catch(() => {})
+  }
+
+  const playMenuClick = () => playCachedEffect('menuClick')
+  const handleStakeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Usuwamy wszystko co nie jest cyfrą
+    const rawValue = e.target.value.replace(/\D/g, '')
+
+    if (rawValue === '') {
+      setStake(0)
+      return
+    }
+
+    // Parsujemy na liczbę, co automatycznie usuwa zera z przodu (np. "020" -> 20)
+    const numValue = parseInt(rawValue, 10)
+    setStake(numValue)
+  }
 
   const [displayGrid, setDisplayGrid] = useState([
     ['🍒', '7️⃣', '🍒'],
@@ -157,7 +192,7 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
                   initial={{ y: 0 }}
                   transition={
                     columnSpinning[colIdx]
-                      ? { duration: 0.15, repeat: Infinity, ease: 'linear' }
+                      ? { duration: 0.3, repeat: Infinity, ease: 'linear' }
                       : { type: 'spring', stiffness: 30, damping: 12 }
                   }
                   className="flex flex-col items-center"
@@ -187,28 +222,90 @@ export default function JackpotBells({ balance, onBalanceUpdate, gameData }: any
 
         {/* PANEL STEROWANIA */}
         <div className="w-full bg-slate-900/90 p-6 rounded-[2.5rem] border border-slate-700 backdrop-blur-md flex flex-wrap flex-col-reverse sm:flex-row items-center justify-between gap-6 shadow-xl">
-          <div className="flex flex-col-reverse sm:flex-col gap-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter text-center">
-              Zakład (5 linii)
-            </span>
-            <div className="flex items-center gap-4 bg-black/50 p-2 rounded-2xl">
-              <button
-                onClick={() => setStake(Math.max(5, stake - 5))}
-                disabled={spinning || autoSpin}
-                className="p-2 bg-slate-800 rounded-lg text-white disabled:opacity-30 hover:bg-slate-700 transition-colors"
-              >
-                <Minus size={20} />
-              </button>
-              <span className="text-2xl font-black text-yellow-500 italic min-w-[60px] text-center">
-                {stake}$
-              </span>
-              <button
-                onClick={() => setStake(stake + 5)}
-                disabled={spinning || autoSpin}
-                className="p-2 bg-slate-800 rounded-lg text-white disabled:opacity-30 hover:bg-slate-700 transition-colors"
-              >
-                <Plus size={20} />
-              </button>
+          <div className="w-full max-w-[500px] mx-auto bg-slate-900/90 p-4 sm:p-6 rounded-[2.5rem] border border-slate-700/50 backdrop-blur-xl shadow-2xl">
+            <div className="flex flex-col gap-4">
+              {/* Nagłówek sekcji zakładu */}
+              <div className="flex items-center justify-between px-2">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">
+                  Konfiguracja Gry
+                </span>
+                <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">
+                  5 Linii Płatnych
+                </span>
+              </div>
+
+              {/* Główny kontener sterowania */}
+              <div className="flex flex-col sm:flex-row items-stretch gap-3">
+                {/* Kontener Stawki */}
+                <div className="flex-1 flex items-center bg-[#0f172a] border border-slate-700/50 p-1.5 rounded-2xl shadow-inner group transition-all hover:border-slate-500">
+                  {/* Przycisk Minus */}
+                  <button
+                    onClick={() => {
+                      playMenuClick()
+                      setStake(Math.max(1, stake - 10))
+                    }}
+                    className="h-12 w-12 flex items-center justify-center bg-slate-800 hover:bg-red-500/20 hover:text-red-500 rounded-xl text-slate-400 active:scale-90 transition-all border border-slate-700/50"
+                  >
+                    <Minus size={18} strokeWidth={3} />
+                  </button>
+
+                  {/* Input i Etykieta */}
+                  <div className="flex-1 flex flex-col items-center justify-center min-w-[80px]">
+                    <span className="text-[8px] font-black text-slate-500 uppercase leading-none mb-1 group-hover:text-blue-500 transition-colors">
+                      Twój Zakład
+                    </span>
+                    <div className="relative flex items-center justify-center">
+                      {/* Znak dolara z ujemnym marginesem prawym, aby dosunąć input */}
+                      <span className="text-yellow-500 font-black text-lg italic select-none mr-0.5">
+                        $
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={stake === 0 ? '' : stake}
+                        onChange={handleStakeChange}
+                        // Zmniejszono padding-left i ustawiono text-left, aby wartość zaczynała się zaraz za $
+                        // Jeśli wolisz wyrównanie do środka, używamy w-fit (wymaga dodatkowej logiki)
+                        // lub po prostu szerokości dopasowanej do fontu.
+                        className="bg-transparent text-left text-xl font-black text-white w-16 outline-none placeholder:text-slate-700"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Przycisk Plus */}
+                  <button
+                    onClick={() => {
+                      playMenuClick()
+                      setStake(stake + 10)
+                    }}
+                    className="h-12 w-12 flex items-center justify-center bg-slate-800 hover:bg-green-500/20 hover:text-green-500 rounded-xl text-slate-400 active:scale-90 transition-all border border-slate-700/50"
+                  >
+                    <Plus size={18} strokeWidth={3} />
+                  </button>
+                </div>
+
+                {/* Szybkie wybory (Opcjonalnie - dodaje profesjonalizmu) */}
+                <div className="hidden sm:flex flex-col justify-between gap-1">
+                  <button
+                    onClick={() => setStake(stake * 2)}
+                    className="px-3 py-1.5 bg-slate-800/50 hover:bg-blue-600 rounded-lg text-[9px] font-black uppercase transition-all border border-slate-700/50"
+                  >
+                    x2
+                  </button>
+                  <button
+                    onClick={() => setStake(Math.floor(stake / 2))}
+                    className="px-3 py-1.5 bg-slate-800/50 hover:bg-blue-600 rounded-lg text-[9px] font-black uppercase transition-all border border-slate-700/50"
+                  >
+                    1/2
+                  </button>
+                </div>
+              </div>
+
+              {/* Stopka informacyjna */}
+              <p className="text-center text-[8px] font-bold text-slate-600 uppercase tracking-tighter">
+                Zmień stawkę za pomocą przycisków lub wpisz własną kwotę
+              </p>
             </div>
           </div>
 

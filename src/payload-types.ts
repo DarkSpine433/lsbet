@@ -432,6 +432,10 @@ export interface User {
    * Aktualny stan konta użytkownika (tylko do odczytu lub korekty bezpośredniej)
    */
   money?: number | null;
+  /**
+   * Stan konta kuponów użytkownika (tylko do odczytu lub korekty bezpośredniej)
+   */
+  cuponsMoney?: number | null;
   totalWinsAmount?: number | null;
   verified?: boolean | null;
   banned?: boolean | null;
@@ -1231,6 +1235,7 @@ export interface UsersSelect<T extends boolean = true> {
   role?: T;
   adjustBalance?: T;
   money?: T;
+  cuponsMoney?: T;
   totalWinsAmount?: T;
   verified?: T;
   banned?: T;

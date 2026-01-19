@@ -100,6 +100,18 @@ export const Users: CollectionConfig = {
         create: isAdmin,
       },
     },
+    {
+      name: 'cuponsMoney',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Stan konta kuponów użytkownika (tylko do odczytu lub korekty bezpośredniej)',
+      },
+      access: {
+        update: isAdmin,
+        create: isAdmin,
+      },
+    },
 
     {
       name: 'totalWinsAmount',

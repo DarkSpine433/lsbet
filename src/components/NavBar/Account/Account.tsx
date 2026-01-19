@@ -27,10 +27,10 @@ import {
 import { Separator } from '../../ui/separator'
 import { Badge } from '@/components/ui/badge'
 import ChangePwd from './ChangePwd'
-import MyBets from './MyBets/MyBets'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import MyCasinoWins from './MyCasinoWins'
 import CouponSection from './CodeCupons'
+import MyBets from './MyBets/MyBets'
 
 type Props = {
   user: User

@@ -28,7 +28,13 @@ const Page = async (props: Props) => {
   // Pobieramy gry dla wybranej kategorii lub pierwszej dostępnej
   const initialGames = await getCasinoGames(categoryTitle || (categories[0]?.title as string))
 
-  return <CasinoClient nickname={user.email.split('@')[0]} user={user} money={user.money || 0} />
+  return (
+    <CasinoClient
+      nickname={user.email.split('@')[0]}
+      user={user}
+      money={(user.money || 0) + (user.cuponsMoney || 0)}
+    />
+  )
 }
 
 const getCasinoCategories = cache(async () => {
