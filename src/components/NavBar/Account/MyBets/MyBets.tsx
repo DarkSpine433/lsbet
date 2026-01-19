@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { History, Loader2, Trophy } from 'lucide-react'
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { getMyBetsAction } from '@/app/actions/getBets' // Import Twojej akcji
+import { getMyBetsAction } from '@/app/actions/getBets'
 import dynamic from 'next/dynamic'
 import { Bet, PlacedBet } from '@/payload-types'
 
@@ -22,6 +22,7 @@ const MyBetsPageClient = dynamic(() => import('@/components/NavBar/Account/MyBet
 })
 
 const MyBets = () => {
+  const [open, setOpen] = useState(false)
   const [data, setData] = useState<{
     placedBets: PlacedBet[]
     results: Bet[]
@@ -29,21 +30,32 @@ const MyBets = () => {
   } | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const fetchData = async () => {
-    setLoading(true)
-    const res = await getMyBetsAction()
-    if ('placedBets' in res) {
-      setData({
-        placedBets: res.placedBets as any,
-        results: res.results as any,
-        user: res.user as any,
-      })
+  // Funkcja wywoływana przy próbie zmiany stanu Dialogu
+  const handleOpenChange = async (newOpen: boolean) => {
+    setOpen(newOpen) // Natychmiastowa reakcja UI na kliknięcie
+
+    // Pobieramy dane tylko gdy Dialog się otwiera i nie mamy jeszcze danych (lub chcemy je odświeżyć)
+    if (newOpen) {
+      setLoading(true)
+      try {
+        const res = await getMyBetsAction()
+        if (res && 'placedBets' in res) {
+          setData({
+            placedBets: res.placedBets as any,
+            results: res.results as any,
+            user: res.user as any,
+          })
+        }
+      } catch (error) {
+        console.error('Błąd podczas pobierania zakładów:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
   }
 
   return (
-    <Dialog onOpenChange={(open) => open && fetchData()}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <div className="group flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/50 hover:bg-slate-900 transition-all cursor-pointer">
           <div className="flex items-center gap-4">
@@ -93,7 +105,13 @@ const MyBets = () => {
               initialBets={data.placedBets}
               resultOfEventBeted={data.results}
             />
-          ) : null}
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <p className="text-slate-500 uppercase font-bold text-xs">
+                Brak danych do wyświetlenia
+              </p>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -3,7 +3,7 @@ import config from '@payload-config'
 import { headers as nextHeaders } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Logo } from '@/components/Logo/Logo'
-import { Wallet, ShieldCheck } from 'lucide-react'
+import { Wallet, ShieldCheck, Ticket } from 'lucide-react'
 import Link from 'next/link'
 import Account from '@/components/NavBar/Account/Account'
 import Notification from '@/components/NavBar/Notification'
@@ -12,6 +12,7 @@ import Heartbeat from '@/components/NavBar/Heartbeat'
 import Status from '@/components/NavBar/Status'
 import OfflineBarStatus from '@/components/MainPage/OfflineBarStatus'
 import MaintenanceController from '@/components/MaintenanceController'
+import { WalletStatus } from '@/components/NavBar/WalletStatus'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const payload = await getPayload({ config })
@@ -62,21 +63,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <div className="px-4 sm:px-8 py-3 md:py-4 max-w-screen-2xl mx-auto flex items-center justify-between">
           <Logo className="h-2 w-auto mr-2" priority="high" loading="eager" />
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center gap-3 rounded-2xl bg-slate-900/50 px-4 py-2 border border-slate-800 group hover:border-blue-500/30 transition-all">
-              <div className="p-1.5 rounded-lg bg-blue-600/10 text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <Wallet className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-black text-slate-500 uppercase leading-none mb-1">
-                  Saldo
-                </span>
-                <span className="font-black text-sm text-white leading-none flex items-center">
-                  {user.money?.toFixed(2)}
-                  <div className="text-blue-500 text-[10px] ml-0.5 "> {moneySign}</div>
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            {/* ZASTĘPUJEMY STARY KOD NOWYM KOMPONENTEM */}
+            <WalletStatus user={user} moneySign={moneySign} />
 
             <div className="flex items-center gap-2">
               <Notification />

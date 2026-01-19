@@ -19,7 +19,7 @@ export default function SimplyNumbers({ balance, onBalanceUpdate, gameSlug, game
   // Pobierz uniwersalne funkcje dźwiękowe
   const { playSpin, stopSpin, playWin, playLose } = useCasinoSounds()
 
-  const possibleWin = (bet * multiplier).toFixed(2)
+  const possibleWin = (bet * multiplier - bet).toFixed(2)
 
   // Efekt wizualny losowania liczb
   useEffect(() => {

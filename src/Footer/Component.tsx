@@ -3,6 +3,7 @@ import type { Footer as FooterType } from '@/payload-types'
 import { Logo } from '@/components/Logo/Logo'
 import { ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
+import LsBetVersion from '@/components/LsBetVersion'
 
 export async function Footer() {
   return (
@@ -53,7 +54,9 @@ export async function Footer() {
           </div>
         </div>
       </div>
-
+      <div className="mt-12 text-[10px] text-slate-800 text-center border-b border-slate-900 relative">
+        <LsBetVersion />
+      </div>
       {/* Dekoracyjny Gradient na spodzie */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
     </footer>

@@ -49,14 +49,6 @@ export async function activateCoupon(code: string) {
     const currentMoney = user.money || 0
     const newBalance = currentMoney + coupon.value
 
-    await payload.update({
-      collection: 'users',
-      id: user.id,
-      data: {
-        money: newBalance,
-      },
-    })
-
     // 6. Aktualizacja statystyk kuponu
     await payload.update({
       collection: 'coupons',
@@ -69,13 +61,20 @@ export async function activateCoupon(code: string) {
         ],
       },
     })
+    await payload.update({
+      collection: 'users',
+      id: user.id,
+      data: {
+        cuponsMoney: newBalance,
+      },
+    })
 
     // 7. Stworzenie powiadomienia o wygranej/bonusie
     await payload.create({
       collection: 'notifications',
       data: {
         title: 'Kod aktywowany!',
-        message: `Otrzymałeś ${coupon.value} $ z kodu bonusowego: ${coupon.code}`,
+        message: `Otrzymałeś ${coupon.value} $ z kodu bonusowego: ${coupon.code}. Kliknij, na saldo aby zobaczyć saldo bonusowe.`,
         type: 'bonus',
         recipient: user.id,
         broadcast: false,
