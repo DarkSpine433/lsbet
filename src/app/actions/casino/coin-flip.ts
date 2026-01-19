@@ -1,6 +1,6 @@
 'use server'
 
-import { validateGameSession } from './casino-validator'
+import { updateUserBalances, validateGameSession } from './casino-validator'
 import { revalidatePath } from 'next/cache'
 import { Payload } from 'payload'
 
@@ -150,13 +150,14 @@ export async function playCoinFlip(
 
   // 5. Aktualizacja finansowa (Atomic-like update)
   const currentMoney = typeof user.money === 'number' ? user.money : 0
-  const newBalance = currentMoney - stake + wonAmount
 
-  await payload.update({
-    collection: 'users',
-    id: user.id,
-    data: { money: newBalance },
-  })
+  const { newMoney } = await updateUserBalances(
+    payload,
+    user.id,
+    { money: currentMoney, cuponsMoney: user.cuponsMoney || 0 },
+    stake,
+    wonAmount,
+  )
 
   // 6. Logowanie wygranej (wymagane dla przyszłego profilowania ryzyka)
   if (wonAmount > 0) {
@@ -182,7 +183,7 @@ export async function playCoinFlip(
     board,
     isWin: isActuallyWin,
     wonAmount,
-    newBalance,
+    newBalance: newMoney,
     // Dane diagnostyczne (opcjonalnie dla admina)
   }
 }

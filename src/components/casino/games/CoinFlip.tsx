@@ -15,14 +15,8 @@ const MODES = {
   extra: { label: '5', count: 5, mult: 5.0 },
 }
 
-export default function CoinFlipGame({
-  initialMoney = 1000,
-  gameData,
-}: {
-  initialMoney?: number
-  gameData: any
-}) {
-  const [balance, setBalance] = useState(initialMoney)
+export default function CoinFlipGame({ balance, onBalanceUpdate, gameData }: any) {
+  const [initBalance, setInitBalance] = useState(balance)
   const [stake, setStake] = useState(10)
   const [difficulty, setDifficulty] = useState<Difficulty>('normal')
 
@@ -96,7 +90,7 @@ export default function CoinFlipGame({
   }
 
   const handlePlay = async () => {
-    if (selectedIndices.length !== MODES[difficulty].count || balance < stake) return
+    if (selectedIndices.length !== MODES[difficulty].count || initBalance < stake) return
     setGameState('processing')
 
     try {
@@ -107,7 +101,7 @@ export default function CoinFlipGame({
       const revealTime = selectedIndices.length * 450 + 400
 
       setTimeout(() => {
-        setBalance(result.newBalance)
+        setInitBalance(result.newBalance)
         setWinData({ isWin: result.isWin, amount: result.wonAmount })
         setGameState('result')
         setShowResultOverlay(true)
@@ -132,7 +126,7 @@ export default function CoinFlipGame({
   }
 
   return (
-    <CasinoGameWrapper gameData={gameData} title="Coin Flip" balance={balance}>
+    <CasinoGameWrapper gameData={gameData} title="Coin Flip" balance={initBalance}>
       <div className="flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-2 sm:px-4 py-4">
         <div className="relative p-3 sm:p-6 bg-[#050b14] border-4 border-[#1e293b] rounded-[2rem] shadow-2xl w-full max-w-[480px]">
           <div className="grid grid-cols-5 gap-2 sm:gap-3 relative z-10">

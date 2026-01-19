@@ -83,7 +83,6 @@ export async function playSimplyNumbersAction(bet: number, gameSlug: string, mul
     bet,
     winAmount,
   )
-  console.log(newMoney)
   // 6. Logowanie zdarzenia (Wymagane do analizy ryzyka przy następnym ruchu)
   if (isWin) {
     try {

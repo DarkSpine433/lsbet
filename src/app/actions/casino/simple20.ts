@@ -1,6 +1,6 @@
 'use server'
 
-import { validateGameSession } from './casino-validator'
+import { updateUserBalances, validateGameSession } from './casino-validator'
 import { revalidatePath } from 'next/cache'
 import { Payload } from 'payload'
 
@@ -101,8 +101,6 @@ export async function playSimple20Action(stake: number) {
   // Validator zwraca riskProfile (level, totalWon24h, winLimiter)
   const { payload, user, riskProfile } = await validateGameSession('simple-20', stake)
 
-  const currentMoney = user.money
-
   // 2. Decyzja silnika (Outcome-Driven Architecture)
   // System najpierw decyduje ile gracz ma wygrać, a potem losuje obrazki
   const scenario = SlotMathEngine.determineOutcomeScenario(riskProfile)
@@ -124,15 +122,15 @@ export async function playSimple20Action(stake: number) {
     winAmount = 0
   }
 
-  // 5. Aktualizacja finansowa (Atomic Transaction)
-  const newBalance = currentMoney - stake + winAmount
+  const currentMoney = typeof user.money === 'number' ? user.money : 0
 
-  await payload.update({
-    collection: 'users',
-    id: user.id,
-    data: { money: newBalance },
-  })
-
+  const { newMoney } = await updateUserBalances(
+    payload,
+    user.id,
+    { money: currentMoney, cuponsMoney: user.cuponsMoney || 0 },
+    stake,
+    winAmount,
+  )
   // 6. Logowanie wygranej do bazy (niezbędne dla profilowania ryzyka)
   if (winAmount > 0) {
     try {
@@ -157,7 +155,7 @@ export async function playSimple20Action(stake: number) {
   return {
     reels,
     winAmount,
-    newBalance,
+    newBalance: newMoney,
     isWin: winAmount > 0,
     riskWarning: riskProfile.level !== 'SAFE',
     // Metadane dla dewelopera (usuń na produkcji)

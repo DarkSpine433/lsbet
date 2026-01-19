@@ -1,6 +1,6 @@
 'use server'
 
-import { validateGameSession } from '@/app/actions/casino/casino-validator'
+import { updateUserBalances, validateGameSession } from '@/app/actions/casino/casino-validator'
 import { Payload } from 'payload'
 
 // ==========================================
@@ -291,15 +291,15 @@ export async function playJackpotBellsAction(stake: number) {
   }
 
   // 6. Transakcja finansowa
-  const currentMoney = (user.money as number) || 0
-  const newBalance = currentMoney - stake + verifiedWin
+  const currentMoney = typeof user.money === 'number' ? user.money : 0
 
-  await payload.update({
-    collection: 'users',
-    id: user.id,
-    data: { money: newBalance },
-  })
-
+  const { newMoney } = await updateUserBalances(
+    payload,
+    user.id,
+    { money: currentMoney, cuponsMoney: user.cuponsMoney || 0 },
+    stake,
+    verifiedWin,
+  )
   // =========================================================
   // LOGOWANIE KAŻDEJ WYGRANEJ (ZGODNIE Z WYMOGIEM)
   // =========================================================
@@ -327,7 +327,7 @@ export async function playJackpotBellsAction(stake: number) {
   return {
     grid,
     winAmount: verifiedWin,
-    newBalance,
+    newBalance: newMoney,
     winningIndices: Array.from(new Set(winningIndices)),
   }
 }
