@@ -10,13 +10,11 @@ const Notification = () => {
 
   const fetchAllNotifications = useCallback(async () => {
     try {
-      // Pobieramy MAX 9 powiadomień
       const res = await fetch('/api/notifications?sort=-createdAt&limit=9')
       const data = await res.json()
 
       if (data.docs) {
         setNotifications(data.docs)
-        // Sprawdzamy czy CO NAJMNIEJ JEDNO powiadomienie jest nieprzeczytane
         const unreadExists = data.docs.some((n: any) => n.isRead === false)
         setHasUnread(unreadExists)
       }
@@ -25,45 +23,58 @@ const Notification = () => {
     }
   }, [])
 
-  // Funkcja oznaczająca pojedyncze powiadomienie jako przeczytane w bazie
+  // FUNKCJA OPTIMISTIC: Oznaczanie pojedynczego
   const markAsRead = async (id: string) => {
+    // 1. Optimistic Update: natychmiastowa zmiana w UI
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)))
+
+    // Sprawdzamy czy po tej zmianie nadal są jakieś nieprzeczytane
+    const stillHasUnread = notifications.some((n) => n.id !== id && n.isRead === false)
+    setHasUnread(stillHasUnread)
+
     try {
+      // 2. Akcja w tle (Under the hood)
       await fetch(`/api/notifications/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isRead: true }),
       })
-      // Odświeżamy listę lokalnie
-      fetchAllNotifications()
+      // Nie musimy tu wywoływać fetchAllNotifications(), bo UI już jest zaktualizowane
     } catch (err) {
       console.error('Błąd oznaczania jako przeczytane:', err)
+      // Opcjonalnie: W razie błędu przywróć stan z serwera
+      fetchAllNotifications()
     }
   }
 
-  // Funkcja oznaczająca WSZYSTKIE widoczne powiadomienia jako przeczytane
+  // FUNKCJA OPTIMISTIC: Oznaczanie wszystkich
   const markAllAsRead = async () => {
-    try {
-      const unreadNotifications = notifications.filter((n) => !n.isRead)
+    const unreadIds = notifications.filter((n) => !n.isRead).map((n) => n.id)
+    if (unreadIds.length === 0) return
 
-      // Wykonujemy zapytania równolegle dla wszystkich nieprzeczytanych
+    // 1. Optimistic Update: Wszystko na przeczytane
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+    setHasUnread(false)
+
+    try {
+      // 2. Akcja w tle
       await Promise.all(
-        unreadNotifications.map((n) =>
-          fetch(`/api/notifications/${n.id}`, {
+        unreadIds.map((id) =>
+          fetch(`/api/notifications/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isRead: true }),
           }),
         ),
       )
-      fetchAllNotifications()
     } catch (err) {
       console.error('Błąd oznaczania wszystkich:', err)
+      fetchAllNotifications()
     }
   }
 
   useEffect(() => {
     fetchAllNotifications()
-    // Sprawdzanie co 5 minut
     const interval = setInterval(fetchAllNotifications, 300000)
     return () => clearInterval(interval)
   }, [fetchAllNotifications])
@@ -108,7 +119,10 @@ const Notification = () => {
           </h4>
           {hasUnread && (
             <button
-              onClick={markAllAsRead}
+              onClick={(e) => {
+                e.stopPropagation()
+                markAllAsRead()
+              }}
               className="text-[9px] text-blue-400 hover:text-white uppercase font-bold flex items-center gap-1 transition-colors"
             >
               <Check className="h-3 w-3" /> Oznacz wszystkie

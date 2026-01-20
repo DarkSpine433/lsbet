@@ -13,7 +13,8 @@ import {
   CalendarDays,
   Trophy,
   User as UserIcon2,
-  Wallet, // Dodano ikonę
+  Wallet,
+  ArrowUpCircle, // Dodano ikonę
 } from 'lucide-react'
 import LogoutButton from '../../ui/logout-button'
 import type { User } from '@/payload-types'
@@ -128,23 +129,9 @@ const Account = ({ user }: Props) => {
               <MyBets />
             </div>
           </section>
-          <Separator className="bg-slate-800/50" />
-
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-600/10 border border-blue-500/20">
-                <Wallet className="h-4 w-4 text-blue-500" />
-              </div>
-              <h3 className="text-sm font-black text-white uppercase tracking-widest italic">
-                Zarządzanie Środkami
-              </h3>
-            </div>
-            <WithdrawalDialog /> {/* <-- Twój nowy komponent */}
-          </section>
 
           <Separator className="bg-slate-800/50" />
           {/* ... reszta komponentu pozostaje bez zmian ... */}
-          <Separator className="bg-slate-800/50" />
 
           <section className="space-y-4">
             <div className="flex items-center gap-3">
@@ -159,7 +146,23 @@ const Account = ({ user }: Props) => {
               <CouponSection onBalanceUpdate={(val) => {}} />
             </div>
           </section>
+          <Separator className="bg-slate-800/50" />
+          <section className="space-y-4">
+            {/* Nagłówek sekcji */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-600/10 border border-blue-500/20">
+                <ArrowUpCircle className="h-4 w-4 text-blue-500" />
+              </div>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest italic">
+                Zarządzanie Środkami
+              </h3>
+            </div>
 
+            {/* Przycisk otwierający dialog wypłaty */}
+            <div className="bg-slate-900/30 rounded-[2.5rem] border border-slate-800/50 p-1">
+              <WithdrawalSection />
+            </div>
+          </section>
           <Separator className="bg-slate-800/50" />
 
           <section className="space-y-4">

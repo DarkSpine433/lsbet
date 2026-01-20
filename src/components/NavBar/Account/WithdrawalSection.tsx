@@ -11,7 +11,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Wallet, History, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import {
+  Wallet,
+  History,
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ChevronRight,
+  TriangleAlertIcon,
+  CreditCard,
+  Plus,
+  Minus,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateTime } from '@/utilities/formatDateTime'
 import { getWithdrawalHistory, requestWithdrawal } from '@/app/actions/withdrawal'
@@ -46,9 +58,30 @@ export default function WithdrawalDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full bg-blue-600 hover:bg-blue-500 font-black italic uppercase">
-          Wypłać środki
-        </Button>
+        {/* STYLIZOWANA KARTA-PRZYCISK */}
+        <button className="w-full group relative flex items-center gap-4 bg-slate-900/40 hover:bg-slate-800/60 border border-slate-800 rounded-2xl p-4 transition-all duration-300 text-left overflow-hidden shadow-lg">
+          {/* Subtelny blask w tle po najechaniu */}
+          <div className="absolute inset-0 bg-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+          {/* Lewa strona: Ikona w boksie */}
+          <div className="relative h-12 w-12 shrink-0 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center shadow-inner group-hover:border-blue-500/50 transition-colors">
+            <Wallet className="h-6 w-6 text-blue-500 group-hover:scale-110 transition-transform" />
+          </div>
+
+          {/* Środek: Teksty */}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-xs font-black text-white uppercase tracking-widest italic flex items-center gap-2">
+              Zleć wypłatę
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+            </h4>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-0.5 truncate">
+              Przelej środki na konto bankowe lub krypto
+            </p>
+          </div>
+
+          {/* Prawa strona: Chevron lub strzałka */}
+          <ChevronRight className="h-5 w-5 text-slate-700 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+        </button>
       </DialogTrigger>
       <DialogContent className="bg-slate-950 border-slate-800 text-white max-w-md">
         <DialogHeader>
@@ -73,32 +106,62 @@ export default function WithdrawalDialog() {
 
           <TabsContent value="request" className="space-y-4">
             <form onSubmit={handleWithdraw} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500">
-                  Kwota wypłaty ($)
-                </label>
-                <Input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="bg-black/40 border-slate-800 font-black italic"
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500">
+              {/* SEKCJA DANYCH PRZELEWU */}
+              <div className="space-y-3 mt-6">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1">
                   Dane do przelewu / Adres portfela
                 </label>
-                <Input
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  className="bg-black/40 border-slate-800 text-sm"
-                  placeholder="Np. Numer konta bankowego Postaci..."
-                  required
-                />
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-500 transition-colors">
+                    <CreditCard size={16} />
+                  </div>
+                  <Input
+                    value={details}
+                    onChange={(e) => setDetails(e.target.value)}
+                    className="bg-black/40 border-slate-800 h-14 pl-12 rounded-2xl font-bold text-sm text-white placeholder:text-slate-700 focus-visible:ring-1 focus-visible:ring-blue-500/50 focus-visible:border-blue-500/50 transition-all shadow-inner"
+                    placeholder="Np. Numer konta bankowego Postaci..."
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] ml-1">
+                  Kwota wypłaty ($)
+                </label>
+                <div className="flex items-center gap-2 bg-black/40 border border-slate-800 rounded-2xl p-1.5 focus-within:border-blue-500/50 transition-all shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => setAmount((prev) => Math.max(0, Number(prev) - 10).toString())}
+                    className="h-10 w-10 shrink-0 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+                  >
+                    <Minus size={16} strokeWidth={3} />
+                  </button>
+
+                  <div className="flex-1 relative">
+                    <Input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      className="bg-transparent border-none text-center font-black italic text-lg text-white focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-800 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setAmount((prev) => (Number(prev) + 10).toString())}
+                    className="h-10 w-10 shrink-0 rounded-xl bg-blue-600 border border-blue-500/50 flex items-center justify-center text-white hover:bg-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all"
+                  >
+                    <Plus size={16} strokeWidth={3} />
+                  </button>
+                </div>
               </div>
 
+              <div className="p-4 bg-red-600/10 border border-red-500/20 rounded-xl flex gap-3 text-[10px] font-bold text-red-300 leading-relaxed uppercase">
+                <TriangleAlertIcon className="h-4 w-4 text-red-500 inline-block" /> Upewnij się, że
+                podane dane są poprawne, aby uniknąć utraty majątku.
+              </div>
               <div className="p-4 bg-blue-600/10 border border-blue-500/20 rounded-xl flex gap-3">
                 <Clock className="text-blue-500 shrink-0" size={20} />
                 <p className="text-[10px] font-bold text-blue-200 leading-relaxed uppercase">
