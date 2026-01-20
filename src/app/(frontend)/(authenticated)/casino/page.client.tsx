@@ -30,8 +30,10 @@ import { User } from '@/payload-types'
 import { TopWinners } from '@/components/casino/TopWinners'
 import CoinFlip from '@/components/casino/games/CoinFlip'
 import CyberVoidGame from '@/components/casino/games/cyber-void/GameInterface'
+import BlackjackGame from '@/components/casino/games/Blackjack'
 
 const GAME_COMPONENTS: Record<string, any> = {
+  blackjack: BlackjackGame,
   'cyber-void': CyberVoidGame,
   'simply-numbers': SimplyNumbers,
   'jackpot-bells': JackpotBells,
