@@ -79,6 +79,7 @@ export interface Config {
     'casino-categories': CasinoCategory;
     'casino-wins': CasinoWin;
     notifications: Notification;
+    withdrawals: Withdrawal;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
     'payload-folders': FolderInterface;
@@ -104,6 +105,7 @@ export interface Config {
     'casino-categories': CasinoCategoriesSelect<false> | CasinoCategoriesSelect<true>;
     'casino-wins': CasinoWinsSelect<false> | CasinoWinsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    withdrawals: WithdrawalsSelect<false> | WithdrawalsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
@@ -743,6 +745,20 @@ export interface Notification {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "withdrawals".
+ */
+export interface Withdrawal {
+  id: string;
+  user: string | User;
+  amount: number;
+  status?: ('pending' | 'completed' | 'rejected') | null;
+  method: string;
+  payoutDetails: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -904,6 +920,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notifications';
         value: string | Notification;
+      } | null)
+    | ({
+        relationTo: 'withdrawals';
+        value: string | Withdrawal;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -1375,6 +1395,19 @@ export interface NotificationsSelect<T extends boolean = true> {
   broadcast?: T;
   isReadBy?: T;
   isRead?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "withdrawals_select".
+ */
+export interface WithdrawalsSelect<T extends boolean = true> {
+  user?: T;
+  amount?: T;
+  status?: T;
+  method?: T;
+  payoutDetails?: T;
   updatedAt?: T;
   createdAt?: T;
 }

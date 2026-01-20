@@ -44,7 +44,7 @@ export default function BlackjackGame({ balance, onBalanceUpdate, gameData }: an
       setDealerHand(res.dealerHand!)
       onBalanceUpdate(res.newBalance)
       setGameState('RESULT')
-      res.winAmount > 0 ? playWin() : playLose()
+      res.winAmount! > 0 ? playWin() : playLose()
     }
     setIsLoading(false)
   }
