@@ -29,8 +29,10 @@ import { GameCard } from './GameCard'
 import { User } from '@/payload-types'
 import { TopWinners } from '@/components/casino/TopWinners'
 import CoinFlip from '@/components/casino/games/CoinFlip'
+import CyberVoidGame from '@/components/casino/games/cyber-void/GameInterface'
 
 const GAME_COMPONENTS: Record<string, any> = {
+  'cyber-void': CyberVoidGame,
   'simply-numbers': SimplyNumbers,
   'jackpot-bells': JackpotBells,
   'simple-20': Simple20,
