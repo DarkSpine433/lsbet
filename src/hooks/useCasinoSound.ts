@@ -6,9 +6,9 @@ export const useCasinoSounds = () => {
   const spinAudio = useRef<HTMLAudioElement | null>(null)
   const winAudio = useRef<HTMLAudioElement | null>(null)
   const loseAudio = useRef<HTMLAudioElement | null>(null)
+  const cardMoveAudio = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    // Inicjalizacja plików (możesz tu podmienić URL na własne)
     spinAudio.current = new Audio(
       'https://assets.mixkit.co/active_storage/sfx/2642/2642-preview.mp3',
     )
@@ -16,13 +16,16 @@ export const useCasinoSounds = () => {
     loseAudio.current = new Audio(
       'https://assets.mixkit.co/active_storage/sfx/2026/2026-preview.mp3',
     )
+    // Dźwięk przesuwania/rozdawania karty
+    cardMoveAudio.current = new Audio(
+      'https://assets.mixkit.co/active_storage/sfx/2002/2002-preview.mp3',
+    )
 
-    // Konfiguracja głośności
     if (spinAudio.current) spinAudio.current.volume = 0.4
     if (winAudio.current) winAudio.current.volume = 0.5
     if (loseAudio.current) loseAudio.current.volume = 0.3
+    if (cardMoveAudio.current) cardMoveAudio.current.volume = 0.6
 
-    // Logika zapętlania pierwszej sekundy dla dźwięku losowania
     const handleSpinLoop = () => {
       if (spinAudio.current && spinAudio.current.currentTime >= 7.0) {
         spinAudio.current.currentTime = 0
@@ -33,16 +36,17 @@ export const useCasinoSounds = () => {
 
     return () => {
       spinAudio.current?.removeEventListener('timeupdate', handleSpinLoop)
-      // Zatrzymaj wszystkie dźwięki przy wychodzeniu z gry
       spinAudio.current?.pause()
       winAudio.current?.pause()
       loseAudio.current?.pause()
+      cardMoveAudio.current?.pause()
     }
   }, [])
 
+  const checkMute = () => localStorage.getItem('casino_muted') === 'true'
+
   const playSpin = useCallback(() => {
-    const isMuted = localStorage.getItem('casino_muted') === 'true'
-    if (isMuted || !spinAudio.current) return
+    if (checkMute() || !spinAudio.current) return
     spinAudio.current.currentTime = 0
     spinAudio.current.play().catch(() => {})
   }, [])
@@ -55,18 +59,22 @@ export const useCasinoSounds = () => {
   }, [])
 
   const playWin = useCallback(() => {
-    const isMuted = localStorage.getItem('casino_muted') === 'true'
-    if (isMuted || !winAudio.current) return
+    if (checkMute() || !winAudio.current) return
     winAudio.current.currentTime = 0
     winAudio.current.play().catch(() => {})
   }, [])
 
   const playLose = useCallback(() => {
-    const isMuted = localStorage.getItem('casino_muted') === 'true'
-    if (isMuted || !loseAudio.current) return
+    if (checkMute() || !loseAudio.current) return
     loseAudio.current.currentTime = 0
     loseAudio.current.play().catch(() => {})
   }, [])
 
-  return { playSpin, stopSpin, playWin, playLose }
+  const playCardMove = useCallback(() => {
+    if (checkMute() || !cardMoveAudio.current) return
+    cardMoveAudio.current.currentTime = 0
+    cardMoveAudio.current.play().catch(() => {})
+  }, [])
+
+  return { playSpin, stopSpin, playWin, playLose, playCardMove }
 }
