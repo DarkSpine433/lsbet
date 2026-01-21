@@ -31,6 +31,8 @@ import { TopWinners } from '@/components/casino/TopWinners'
 import CoinFlip from '@/components/casino/games/CoinFlip'
 import CyberVoidGame from '@/components/casino/games/cyber-void/GameInterface'
 import BlackjackGame from '@/components/casino/games/Blackjack'
+import WinMarquee from '@/components/casino/WinMarquee'
+import { GameGrid } from '@/components/casino/GameGrid'
 
 const GAME_COMPONENTS: Record<string, any> = {
   blackjack: BlackjackGame,
@@ -40,6 +42,16 @@ const GAME_COMPONENTS: Record<string, any> = {
   'simple-20': Simple20,
   'coin-flip': CoinFlip,
 }
+
+const GameCardSkeleton = () => (
+  <div className="relative aspect-[3/4] w-full bg-slate-900/40 rounded-[2rem] border border-slate-800/50 overflow-hidden animate-pulse">
+    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent -translate-y-full animate-[shimmer_2s_infinite]" />
+    <div className="absolute bottom-0 left-0 right-0 p-5 space-y-3">
+      <div className="h-4 w-2/3 bg-slate-800 rounded-lg" />
+      <div className="h-3 w-1/3 bg-slate-800/60 rounded-lg" />
+    </div>
+  </div>
+)
 
 export default function CasinoClient({
   nickname,
@@ -59,6 +71,7 @@ export default function CasinoClient({
   const [hasPlayed, setHasPlayed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [isLoading, setIsLoading] = useState(true)
 
   const [favorites, setFavorites] = useState<string[]>([])
   const [recentlyPlayed, setRecentlyPlayed] = useState<string[]>([])
@@ -92,6 +105,7 @@ export default function CasinoClient({
         winsRes.json(),
         catsRes.json(),
       ])
+      setIsLoading(false)
       setGames(gamesData?.docs || [])
       setWins(winsData?.docs || [])
       setCategories(catsData?.docs || [])
@@ -189,43 +203,7 @@ export default function CasinoClient({
 
   return (
     <div className="min-h-screen bg-[#020617] text-white overflow-x-hidden font-sans">
-      <div className="w-full bg-blue-600/10 border-b border-blue-500/20 py-3 overflow-hidden h-12 flex items-center">
-        <div className="flex whitespace-nowrap animate-marquee">
-          {wins?.length > 0 ? (
-            [...wins, ...wins].map((win, i) => {
-              const isJackpot = Number(win?.winAmount) >= 2000
-              return (
-                <div
-                  key={i}
-                  className={`flex items-center gap-4 px-10 border-r border-slate-800/40 `}
-                >
-                  <Trophy
-                    className={`h-3.5 w-3.5 ${isJackpot ? 'text-yellow-400 animate-bounce' : 'text-yellow-500'}`}
-                  />
-                  <div className="flex flex-col leading-none">
-                    <span className="text-white font-black text-[10px] uppercase tracking-tighter">
-                      {win?.user?.nickname || win?.user?.email?.split('@')[0] || 'Gracz'}
-                      <span className="text-slate-500 font-medium ml-2">w</span>
-                      <span className="text-blue-400 ml-1 italic">
-                        {win?.gameTitle || 'Kasyno'}
-                      </span>
-                    </span>
-                  </div>
-                  <span
-                    className={`font-black italic text-[12px] ${isJackpot ? 'text-yellow-400 scale-110 drop-shadow-[0_0_15px_rgba(234,179,8,0.6)]' : 'text-green-500'}`}
-                  >
-                    +{Number(win?.winAmount).toFixed(2)} $
-                  </span>
-                </div>
-              )
-            })
-          ) : (
-            <div className="px-10 text-slate-600 text-[10px] font-bold uppercase tracking-widest">
-              Ładowanie danych...
-            </div>
-          )}
-        </div>
-      </div>
+      <WinMarquee />
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         <TopWinners />
 
@@ -302,39 +280,15 @@ export default function CasinoClient({
           </div>
         </header>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8">
-          <AnimatePresence mode="popLayout">
-            {filteredGames.length > 0 ? (
-              filteredGames.map((game) => (
-                <div key={game.id} className="relative group">
-                  {/* Badge dla Nowych Gier */}
-                  {isNewGame(game.publishedAt) && (
-                    <div className="absolute top-4 left-4 z-20 bg-emerald-500 text-white text-[8px] font-black px-2 py-1 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.5)] uppercase tracking-tighter">
-                      NOWOŚĆ
-                    </div>
-                  )}
-
-                  {/* Serduszko w PRAWYM GÓRNYM ROGU */}
-                  <button
-                    onClick={(e) => toggleFavorite(e, game.id)}
-                    className="absolute top-4 right-4 z-20 p-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
-                  >
-                    <Heart
-                      className={`h-3 w-3 ${favorites.includes(game.id) ? 'fill-red-500 text-red-500' : 'text-white'}`}
-                    />
-                  </button>
-
-                  <GameCard game={game} isAdmin={isAdmin} onSelect={() => handleGameSelect(game)} />
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center opacity-30">
-                <AlertCircle className="h-12 w-12 mx-auto mb-4" />
-                <p className="font-black uppercase italic tracking-widest">Nie znaleziono gier</p>
-              </div>
-            )}
-          </AnimatePresence>
-        </div>
+        <GameGrid
+          filteredGames={filteredGames}
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+          isNewGame={isNewGame}
+          isAdmin={isAdmin}
+          handleGameSelect={handleGameSelect}
+          isLoading={isLoading}
+        />
       </div>
 
       <Dialog open={!!selectedGame} onOpenChange={handleDialogChange}>
