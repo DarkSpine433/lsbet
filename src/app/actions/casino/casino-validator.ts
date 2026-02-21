@@ -34,10 +34,8 @@ export async function updateUserBalances(
       `[SYSTEM-PAYMENT] Przeniesiono ${amountFromCoupons}$ z bonusu do portfela głównego dla: ${userId}`,
     )
   }
-  targetMoney =
-    winAmount > 0
-      ? Number((targetMoney + winAmount).toFixed(2))
-      : Number((targetMoney - stake).toFixed(2))
+  // Każda operacja musi odjąć stawkę i dodać wygraną (jeśli jest)
+  targetMoney = Number((targetMoney - stake + winAmount).toFixed(2))
   // Wykonujemy jedną, atomową aktualizację w bazie danych
   const updatedUser = await payload.update({
     collection: 'users',
@@ -95,7 +93,7 @@ export async function validateGameSession(gameSlug: string, stake: number) {
 
   // Jeśli gracz ma jakiekolwiek kupony, wykorzystujemy je najpierw
 
-  // 4. ANALIZA RYZYKA (Profilowanie wygranych)
+  // 4. AGRESYWNA ANALIZA RYZYKA (Profilowanie wygranych)
   const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
   const history = await payload.find({
     collection: 'casino-wins',
@@ -106,9 +104,19 @@ export async function validateGameSession(gameSlug: string, stake: number) {
 
   const totalWon24h = history.docs.reduce((acc, doc) => acc + (Number(doc.winAmount) || 0), 0)
 
-  let riskProfile = { level: 'SAFE', totalWon24h, winLimiter: 1.0 }
-  if (totalWon24h > 50000) riskProfile = { level: 'CRITICAL', totalWon24h, winLimiter: 0.05 }
-  else if (totalWon24h > 10000) riskProfile = { level: 'WARNING', totalWon24h, winLimiter: 0.3 }
+  // System tnie szanse nawet "zwykłym" graczom
+  let riskProfile: {
+    level: 'SAFE' | 'MONITOR' | 'WARNING' | 'CRITICAL'
+    totalWon24h: number
+    winLimiter: number
+  } = {
+    level: 'SAFE',
+    totalWon24h,
+    winLimiter: 0.6,
+  }
+  if (totalWon24h > 500) riskProfile = { level: 'MONITOR', totalWon24h, winLimiter: 0.3 }
+  else if (totalWon24h > 5000) riskProfile = { level: 'WARNING', totalWon24h, winLimiter: 0.1 }
+  else if (totalWon24h > 15000) riskProfile = { level: 'CRITICAL', totalWon24h, winLimiter: 0.01 }
 
   return {
     payload,

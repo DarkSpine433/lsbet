@@ -27,87 +27,13 @@ const PAYOUT_TABLE: Record<string, Record<number, number>> = {
   '🍒': { 2: 2, 3: 5, 4: 10, 5: 20 },
 }
 
-// ==========================================
-// 2. SILNIK ANALITYCZNY GRACZA (PLAYER TRACKING)
-// ==========================================
-
-interface PlayerStats {
-  netProfit: number
-  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
-}
-
-async function analyzePlayerRisk(payload: Payload, userId: string): Promise<PlayerStats> {
-  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-
-  // Pobieramy historię wygranych, aby ocenić "szczęście" gracza
-  const history = await payload.find({
-    collection: 'casino-wins',
-    where: {
-      and: [{ user: { equals: userId } }, { createdAt: { greater_than: oneDayAgo } }],
-    },
-    limit: 1000,
-  })
-
-  const totalWon = history.docs.reduce((acc, doc) => acc + (doc.winAmount || 0), 0)
-
-  let risk: PlayerStats['riskLevel'] = 'LOW'
-
-  // Progi ryzyka (ile gracz wygrał w ostatnich 24h)
-  if (totalWon > 5000) risk = 'MEDIUM'
-  if (totalWon > 20000) risk = 'HIGH'
-  if (totalWon > 100000) risk = 'CRITICAL'
-
-  return {
-    netProfit: totalWon,
-    riskLevel: risk,
-  }
-}
+import { GamblingEngine } from './gambling-engine'
 
 // ==========================================
 // 3. SILNIK DECYZYJNY (OUTCOME GENERATOR)
 // ==========================================
 
-type OutcomeType = 'DEAD_SPIN' | 'CHURN_WIN' | 'SMALL_WIN' | 'BIG_WIN' | 'JACKPOT'
-
-function determineOutcome(risk: PlayerStats['riskLevel']): {
-  type: OutcomeType
-  targetMult: number
-} {
-  const roll = Math.random()
-
-  // --- LOGIKA "KILLER" DLA GRACZY WYGRYWAJĄCYCH ---
-  if (risk === 'CRITICAL') {
-    // 98% szans na przegraną, 2% na zwrot 10% stawki (odzyskanie resztek)
-    if (roll < 0.98) return { type: 'DEAD_SPIN', targetMult: 0 }
-    return { type: 'CHURN_WIN', targetMult: 0.1 }
-  }
-
-  if (risk === 'HIGH') {
-    // 90% przegranych, 8% zwrotu połowy stawki, 2% małej wygranej
-    if (roll < 0.9) return { type: 'DEAD_SPIN', targetMult: 0 }
-    if (roll < 0.98) return { type: 'CHURN_WIN', targetMult: 0.5 }
-    return { type: 'SMALL_WIN', targetMult: 1.2 }
-  }
-
-  // --- STANDARDOWA LOGIKA DLA ZWYKŁYCH GRACZY ---
-  // 70% Spiny puste (Czysty zysk kasyna)
-  if (roll < 0.7) return { type: 'DEAD_SPIN', targetMult: 0 }
-
-  // 20% "Fake wins" (Wygrywasz mniej niż postawiłeś lub minimalnie więcej - budowanie uzależnienia)
-  if (roll < 0.9) {
-    const mult = 0.2 + Math.random() // Mnożnik 0.2x - 1.2x
-    return { type: 'CHURN_WIN', targetMult: mult }
-  }
-
-  // 9% Małe wygrane (2x - 5x)
-  if (roll < 0.99) {
-    const mult = 2 + Math.random() * 3
-    return { type: 'SMALL_WIN', targetMult: mult }
-  }
-
-  // 1% Szans na Big Win (limitowane do 20x, a nie Max Win)
-  return { type: 'BIG_WIN', targetMult: 10 + Math.random() * 10 }
-}
+export type OutcomeType = 'DEAD_SPIN' | 'CHURN_WIN' | 'SMALL_WIN' | 'BIG_WIN' | 'JACKPOT'
 
 // ==========================================
 // 4. FABRYKA SIATEK (GRID CONSTRUCTOR)
@@ -214,6 +140,18 @@ class GridFactory {
     return bestGrid
   }
 
+  // Tworzy siatkę "Near Miss" - bliska wygrana
+  createTeaseGrid(): string[] {
+    const grid = this.createLosingGrid()
+    const line = PAYLINES[Math.floor(Math.random() * PAYLINES.length)]
+    const symbol = Math.random() < 0.3 ? '7️⃣' : '🔔'
+
+    // Wstrzykujemy tylko 2 symbole na linii (potrzeba min. 3)
+    grid[line[0]] = symbol
+    grid[line[1]] = symbol
+    return grid
+  }
+
   calculateWin(grid: string[]): number {
     let totalWin = 0
     const stakePerLine = this.stake / PAYLINES.length
@@ -245,29 +183,63 @@ class GridFactory {
 
 export async function playJackpotBellsAction(stake: number) {
   // 1. Walidacja sesji
-  const { payload, user } = await validateGameSession('jackpot-bells', stake)
+  const { payload, user, riskProfile } = await validateGameSession('jackpot-bells', stake)
 
-  // 2. Analiza Ryzyka (Profilowanie gracza)
-  const playerStats = await analyzePlayerRisk(payload, user.id)
+  // 2. Decyzja Silnika (Outcome Mapping)
+  const scenario = GamblingEngine.determineScenario(riskProfile)
 
-  // 3. Decyzja (Ile ma wygrać w tej rundzie?)
-  const outcome = determineOutcome(playerStats.riskLevel)
+  let outcomeType: OutcomeType = 'DEAD_SPIN'
+  let targetMult = 0
+
+  switch (scenario) {
+    case 'JACKPOT':
+      outcomeType = 'JACKPOT'
+      targetMult = 1000
+      break
+    case 'BIG_WIN':
+      outcomeType = 'BIG_WIN'
+      targetMult = 10 + Math.random() * 40
+      break
+    case 'MEDIUM_WIN':
+      outcomeType = 'SMALL_WIN'
+      targetMult = 3 + Math.random() * 7
+      break
+    case 'SMALL_WIN':
+      outcomeType = 'CHURN_WIN'
+      targetMult = 1.1 + Math.random()
+      break
+    case 'CHURN_WIN':
+    case 'PUSH':
+      outcomeType = 'CHURN_WIN'
+      targetMult = 0.5 + Math.random() * 0.5
+      break
+    case 'TEASE':
+      outcomeType = 'DEAD_SPIN'
+      targetMult = 0 // Wizualna przegrana
+      break
+    default:
+      outcomeType = 'DEAD_SPIN'
+      targetMult = 0
+  }
 
   // 4. Konstrukcja siatki pod decyzję
   const factory = new GridFactory(stake)
   let grid: string[] = []
 
-  if (outcome.type === 'DEAD_SPIN') {
+  if (scenario === 'TEASE') {
+    // Tease: Generujemy siatkę, która ma np. 2 siódemki na linii (blisko wygranej)
+    grid = factory.createTeaseGrid()
+  } else if (outcomeType === 'DEAD_SPIN') {
     grid = factory.createLosingGrid()
   } else {
-    grid = factory.createWinningGrid(outcome.targetMult)
+    grid = factory.createWinningGrid(targetMult)
   }
 
   // 5. Weryfikacja i Kill Switch
   const finalCalculation = factory.calculateWin(grid)
 
   // Jeśli wygenerowana wygrana jest podejrzanie wysoka (bug generatora), zerujemy ją.
-  if (outcome.type !== 'JACKPOT' && finalCalculation > stake * 50) {
+  if (outcomeType !== 'JACKPOT' && finalCalculation > stake * 50) {
     grid = factory.createLosingGrid()
   }
 

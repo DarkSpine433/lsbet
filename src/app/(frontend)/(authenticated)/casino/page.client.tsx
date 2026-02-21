@@ -292,10 +292,10 @@ export default function CasinoClient({
       </div>
 
       <Dialog open={!!selectedGame} onOpenChange={handleDialogChange}>
-        <DialogContent className="max-w-screen-2xl w-dvw h-dvh  bg-[#020617] border-slate-800 text-white p-0 rounded-none sm:rounded-3xl outline-none shadow-[0_0_120px_rgba(37,99,235,0.3)] flex flex-col overflow-hidden">
+        <DialogContent className=" w-full   bg-[#020617] border-slate-800 text-white p-0 rounded-none sm:rounded-3xl max-w-4xl outline-none shadow-[0_0_120px_rgba(37,99,235,0.3)] ">
           {selectedGame && (
             <>
-              <div className="flex-none p-6 bg-slate-900/50 border-b border-slate-800 flex items-center justify-between">
+              <div className="p-6 bg-slate-900/50 border-b border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Gamepad2 className="h-6 w-6 text-blue-500" />
                   <DialogTitle className="text-xl font-black italic uppercase tracking-tighter">
@@ -308,8 +308,8 @@ export default function CasinoClient({
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto  custom-scrollbar">
-                <div className="w-full min-h-full flex items-center justify-center">
+              <div className=" overflow-y-auto h-[calc(100vh-200px)]  custom-scrollbar">
+                <div className="w-full ">
                   {ActiveGame ? (
                     <div className="w-full">
                       <ActiveGame

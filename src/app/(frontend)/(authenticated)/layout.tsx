@@ -64,7 +64,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Logo className="h-2 w-auto mr-2" priority="high" loading="eager" />
 
           <div className="flex items-center space-x-3 sm:space-x-4">
-            {/* ZASTĘPUJEMY STARY KOD NOWYM KOMPONENTEM */}
             <WalletStatus user={user} moneySign={moneySign} />
 
             <div className="flex items-center gap-2">
@@ -82,7 +81,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </header>
 
       <main className="relative">
-        {/* Przekazujemy rozszerzoną konfigurację do kontrolera */}
         <MaintenanceController
           maintenancePaths={maintenanceConfig.maintenancePages}
           redirectTo={maintenanceConfig.redirectTo}

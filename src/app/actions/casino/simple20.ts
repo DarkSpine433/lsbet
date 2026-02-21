@@ -32,40 +32,14 @@ const VIRTUAL_REEL = [
   ...Array(120).fill('BLANK'), // Puste pola lub śmieci
 ]
 
+import { GamblingEngine } from './gambling-engine'
+
 // ==========================================
 // 2. SILNIK KONTROLI MATEMATYCZNEJ (MATH CORE)
 // ==========================================
 class SlotMathEngine {
   /**
-   * Główny algorytm decyzyjny oparty na profilu ryzyka.
-   * Zamiast losować symbole, losujemy scenariusz.
-   */
-  static determineOutcomeScenario(riskProfile: any) {
-    const roll = Math.random()
-
-    // Pobieramy winLimiter z validatora (1.0 = normal, 0.01 = killer mode)
-    const limiter = riskProfile.winLimiter
-
-    // Progi prawdopodobieństwa modyfikowane przez drenaż
-    const thresholds = {
-      JACKPOT: 0.001 * limiter,
-      BIG_WIN: 0.01 * limiter,
-      MEDIUM_WIN: 0.05 * limiter,
-      SMALL_WIN: 0.15 * limiter,
-      CHURN_WIN: 0.25, // Wygrana < stawka (zawsze dopuszczalna dla dopaminy)
-    }
-
-    if (roll < thresholds.JACKPOT) return 'JACKPOT'
-    if (roll < thresholds.BIG_WIN) return 'BIG_WIN'
-    if (roll < thresholds.MEDIUM_WIN) return 'MEDIUM_WIN'
-    if (roll < thresholds.SMALL_WIN) return 'SMALL_WIN'
-    if (roll < thresholds.CHURN_WIN) return 'CHURN_WIN'
-
-    return 'LOSS'
-  }
-
-  /**
-   * Generuje układ bębnów pod konkretny scenariusz.
+   * Generuje układ bębnów pod konkretny scenariusz z uniwersalnego silnika.
    */
   static generateReelsForScenario(scenario: string): string[] {
     const randomSym = () => ALL_SYMBOLS[Math.floor(Math.random() * ALL_SYMBOLS.length)]
@@ -81,14 +55,13 @@ class SlotMathEngine {
         return ['🍋', '🍋', '🍋']
       case 'CHURN_WIN':
         return ['🍒', '🍒', '🍒']
+      case 'TEASE':
+        const teaseSym = randomSym()
+        return [teaseSym, teaseSym, ALL_SYMBOLS.find((x) => x !== teaseSym) || '🍒']
       case 'LOSS':
       default:
-        // Generuj układ "Near Miss" (Bliskie trafienie) - 70% szans na 2 takie same
-        if (Math.random() < 0.7) {
-          const s = randomSym()
-          return [s, s, ALL_SYMBOLS.find((x) => x !== s) || '🍒']
-        }
-        return [randomSym(), randomSym(), ALL_SYMBOLS.find((_, i) => i === 2) || '🍋']
+        const s1 = randomSym()
+        return [s1, ALL_SYMBOLS.find((x) => x !== s1) || '🍋', '🍇']
     }
   }
 }
@@ -103,7 +76,7 @@ export async function playSimple20Action(stake: number) {
 
   // 2. Decyzja silnika (Outcome-Driven Architecture)
   // System najpierw decyduje ile gracz ma wygrać, a potem losuje obrazki
-  const scenario = SlotMathEngine.determineOutcomeScenario(riskProfile)
+  const scenario = GamblingEngine.determineScenario(riskProfile)
   const reels = SlotMathEngine.generateReelsForScenario(scenario)
 
   // 3. Obliczenie wygranej na podstawie wygenerowanych bębnów

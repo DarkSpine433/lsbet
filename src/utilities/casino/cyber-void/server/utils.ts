@@ -3,73 +3,71 @@ import { SYMBOLS, SymbolType } from './config'
 /**
  * Zwraca listę symboli (spłaszczoną tablicę 18 elementów dla siatki 6x3)
  */
-export function generateGrid(outcomeType: 'LOSS' | 'WIN', multiplier: number): number[] {
+export function generateGrid(outcomeType: 'LOSS' | 'WIN' | 'TEASE', multiplier: number): number[] {
   const allSymbols = Object.values(SYMBOLS)
   const totalCells = 18 // 6 wierszy * 3 kolumny
+  let grid = Array(totalCells).fill(null)
+  let indices = Array.from({ length: totalCells }, (_, i) => i).sort(() => Math.random() - 0.5)
 
   // 1. SCENARIUSZ WYGRANEJ
   if (outcomeType === 'WIN') {
-    // Znajdź symbol odpowiadający mnożnikowi
     const winningSymbol = allSymbols.find((s) => s.multiplier === multiplier) || SYMBOLS.COMMON
-
-    // Inicjalizacja pustej siatki
-    let grid = Array(totalCells).fill(null)
-    // Losowanie indeksów dla całej siatki
-    let indices = Array.from({ length: totalCells }, (_, i) => i).sort(() => Math.random() - 0.5)
 
     // Wstawiamy 3 symbole wygrywające
     grid[indices[0]] = winningSymbol.id
     grid[indices[1]] = winningSymbol.id
     grid[indices[2]] = winningSymbol.id
 
-    // Resztę wypełniamy tak, aby nie stworzyć przypadkiem innej wygranej
+    // Wypełniamy resztę
     for (let i = 3; i < totalCells; i++) {
       const idx = indices[i]
-      let randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)]
+      let sym = allSymbols[Math.floor(Math.random() * allSymbols.length)]
 
-      // Zabezpieczenie:
-      // 1. Nie może być taki sam jak wygrywający (żeby nie było więcej niż 3)
-      // 2. Nie może stworzyć innej trójki przez przypadek
+      let attempts = 0
+      // Próbujemy znaleźć symbol, którego nie ma za dużo, ale nie blokujemy się w nieskończoność
       while (
-        randomSymbol.id === winningSymbol.id ||
-        grid.filter((id) => id === randomSymbol.id).length >= 2
+        (sym.id === winningSymbol.id || grid.filter((id) => id === sym.id).length >= 2) &&
+        attempts < 20
       ) {
-        randomSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)]
+        sym = allSymbols[Math.floor(Math.random() * allSymbols.length)]
+        attempts++
       }
-      grid[idx] = randomSymbol.id
+
+      // Jeśli nie znaleźliśmy nic "czystego", wstawiamy cokolwiek poza wygrywającym (by nie było 4)
+      if (grid.filter((id) => id === sym.id).length >= 3 || sym.id === winningSymbol.id) {
+        sym = allSymbols.find((s) => s.id !== winningSymbol.id) || SYMBOLS.VOID
+      }
+
+      grid[idx] = sym.id
     }
     return grid
   }
 
-  // 2. SCENARIUSZ PRZEGRANEJ
-  // Wybieramy symbol dla "Near Miss"
-  const targetSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)]
-  let grid = Array(totalCells).fill(null)
-  let indices = Array.from({ length: totalCells }, (_, i) => i).sort(() => Math.random() - 0.5)
+  // 2. SCENARIUSZ PRZEGRANEJ LUB TEASE
+  if (outcomeType === 'TEASE') {
+    const highValueSyms = allSymbols.filter((s) => s.multiplier > 5)
+    const teaser = highValueSyms[Math.floor(Math.random() * highValueSyms.length)] || SYMBOLS.RARE
+    grid[indices[0]] = teaser.id
+    grid[indices[1]] = teaser.id
+  }
 
-  // Wstawiamy 2 takie same symbole (brak wygranej o jeden symbol)
-  grid[indices[0]] = targetSymbol.id
-  grid[indices[1]] = targetSymbol.id
-
-  // Wypełniamy resztę (maksymalnie po 2 takie same symbole na całą siatkę 18 pól)
-  for (let i = 2; i < totalCells; i++) {
+  // Wypełniamy resztę (bezpiecznie)
+  for (let i = outcomeType === 'TEASE' ? 2 : 0; i < totalCells; i++) {
     const idx = indices[i]
-
-    // Szukamy symbolu, którego nie ma jeszcze 2 razy w siatce
-    let safeSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)]
+    let sym = allSymbols[Math.floor(Math.random() * allSymbols.length)]
 
     let attempts = 0
-    while (grid.filter((id) => id === safeSymbol.id).length >= 2 && attempts < 20) {
-      safeSymbol = allSymbols[Math.floor(Math.random() * allSymbols.length)]
+    while (grid.filter((id) => id === sym.id).length >= 2 && attempts < 15) {
+      sym = allSymbols[Math.floor(Math.random() * allSymbols.length)]
       attempts++
     }
 
-    // Jeśli po 20 próbach nie znaleziono (mało prawdopodobne), używamy VOID
-    if (grid.filter((id) => id === safeSymbol.id).length >= 2) {
-      safeSymbol = SYMBOLS.VOID
+    // Jeśli zapchaliśmy rzadkie symbole, walimy VOID pod korek
+    if (grid.filter((id) => id === sym.id).length >= 2) {
+      sym = SYMBOLS.VOID
     }
 
-    grid[idx] = safeSymbol.id
+    grid[idx] = sym.id
   }
 
   return grid

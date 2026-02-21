@@ -15,108 +15,174 @@ interface ScratchCanvasProps {
 export const ScratchCanvas = ({
   width,
   height,
-  coverColor = '#0f172a',
+  coverColor = '#1e293b',
   brushSize = 40,
   onReveal,
   isRevealedProp = false,
   threshold = 70,
 }: ScratchCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [isFullyRevealed, setIsFullyRevealed] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
+  const isDrawingRef = useRef(false)
+  const lastPosRef = useRef<{ x: number; y: number } | null>(null)
+  const isRevealedRef = useRef(false)
+  const lastCheckRef = useRef(0)
 
+  // Ref dla callbacka, aby uniknąć problemów z domknięciami w event listenerach
+  const onRevealRef = useRef(onReveal)
+  useEffect(() => {
+    onRevealRef.current = onReveal
+  }, [onReveal])
+
+  // Inicjalizacja Canvas - MUSI mieć alpha: true dla destination-out
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
+    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true })
     if (!ctx) return
 
-    // Tło zdrapki
     ctx.fillStyle = coverColor
     ctx.fillRect(0, 0, width, height)
 
-    // Tekstura zdrapki (szum)
-    ctx.fillStyle = '#1e293b'
-    for (let i = 0; i < 800; i++) {
-      ctx.fillRect(Math.random() * width, Math.random() * height, 2, 2)
-    }
-
-    setIsFullyRevealed(false)
+    isRevealedRef.current = false
+    setIsVisible(true)
   }, [width, height, coverColor])
 
   useEffect(() => {
-    if (isRevealedProp && !isFullyRevealed) {
-      revealEverything()
+    if (isRevealedProp && !isRevealedRef.current) {
+      revealInternal()
     }
   }, [isRevealedProp])
 
-  const revealEverything = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, width, height)
-    setIsFullyRevealed(true)
+  const revealInternal = () => {
+    if (isRevealedRef.current) return
+    isRevealedRef.current = true
+
+    // Zapobiegamy dalszemu rysowaniu
+    isDrawingRef.current = false
+    lastPosRef.current = null
+
+    // Wywołujemy callback rodzica
+    if (onRevealRef.current) {
+      onRevealRef.current()
+    }
+
+    // Natychmiast usuwamy canvas z DOM (bez animacji)
+    setIsVisible(false)
   }
 
-  const scratch = (x: number, y: number) => {
-    if (isFullyRevealed) return
+  const scratch = (clientX: number, clientY: number) => {
+    if (isRevealedRef.current || !isVisible) return
     const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const ctx = canvas?.getContext('2d')
+    if (!ctx || !canvas) return
+
+    const rect = canvas.getBoundingClientRect()
+    // Skalowanie współrzędnych okna do rozdzielczości canvasu
+    const x = ((clientX - rect.left) / rect.width) * width
+    const y = ((clientY - rect.top) / rect.height) * height
 
     ctx.globalCompositeOperation = 'destination-out'
-    ctx.beginPath()
-    ctx.arc(x, y, brushSize, 0, 2 * Math.PI)
-    ctx.fill()
+    ctx.lineJoin = 'round'
+    ctx.lineCap = 'round'
+    ctx.lineWidth = brushSize * 2.5 // Bardzo szeroki pędzel
 
-    checkReveal()
+    ctx.beginPath()
+    if (lastPosRef.current) {
+      ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y)
+      ctx.lineTo(x, y)
+    } else {
+      // Jeśli to pierwszy punkt, rysujemy kółko
+      ctx.arc(x, y, brushSize * 0.5, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.stroke()
+
+    lastPosRef.current = { x, y }
+
+    // Sprawdzaj postęp podczas ruchu co 100ms
+    const now = Date.now()
+    if (now - lastCheckRef.current > 100) {
+      checkReveal()
+      lastCheckRef.current = now
+    }
   }
 
   const checkReveal = () => {
+    if (isRevealedRef.current) return
     const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const ctx = canvas?.getContext('2d')
+    if (!ctx || !canvas) return
 
     const imageData = ctx.getImageData(0, 0, width, height)
     const pixels = imageData.data
     let transparent = 0
 
-    // Co 32 piksel dla optymalizacji
-    for (let i = 3; i < pixels.length; i += 32) {
-      if (pixels[i] < 128) transparent++
+    // Skanujemy piksele co 512, aby sprawdzić przezroczystość (alpha channel)
+    const step = 512
+    for (let i = 3; i < pixels.length; i += step) {
+      if (pixels[i] < 50) {
+        // Jeśli kanał alfa jest bliski zero (przezroczysty)
+        transparent++
+      }
     }
 
-    const percent = (transparent / (pixels.length / 32)) * 100
-    if (percent > threshold && !isFullyRevealed) {
-      revealEverything()
-      if (onReveal) onReveal()
+    const totalSamples = pixels.length / step
+    const percent = (transparent / totalSamples) * 100
+
+    if (percent * 1.25 > threshold) {
+      revealInternal()
     }
   }
 
-  const handleInput = (e: any) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const x = (e.clientX || e.touches[0].clientX) - rect.left
-    const y = (e.clientY || e.touches[0].clientY) - rect.top
-    scratch(x, y)
-  }
+  useEffect(() => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDrawingRef.current) return
+
+      const clientX = 'clientX' in e ? e.clientX : e.touches[0].clientX
+      const clientY = 'clientY' in e ? e.clientY : e.touches[0].clientY
+
+      scratch(clientX, clientY)
+    }
+
+    const handleEnd = () => {
+      if (isDrawingRef.current) {
+        isDrawingRef.current = false
+        lastPosRef.current = null
+        checkReveal() // Ostatnie sprawdzenie przy puszczeniu przycisku
+      }
+    }
+
+    // Globalne listenery – działają nawet jeśli myszka wyjedzie poza zdrapkę
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleEnd)
+    window.addEventListener('touchmove', handleMove, { passive: false })
+    window.addEventListener('touchend', handleEnd)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleEnd)
+      window.removeEventListener('touchmove', handleMove)
+      window.removeEventListener('touchend', handleEnd)
+    }
+  }, [width, height, brushSize, threshold, isVisible])
+
+  if (!isVisible) return null
 
   return (
     <canvas
       ref={canvasRef}
       width={width}
       height={height}
-      className={`absolute inset-0 cursor-crosshair touch-none transition-opacity duration-500 ${isFullyRevealed ? 'opacity-0' : 'opacity-100'}`}
-      onMouseDown={() => setIsDrawing(true)}
-      onMouseUp={() => setIsDrawing(false)}
-      onMouseMove={(e) => isDrawing && handleInput(e)}
-      onTouchStart={() => setIsDrawing(true)}
-      onTouchEnd={() => setIsDrawing(false)}
-      onTouchMove={(e) => isDrawing && handleInput(e)}
+      className="absolute inset-0 cursor-crosshair touch-none z-[50]"
+      onMouseDown={(e) => {
+        isDrawingRef.current = true
+        scratch(e.clientX, e.clientY)
+      }}
+      onTouchStart={(e) => {
+        isDrawingRef.current = true
+        scratch(e.touches[0].clientX, e.touches[0].clientY)
+      }}
     />
   )
 }

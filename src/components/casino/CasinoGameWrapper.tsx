@@ -12,6 +12,7 @@ interface CasinoGameWrapperProps {
   balance: number
   isSpinning?: boolean
   isWin?: boolean
+  border?: boolean
 }
 
 export const CasinoGameWrapper = ({
@@ -19,6 +20,7 @@ export const CasinoGameWrapper = ({
   gameData,
   title,
   balance,
+  border = true,
 }: CasinoGameWrapperProps) => {
   const [isMuted, setIsMuted] = useState<boolean>(false)
 
@@ -43,7 +45,11 @@ export const CasinoGameWrapper = ({
           <AnimatePresence mode="wait">
             <TabsContent value="play" key="play-content" className="mt-0 outline-none border-none">
               <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}>
-                <div className="flex flex-col items-center bg-[#020617] rounded-[3rem] border border-slate-800 p-4 md:p-10 gap-4  w-fit mx-auto">
+                <div
+                  className={`flex flex-col items-center bg-[#020617] rounded-[3rem] p-4 md:p-10 gap-4  w-fit mx-auto ${
+                    border ? 'border border-slate-800' : ''
+                  }`}
+                >
                   {children}
                 </div>
               </motion.div>
