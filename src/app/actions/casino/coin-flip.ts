@@ -16,11 +16,10 @@ const MODES = {
   extra: { count: 5, mult: 5.0 },
 }
 
-// Globalne ustawienia drenażu (RTP Control)
 const RIGGING_CONFIG = {
-  BASE_WIN_CHANCE: 0.3, // Bazowa szansa na wygraną (30%)
-  FAKE_WIN_CHANCE: 0.2, // Szansa na "bliską przegraną" (teasing)
-  FORCE_LOSS_THRESHOLD: 0.05, // Szansa na wygraną przy statusie CRITICAL (5%)
+  BASE_WIN_CHANCE: 0.2, // Szansa spadła do 5%
+  FAKE_WIN_CHANCE: 0.7, // Połowa przegranych to "bliskie wygrane" (Tease)
+  FORCE_LOSS_THRESHOLD: 0.05,
 }
 
 // ==========================================
@@ -39,26 +38,24 @@ function shuffle<T>(array: T[]): T[] {
 // 3. SILNIK DECYZYJNY (DECISION ENGINE)
 // ==========================================
 /**
- * Decyduje o wyniku gry przed wygenerowaniem planszy wizualnej.
- * Wykorzystuje profil ryzyka dostarczony przez validator.
+ * Decyduje o wyniku gry i liczbie pasujących symboli.
  */
 function determineOutcome(riskProfile: any, difficulty: keyof typeof MODES) {
   const roll = Math.random()
+  const mode = MODES[difficulty]
 
-  // Modyfikacja szansy na podstawie profilu ryzyka z validatora
-  // winLimiter drastycznie obniża szanse dla wygrywających graczy
+  // Szansa na realną wygraną
   const adjustedChance = RIGGING_CONFIG.BASE_WIN_CHANCE * riskProfile.winLimiter
 
   if (roll < adjustedChance) {
-    return 'WIN'
+    return { isWin: true, matchCount: mode.count }
   }
 
-  // Jeśli nie wygrał, sprawdź czy pokazać "bliską przegraną" dla efektu psychologicznego
-  if (Math.random() < RIGGING_CONFIG.FAKE_WIN_CHANCE) {
-    return 'TEASE'
-  }
+  // LOGIKA RETENCJI: Jeśli przegrał, wylosuj ile symboli ma "pasować" (od 1 do count-1)
+  // To sprawia, że każda przegrana wygląda inaczej i buduje napięcie.
+  const matchCount = Math.floor(Math.random() * (mode.count - 1)) + 1
 
-  return 'LOSS'
+  return { isWin: false, matchCount }
 }
 
 // ==========================================
@@ -66,42 +63,27 @@ function determineOutcome(riskProfile: any, difficulty: keyof typeof MODES) {
 // ==========================================
 class BoardFactory {
   /**
-   * Generuje planszę wymuszającą określony wynik.
+   * Generuje planszę z określoną liczbą pasujących symboli w wybranych miejscach.
    */
-  static create(outcome: string, selectedIndices: number[], count: number): string[] {
-    let board: string[] = []
+  static create(matchCount: number, selectedIndices: number[], totalNeeded: number): string[] {
     const availableEmojis = shuffle([...EMOJIS])
-
-    // Inicjalizacja pustej planszy (20 pól)
     const tempBoard = new Array(20).fill(null)
 
-    if (outcome === 'WIN') {
-      // Wstrzyknij identyczne symbole w wybrane przez gracza miejsca
-      const winningSymbol = availableEmojis[0]
-      selectedIndices.forEach((idx) => {
-        tempBoard[idx] = winningSymbol
-      })
+    // Główny owoc, który będzie się powtarzał (ten, który "prawie" wygrał)
+    const mainSymbol = availableEmojis[0]
 
-      // Resztę wypełnij tak, aby nie stworzyć przypadkiem innej wygrywającej kombinacji
-      this.fillRemaining(tempBoard, availableEmojis.slice(1))
-    } else if (outcome === 'TEASE') {
-      // "Bliska przegrana": Prawie wszystkie wybrane są takie same, oprócz ostatniego
-      const mainSymbol = availableEmojis[0]
-      const failSymbol = availableEmojis[1]
+    // Wstawiamy pasujące symbole w wybranych polach
+    selectedIndices.forEach((idx, i) => {
+      if (i < matchCount) {
+        tempBoard[idx] = mainSymbol
+      } else {
+        // Pozostałe wybrane pola muszą być inne niż mainSymbol i inne od siebie nawzajem
+        tempBoard[idx] = availableEmojis[i + 1]
+      }
+    })
 
-      selectedIndices.forEach((idx, i) => {
-        tempBoard[idx] = i === selectedIndices.length - 1 ? failSymbol : mainSymbol
-      })
-
-      this.fillRemaining(tempBoard, availableEmojis)
-    } else {
-      // Całkowita porażka: wymieszaj owoce tak, aby wybrane pola były różne
-      selectedIndices.forEach((idx, i) => {
-        tempBoard[idx] = availableEmojis[i % availableEmojis.length]
-      })
-
-      this.fillRemaining(tempBoard, availableEmojis)
-    }
+    // Resztę planszy wypełniamy losowo
+    this.fillRemaining(tempBoard, availableEmojis)
 
     return tempBoard
   }
@@ -133,15 +115,14 @@ export async function playCoinFlip(
   }
 
   // 2. Decyzja o wyniku (Outcome-First)
-  // Wykorzystujemy winLimiter z validatora, aby zdusić wygrane
   const outcome = determineOutcome(riskProfile, difficulty)
 
   // 3. Generowanie planszy pod decyzję
-  const board = BoardFactory.create(outcome, selectedIndices, mode.count)
+  const board = BoardFactory.create(outcome.matchCount, selectedIndices, mode.count)
 
   // 4. Weryfikacja końcowa (Double Check)
-  const revealed = selectedIndices.map((i) => board[i])
-  const isActuallyWin = revealed.every((s) => s === revealed[0]) && outcome === 'WIN'
+  const revealedValues = selectedIndices.map((i) => board[i])
+  const isActuallyWin = revealedValues.every((s) => s === revealedValues[0]) && outcome.isWin
 
   let wonAmount = 0
   if (isActuallyWin) {
