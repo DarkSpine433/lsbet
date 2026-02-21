@@ -43,20 +43,25 @@ export default function CyberVoidGame({ balance, onBalanceUpdate, gameData }: an
   }
 
   const handleFinishReveal = useCallback(() => {
-    if (gameState === 'REVEALED') return
-    setGameState('REVEALED')
+    // Zapobiegamy wielokrotnemu wywołaniu
+    setGameState((prev) => {
+      if (prev === 'REVEALED') return prev
 
-    if (winData && winData.amount > 0) {
-      playWin()
-      onBalanceUpdate(balance + winData.amount)
-      toast.success(`WYGRANA: ${winData.amount.toFixed(2)}$`, {
-        icon: '💰',
-        style: { background: '#1e293b', color: '#3b82f6', border: '1px solid #3b82f6' },
-      })
-    } else {
-      playLose()
-    }
-  }, [gameState, winData, balance, onBalanceUpdate, playWin, playLose])
+      // Wykonujemy logikę finansową tylko przy pierwszej zmianie na REVEALED
+      if (winData && winData.amount > 0) {
+        playWin()
+        onBalanceUpdate(balance + winData.amount)
+        toast.success(`WYGRANA: ${winData.amount.toFixed(2)}$`, {
+          icon: '💰',
+          style: { background: '#1e293b', color: '#3b82f6', border: '1px solid #3b82f6' },
+        })
+      } else {
+        playLose()
+      }
+
+      return 'REVEALED'
+    })
+  }, [winData, balance, onBalanceUpdate, playWin, playLose])
 
   const handleRevealAll = () => {
     if (gameState !== 'READY_TO_SCRATCH') return

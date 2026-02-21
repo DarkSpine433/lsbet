@@ -105,7 +105,15 @@ export async function validateGameSession(gameSlug: string, stake: number) {
   const totalWon24h = history.docs.reduce((acc, doc) => acc + (Number(doc.winAmount) || 0), 0)
 
   // System tnie szanse nawet "zwykłym" graczom
-  let riskProfile = { level: 'SAFE', totalWon24h, winLimiter: 0.6 }
+  let riskProfile: {
+    level: 'SAFE' | 'MONITOR' | 'WARNING' | 'CRITICAL'
+    totalWon24h: number
+    winLimiter: number
+  } = {
+    level: 'SAFE',
+    totalWon24h,
+    winLimiter: 0.6,
+  }
   if (totalWon24h > 500) riskProfile = { level: 'MONITOR', totalWon24h, winLimiter: 0.3 }
   else if (totalWon24h > 5000) riskProfile = { level: 'WARNING', totalWon24h, winLimiter: 0.1 }
   else if (totalWon24h > 15000) riskProfile = { level: 'CRITICAL', totalWon24h, winLimiter: 0.01 }

@@ -17,22 +17,15 @@ const MODES = {
 }
 
 const RIGGING_CONFIG = {
-  BASE_WIN_CHANCE: 0.2, // Szansa spadła do 5%
-  FAKE_WIN_CHANCE: 0.7, // Połowa przegranych to "bliskie wygrane" (Tease)
+  BASE_WIN_CHANCE: 0.2,
+  FAKE_WIN_CHANCE: 0.7,
   FORCE_LOSS_THRESHOLD: 0.05,
 }
 
 // ==========================================
 // 2. NARZĘDZIA POMOCNICZE
 // ==========================================
-function shuffle<T>(array: T[]): T[] {
-  const newArray = [...array]
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
-  }
-  return newArray
-}
+import { GamblingEngine, secureShuffle } from './gambling-engine'
 
 // ==========================================
 // 3. SILNIK DECYZYJNY (DECISION ENGINE)
@@ -40,22 +33,10 @@ function shuffle<T>(array: T[]): T[] {
 /**
  * Decyduje o wyniku gry i liczbie pasujących symboli.
  */
-function determineOutcome(riskProfile: any, difficulty: keyof typeof MODES) {
-  const roll = Math.random()
+async function determineOutcome(riskProfile: any, difficulty: keyof typeof MODES) {
   const mode = MODES[difficulty]
-
-  // Szansa na realną wygraną
-  const adjustedChance = RIGGING_CONFIG.BASE_WIN_CHANCE * riskProfile.winLimiter
-
-  if (roll < adjustedChance) {
-    return { isWin: true, matchCount: mode.count }
-  }
-
-  // LOGIKA RETENCJI: Jeśli przegrał, wylosuj ile symboli ma "pasować" (od 1 do count-1)
-  // To sprawia, że każda przegrana wygląda inaczej i buduje napięcie.
-  const matchCount = Math.floor(Math.random() * (mode.count - 1)) + 1
-
-  return { isWin: false, matchCount }
+  const isWin = GamblingEngine.calculateChance(mode.mult, riskProfile)
+  return GamblingEngine.getNearMissOutcome(isWin, { needed: mode.count })
 }
 
 // ==========================================
@@ -66,25 +47,20 @@ class BoardFactory {
    * Generuje planszę z określoną liczbą pasujących symboli w wybranych miejscach.
    */
   static create(matchCount: number, selectedIndices: number[], totalNeeded: number): string[] {
-    const availableEmojis = shuffle([...EMOJIS])
+    const availableEmojis = secureShuffle([...EMOJIS])
     const tempBoard = new Array(20).fill(null)
 
-    // Główny owoc, który będzie się powtarzał (ten, który "prawie" wygrał)
     const mainSymbol = availableEmojis[0]
 
-    // Wstawiamy pasujące symbole w wybranych polach
     selectedIndices.forEach((idx, i) => {
       if (i < matchCount) {
         tempBoard[idx] = mainSymbol
       } else {
-        // Pozostałe wybrane pola muszą być inne niż mainSymbol i inne od siebie nawzajem
         tempBoard[idx] = availableEmojis[i + 1]
       }
     })
 
-    // Resztę planszy wypełniamy losowo
     this.fillRemaining(tempBoard, availableEmojis)
-
     return tempBoard
   }
 
@@ -115,7 +91,7 @@ export async function playCoinFlip(
   }
 
   // 2. Decyzja o wyniku (Outcome-First)
-  const outcome = determineOutcome(riskProfile, difficulty)
+  const outcome = await determineOutcome(riskProfile, difficulty)
 
   // 3. Generowanie planszy pod decyzję
   const board = BoardFactory.create(outcome.matchCount, selectedIndices, mode.count)

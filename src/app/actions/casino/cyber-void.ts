@@ -1,55 +1,52 @@
 'use server'
 
-import { updateUserBalances, validateGameSession } from '@/app/actions/casino/casino-validator' // Twoja ścieżka
+import { updateUserBalances, validateGameSession } from '@/app/actions/casino/casino-validator'
 import { GAME_SLUG, OUTCOME_WEIGHTS, SYMBOLS } from '@/utilities/casino/cyber-void/server/config'
 import { generateGrid } from '@/utilities/casino/cyber-void/server/utils'
 import { revalidatePath } from 'next/cache'
+import { GamblingEngine } from '@/app/actions/casino/gambling-engine'
 
 export async function playCyberVoidAction(stake: number) {
   // 1. Walidacja i Profilowanie Ryzyka
   const { payload, user, riskProfile } = await validateGameSession(GAME_SLUG, stake)
 
-  // 2. Logika Finansowa - Czy stać gracza? (Bonus First logic)
   let currentMoney = Number(user.money)
   let currentCoupons = Number(user.cuponsMoney)
 
-  const roll = Math.random() * 10000
-  let outcome: 'WIN' | 'LOSS' = 'LOSS'
+  // 2. Decyzja silnika o scenariuszu wygranej
+  const scenario = GamblingEngine.determineScenario(riskProfile, {
+    JACKPOT: OUTCOME_WEIGHTS.JACKPOT / 10000,
+    BIG_WIN: OUTCOME_WEIGHTS.BIG_WIN / 10000,
+    MEDIUM_WIN: OUTCOME_WEIGHTS.SMALL_WIN / 12000, // Small Win mapuje się na Medium/Small
+  })
+
   let multiplier = 0
-
-  // Win Limiter z validatora (np. 0.1 dla graczy wygrywających)
-  const difficultyMod = riskProfile.winLimiter
-
-  // Progi są dynamicznie skalowane w dół, jeśli gracz wygrywa za dużo
-  if (roll < OUTCOME_WEIGHTS.JACKPOT * difficultyMod) {
-    outcome = 'WIN'
-    multiplier = SYMBOLS.JACKPOT.multiplier
-  } else if (roll < (OUTCOME_WEIGHTS.JACKPOT + OUTCOME_WEIGHTS.BIG_WIN) * difficultyMod) {
-    outcome = 'WIN'
-    multiplier = SYMBOLS.LEGENDARY.multiplier
-  } else if (
-    roll <
-    (OUTCOME_WEIGHTS.JACKPOT + OUTCOME_WEIGHTS.BIG_WIN + OUTCOME_WEIGHTS.SMALL_WIN) * difficultyMod
-  ) {
-    outcome = 'WIN'
-    multiplier = SYMBOLS.RARE.multiplier // lub UNCOMMON losowo
-  } else if (
-    roll <
-    OUTCOME_WEIGHTS.JACKPOT +
-      OUTCOME_WEIGHTS.BIG_WIN +
-      OUTCOME_WEIGHTS.SMALL_WIN +
-      OUTCOME_WEIGHTS.MONEY_BACK
-  ) {
-    // Money Back nie jest limitowane tak mocno (churn retention)
-    outcome = 'WIN'
-    multiplier = 1
-  } else {
-    outcome = 'LOSS'
-    multiplier = 0
+  switch (scenario) {
+    case 'JACKPOT':
+      multiplier = SYMBOLS.JACKPOT.multiplier
+      break
+    case 'BIG_WIN':
+      multiplier = SYMBOLS.LEGENDARY.multiplier
+      break
+    case 'MEDIUM_WIN':
+    case 'SMALL_WIN':
+      multiplier = SYMBOLS.RARE.multiplier
+      break
+    case 'CHURN_WIN':
+      multiplier = 1
+      break
+    case 'TEASE':
+      multiplier = 0
+      break
+    default:
+      multiplier = 0
   }
 
+  const outcome = scenario === 'TEASE' ? 'TEASE' : multiplier > 0 ? 'WIN' : 'LOSS'
+
   // 4. Generowanie Siatki (Visuals)
-  const grid = generateGrid(outcome, multiplier)
+  // generateGrid musi być zaktualizowane, by obsłużyć 'TEASE'
+  const grid = generateGrid(outcome as any, multiplier)
   const winAmount = stake * multiplier
 
   const balanceResult = await updateUserBalances(
