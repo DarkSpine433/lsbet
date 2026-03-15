@@ -114,7 +114,7 @@ export default buildConfig({
         ],
         description: 'Admin panel for LSBets website',
         siteName: 'LSBets Admin Panel',
-        title: 'LSBets Panel - PZS Złoczew',
+        title: 'LSBets Panel ',
       },
     },
     components: {
