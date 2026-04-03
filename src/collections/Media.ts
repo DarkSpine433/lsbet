@@ -8,30 +8,22 @@ import {
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
-import { isAdmin } from '@/access/isAdmin'
-
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export const Media: CollectionConfig = {
+  admin: {
+    group: 'Content',
+  },
   slug: 'media',
   access: {
-    create: isAdmin,
-    delete: isAdmin,
-    read: anyone,
-    update: isAdmin,
+    read: () => true,
   },
-  admin: {
-    group: 'System',
-  },
-  folders: true,
   fields: [
     {
       name: 'alt',
       type: 'text',
-      //required: true,
+      required: true,
     },
     {
       name: 'caption',
@@ -44,42 +36,41 @@ export const Media: CollectionConfig = {
     },
   ],
   upload: {
-    // Upload to the public/media directory in Next.js making them publicly accessible even outside of Payload
     staticDir: path.resolve(dirname, '../../public/media'),
-    adminThumbnail: 'thumbnail',
-    focalPoint: true,
+    mimeTypes: ['image/*'], // Restrict to images
+    // 1. Optimize the original file
+    formatOptions: {
+      format: 'webp',
+      options: {
+        quality: 80, // Balanced quality vs. file size
+        effort: 4, // CPU effort for compression (1-6)
+      },
+    },
+    // 2. Define responsive sizes
     imageSizes: [
       {
         name: 'thumbnail',
-        width: 300,
+        width: 400,
+        height: 300,
+        position: 'centre',
+        formatOptions: { format: 'webp', options: { quality: 70 } },
       },
       {
-        name: 'square',
-        width: 500,
-        height: 500,
+        name: 'card',
+        width: 768,
+        height: undefined, // Maintains aspect ratio
+        position: 'centre',
+        formatOptions: { format: 'webp', options: { quality: 80 } },
       },
       {
-        name: 'small',
-        width: 600,
-      },
-      {
-        name: 'medium',
-        width: 900,
-      },
-      {
-        name: 'large',
-        width: 1400,
-      },
-      {
-        name: 'xlarge',
+        name: 'desktop',
         width: 1920,
-      },
-      {
-        name: 'og',
-        width: 1200,
-        height: 630,
-        crop: 'center',
+        height: undefined,
+        position: 'centre',
+        formatOptions: { format: 'webp', options: { quality: 85 } },
       },
     ],
+    // 3. Admin UI optimization
+    adminThumbnail: 'thumbnail',
   },
 }
